@@ -30,7 +30,7 @@ Run flows directly from Studio. This is best for quick iteration.
 ### Option B — CLI runner (recommended for artifacts + logs)
 Run from repo root:
 ```bat
-run_demo_suite.bat
+.\run_demo_suite.bat
 ```
 This will:
 - run all flows in `flows\demo`
@@ -60,6 +60,20 @@ Toggles are exposed as:
 scripts\run_action.bat ehh cid true
 scripts\run_action.bat ehh phud true
 ```
+
+Before running the demo/full suite, verify your environment:
+
+```powershell
+.\scripts\check_env.bat
+```
+
+If `maestro` is not found, either install the Maestro CLI or set the `MAESTRO_CMD` environment variable to the full path of the Maestro executable. Example (PowerShell):
+
+```powershell
+setx MAESTRO_CMD "C:\\path\\to\\maestro.exe"
+```
+
+Restart your terminal after setting `MAESTRO_CMD` and re-run `.\scripts\check_env.bat`.
 
 ## Maestro output location
 By default, Maestro stores artifacts under `%USERPROFILE%\.maestro\tests\...`.
