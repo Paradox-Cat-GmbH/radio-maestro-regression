@@ -79,6 +79,14 @@ def main() -> int:
     # Allow overriding the Maestro CLI executable via environment variable `MAESTRO_CMD`.
     # Example: set MAESTRO_CMD=C:\path\to\maestro.exe
     maestro_exe = os.environ.get("MAESTRO_CMD", "maestro")
+    # Validate that the Maestro executable is resolvable. If MAESTRO_CMD points to
+    # a GUI application (e.g. "Maestro Studio.exe") it will likely fail; provide
+    # a helpful message instead of a cryptic FileNotFoundError.
+    import shutil
+    maestro_resolved = shutil.which(maestro_exe) if maestro_exe else None
+    if maestro_resolved is None and not Path(maestro_exe).exists():
+        print(f"Maestro executable not found: '{maestro_exe}'.\n\nPlease install the Maestro CLI or set the MAESTRO_CMD environment variable to the full path of the Maestro CLI executable. Example (PowerShell):\nsetx MAESTRO_CMD \"C:\\\\path\\\\to\\\\maestro.exe\"")
+        return 3
     maestro_cmd = [maestro_exe, "test", str(flow_path), f"--test-output-dir={maestro_out_dir}", "--format=junit"]
     rc = run_cmd(maestro_cmd, cwd=root, log_file=flow_log)
     if rc != 0:
