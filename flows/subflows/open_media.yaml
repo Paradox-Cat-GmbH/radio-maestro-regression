@@ -1,0 +1,11 @@
+appId: com.bmwgroup.idnext.launcher
+tags: [helper]
+---
+- pressKey: home
+- extendedWaitUntil:
+    visible:
+      id: "IconicBar.Det.Media"
+    timeout: 20000
+- tapOn:
+    id: "IconicBar.Det.Media"
+- waitForAnimationToEnd

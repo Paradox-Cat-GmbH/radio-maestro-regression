@@ -1,0 +1,9 @@
+# Ignore runtime/test artifacts and generated media
+artifacts/
+.maestro/tests/
+.maestro/screenshots/
+*.mp4
+*.log
+*.tmp
+__pycache__/
+.pytest_cache/

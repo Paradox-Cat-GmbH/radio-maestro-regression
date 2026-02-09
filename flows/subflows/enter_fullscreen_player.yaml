@@ -1,0 +1,16 @@
+appId: com.bmwgroup.idnext.launcher
+name: Enter Fullscreen player
+tags: [subflow, radio]
+---
+# Best-effort: many builds allow entering Fullscreen by tapping the mini-player control/artwork area.
+# If this does not open Fullscreen on your rack:
+# 1) In Maestro Studio, open Media -> Radio, then tap the element that opens Fullscreen.
+# 2) Use "Inspect Screen" and copy its id.
+# 3) Replace `miniplayer_control` below with that id.
+- extendedWaitUntil:
+    visible:
+      id: "miniplayer_control"
+    timeout: 20000
+- tapOn:
+    id: "miniplayer_control"
+- waitForAnimationToEnd

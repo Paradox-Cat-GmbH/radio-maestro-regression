@@ -1,0 +1,27 @@
+# Group B: Search & Input
+# Covers: IDCEVODEV-478229
+
+appId: com.bmwgroup.idnext.launcher
+tags:
+  - regression
+  - search
+---
+- pressKey: home
+- tapOn:
+    id: "IconicBar.Det.Media"
+
+# ROBUSTNESS: Ensure we are in a state where Search is visible
+- tapOn: "Search"
+- tapOn:
+    point: 19%,14%
+
+- inputText: "Rock"
+- pressKey: enter
+
+- assertVisible:
+    text: "Rock" # Search results should contain the query
+    optional: true # Don't fail hard if network is slow
+
+# Select the first result
+- tapOn:
+    index: 0

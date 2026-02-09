@@ -1,0 +1,15 @@
+appId: com.bmwgroup.idnext.launcher
+name: IDCEVODEV-478205 - BIM - skip to next station
+tags: [demo, radio, hardware]
+---
+- runFlow: ../subflows/open_media.yaml
+- runFlow: ../subflows/tune_any_station.yaml
+
+# ACTION: bim next
+# How to execute the action:
+#   scripts\run_action.bat bim next
+# Notes:
+# - BIM path requires KEYCODE_MUTE (to reach BIM), then a media-next action.
+# - The runner tries a best-effort sequence (MUTE + inject/custom-input + keyevent fallback).
+
+- waitForAnimationToEnd

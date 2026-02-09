@@ -1,0 +1,11 @@
+appId: com.bmwgroup.idnext.launcher
+name: IDCEVODEV-478222 — Speech — tune station from All stations list
+tags: [demo, radio, speech, manual_step]
+---
+- runFlow: ../subflows/open_media.yaml
+- runFlow: ../subflows/open_all_stations.yaml
+
+# Manual step:
+# Trigger voice assistant (e.g., "Hey BMW") and request tuning a station from All stations context.
+# If your build exposes a tappable mic UI element, capture its id in Maestro Studio and add a tap step.
+- waitForAnimationToEnd

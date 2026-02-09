@@ -1,0 +1,7 @@
+appId: com.bmwgroup.idnext.launcher
+name: Open Favourites list
+tags: [subflow, radio]
+---
+# UI label is usually 'Favourites' (UK spelling). If your build uses a different label, replace this with the captured nav item id.
+- tapOn: 'Favourites'
+- waitForAnimationToEnd

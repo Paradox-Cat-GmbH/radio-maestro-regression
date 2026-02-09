@@ -1,0 +1,15 @@
+appId: com.bmwgroup.idnext.launcher
+name: IDCEVODEV-478204 - Mediaminiplayer - skip to previous station
+tags: [demo, radio, ui_only]
+---
+- runFlow: ../subflows/open_media.yaml
+- extendedWaitUntil:
+    visible:
+      id: "miniplayer_control"
+    timeout: 20000
+
+# TODO: Capture the exact id for "skip back" in Maestro Studio.
+# If it matches the forward naming pattern, update accordingly.
+- tapOn:
+    id: "idx_icon_back"
+- waitForAnimationToEnd

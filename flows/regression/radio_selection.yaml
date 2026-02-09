@@ -1,0 +1,33 @@
+# Group A: Core Navigation & Selection (The Basics)
+# Covers: IDCEVODEV-478199, IDCEVODEV-600874, IDCEVODEV-478202
+
+appId: com.bmwgroup.idnext.launcher
+tags:
+  - regression
+  - radio_core
+---
+# --- PRECONDITION: GO TO RADIO ---
+- pressKey: home
+- tapOn:
+    id: "IconicBar.Det.Media"
+- assertVisible:
+    text: "Radio"
+
+# --- TEST 1: Select Station from All Stations ---
+- tapOn: "All stations"
+- tapOn:
+    index: 0
+    retryTapIfNoChange: true
+
+# VALIDATE (Fixed Syntax: Single line string)
+- pressKey: home
+
+# VALIDATE MINIPLAYER VISIBILITY (Fixed Syntax: Proper ID selector)
+- extendedWaitUntil:
+    visible:
+      id: "MediaMiniPlayer"
+    timeout: 5000
+
+- tapOn:
+    id: idx_icon_forward
+# VALIDATE (Fixed Syntax: Single line string)

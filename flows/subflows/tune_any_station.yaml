@@ -1,0 +1,16 @@
+# Ensures Radio is actively tuned by selecting the first station in the list.
+# Used as a stable precondition for hardware-based skip tests (SWAG/BIM).
+
+appId: com.bmwgroup.idnext.launcher
+---
+- assertVisible:
+    text: "Radio"
+- tapOn:
+    text: "All stations"
+- waitForAnimationToEnd
+# Tap the first station row (static id + index).
+- tapOn:
+    id: "ListImageComponent ImageRightIcon"
+    index: 0
+    retryTapIfNoChange: true
+- waitForAnimationToEnd

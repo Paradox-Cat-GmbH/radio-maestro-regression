@@ -1,0 +1,13 @@
+appId: com.bmwgroup.idnext.launcher
+name: IDCEVODEV-600874 — Favourites — skip to next station when >1 favourites exist
+tags: [demo, radio, favourites, requires_setup, keyevent_first]
+---
+- runFlow: ../subflows/open_media.yaml
+- runFlow: ../subflows/open_favourites.yaml
+
+# Precondition: favourites contains >1 station.
+# If not, add at least two favourites (see IDCEVODEV-478215 flow).
+
+# Use media key event as the most stable "skip next" action on racks.
+- pressKey: "remote media next"
+- waitForAnimationToEnd

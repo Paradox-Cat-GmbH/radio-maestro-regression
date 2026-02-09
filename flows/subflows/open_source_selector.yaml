@@ -1,0 +1,7 @@
+appId: com.bmwgroup.idnext.launcher
+name: Open Source selector
+tags: [subflow, radio]
+---
+# Opens the Source selector. If 'Source' text is not tappable on your build, capture the selector ID in Maestro Studio and replace the tap below.
+- tapOn: 'Source'
+- waitForAnimationToEnd

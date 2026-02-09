@@ -1,0 +1,15 @@
+appId: com.bmwgroup.idnext.launcher
+name: IDCEVODEV-478210 - SWAG - skip to next station
+tags: [demo, radio, hardware]
+---
+- runFlow: ../subflows/open_media.yaml
+- runFlow: ../subflows/tune_any_station.yaml
+
+# ACTION: swag media-next
+# How to execute the action (host side):
+#   scripts\run_action.bat swag media-next
+# Notes:
+# - On some builds, `pressKey: remote media next` does not reach SWAG, so we inject via car_service.
+# - This flow only sets the UI precondition; the action is injected by the runner.
+
+- waitForAnimationToEnd
