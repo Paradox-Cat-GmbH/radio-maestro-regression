@@ -3,8 +3,8 @@ Download and extract Android Platform Tools (Windows) into repo-local tools/plat
 This does NOT modify system PATH. After running, use scripts\adb.bat to invoke adb from the local tools.
 #>
 
-param()
-
+$out = Join-Path $PSScriptRoot "..\tools\platform-tools"
+$zip = Join-Path $PSScriptRoot "platform-tools-latest.zip"
 $out = Join-Path $PSScriptRoot "..\tools\platform-tools"
 $zip = Join-Path $PSScriptRoot "platform-tools-latest.zip"
 
