@@ -1,0 +1,22 @@
+appId: com.bmwgroup.idnext.launcher
+name: IDCEVODEV-478217 — Shortcuts — recall a radio station
+tags: [demo, radio, shortcuts]
+---
+- runFlow: ../subflows/open_media.yaml
+- runFlow: ../subflows/open_all_stations.yaml
+
+# Add station to shortcuts via long-press (choose a stable station name on your rack).
+# If your station list differs, replace "089Kult" with any station visible in All stations.
+- longPressOn: "089Kult"
+- waitForAnimationToEnd
+
+# Tune a different station to prove recall works (replace if needed).
+- tapOn: "106.4 TOP FM"
+- waitForAnimationToEnd
+
+- runFlow: ../subflows/open_shortcuts.yaml
+
+# Recall station from shortcuts (replace selector if shortcuts UI does not show text).
+- tapOn: "089Kult"
+- waitForAnimationToEnd
+# Backend validation should run after this flow.

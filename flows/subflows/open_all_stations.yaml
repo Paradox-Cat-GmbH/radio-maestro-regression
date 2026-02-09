@@ -1,0 +1,6 @@
+appId: com.bmwgroup.idnext.launcher
+name: Open All stations list
+tags: [subflow, radio]
+---
+- tapOn: All stations
+- waitForAnimationToEnd

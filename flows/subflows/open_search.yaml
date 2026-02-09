@@ -1,0 +1,6 @@
+appId: com.bmwgroup.idnext.launcher
+name: Open Search
+tags: [subflow, radio]
+---
+- tapOn: "Search"
+- waitForAnimationToEnd

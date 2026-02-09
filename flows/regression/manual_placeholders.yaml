@@ -1,0 +1,12 @@
+# Group E: The "Manual/Impossible" Tests (Speech)
+# Covers: IDCEVODEV-486442, 478222
+
+appId: com.bmwgroup.idnext.launcher
+tags:
+  - manual
+---
+- pressKey: home
+- waitForAnimationToEnd
+- runFlow: ../subflows/open_media.yaml
+- assertVisible: "Radio"
+- waitForAnimationToEnd

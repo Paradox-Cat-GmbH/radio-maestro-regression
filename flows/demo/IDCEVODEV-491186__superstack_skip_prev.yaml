@@ -1,0 +1,14 @@
+appId: com.bmwgroup.idnext.launcher
+name: IDCEVODEV-491186 — Superstack media widget — skip to previous station
+tags: [demo, radio, superstack, keyevent_first]
+---
+- runFlow: ../subflows/open_media.yaml
+- pressKey: home
+- waitForAnimationToEnd
+
+# Superstack (home media widget) typically reacts to Media key events.
+- pressKey: "remote media previous"
+- waitForAnimationToEnd
+# Optional refinement:
+# If your Superstack widget has a tappable "prev" button with a stable id, replace the key event with:
+# - tapOn: { id: "<SUPERSTACK_SKIP_PREV_ID>" }

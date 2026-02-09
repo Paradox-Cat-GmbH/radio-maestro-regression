@@ -1,0 +1,10 @@
+appId: com.bmwgroup.idnext.launcher
+name: Open Shortcuts panel
+tags: [subflow, radio]
+---
+# Build-dependent entry point.
+# Try tapping the visible "Shortcuts" entry. If your build shows only an icon (no text),
+# use Maestro Studio "Inspect Screen" on the shortcuts entry point and replace this step
+# with `tapOn: { id: "<YOUR_SHORTCUTS_ENTRY_ID>" }`.
+- tapOn: "Shortcuts"
+- waitForAnimationToEnd

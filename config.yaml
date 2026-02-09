@@ -1,0 +1,1 @@
+# Deprecated: keep appId/env per-flow. Workspace config lives in .maestro/config.yaml if needed.

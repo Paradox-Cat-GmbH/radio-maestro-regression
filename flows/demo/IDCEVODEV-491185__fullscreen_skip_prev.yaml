@@ -1,0 +1,13 @@
+appId: com.bmwgroup.idnext.launcher
+name: IDCEVODEV-491185 — Fullscreen player — skip to previous station
+tags: [demo, radio, fullscreen]
+---
+- runFlow: ../subflows/open_media.yaml
+- runFlow: ../subflows/enter_fullscreen_player.yaml
+
+# Skip to previous station (Fullscreen).
+# If this id is different on your build: in Maestro Studio while in Fullscreen, click the skip-prev button,
+# copy its id, and replace `idx_icon_back`.
+- tapOn:
+    id: "idx_icon_back"
+- waitForAnimationToEnd

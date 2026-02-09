@@ -1,0 +1,5 @@
+# Maestro workspace configuration
+# Stores Maestro debug output + artifacts (screenshots/logs/AI reports, etc.) inside this repo.
+# CLI flag --test-output-dir takes priority.
+
+testOutputDir: artifacts/maestro

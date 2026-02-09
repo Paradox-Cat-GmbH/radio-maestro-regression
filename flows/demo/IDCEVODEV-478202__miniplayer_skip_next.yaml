@@ -1,0 +1,15 @@
+appId: com.bmwgroup.idnext.launcher
+name: IDCEVODEV-478202 - Mediaminiplayer - skip to next station
+tags: [demo, radio, ui_only]
+---
+- runFlow: ../subflows/open_media.yaml
+- assertVisible:
+    text: "Radio"
+# Precondition: Radio is the active source and the mini player is visible
+- extendedWaitUntil:
+    visible:
+      id: "miniplayer_control"
+    timeout: 20000
+- tapOn:
+    id: "idx_icon_forward"
+- waitForAnimationToEnd

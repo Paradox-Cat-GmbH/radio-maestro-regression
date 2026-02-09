@@ -1,0 +1,17 @@
+appId: com.bmwgroup.idnext.launcher
+name: IDCEVODEV-478219 — Shortcuts — recall Radio source
+tags: [demo, radio, shortcuts]
+---
+- runFlow: ../subflows/open_media.yaml
+- runFlow: ../subflows/open_source_selector.yaml
+
+# Optional (for stronger proof): switch to a different source first (Bluetooth/USB/etc).
+# If you want that, add a tap step here for the correct source label on your build.
+
+# Add Radio source to shortcuts via long press.
+- longPressOn: "Radio"
+- waitForAnimationToEnd
+
+- runFlow: ../subflows/open_shortcuts.yaml
+- tapOn: "Radio"
+- waitForAnimationToEnd

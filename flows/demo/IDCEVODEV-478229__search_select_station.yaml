@@ -1,0 +1,20 @@
+appId: com.bmwgroup.idnext.launcher
+name: IDCEVODEV-478229 - Search - select station from search results
+tags: [demo, radio, ui_only]
+---
+- runFlow: ../subflows/open_media.yaml
+
+# TODO: Ensure you are on the Radio browse/search surface.
+- tapOn: "Search"
+- waitForAnimationToEnd
+
+# TODO: Replace the search term with a stable station substring available on your rack (e.g., "089")
+- inputText: "089"
+- waitForAnimationToEnd
+
+# TODO: Tap the first search result; capture selector if needed.
+- tapOn:
+    id: "UiLib:ListComponent" # Ensure this matches the actual text or ID of the component
+    index: 0
+    retryTapIfNoChange: true
+- waitForAnimationToEnd

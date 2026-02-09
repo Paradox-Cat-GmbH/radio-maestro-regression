@@ -1,0 +1,14 @@
+IDCEVODEV-600874 -> IDCEVODEV-600874__favourites_skip_next_multi.yaml :: skip to next station in Favorite with > one station
+IDCEVODEV-491186 -> IDCEVODEV-491186__superstack_skip_prev.yaml :: skip back to previous station via skip button in Superstackmediawidget
+IDCEVODEV-491185 -> IDCEVODEV-491185__fullscreen_skip_prev.yaml :: skip back to previous station via skip button in Fullscreenplayer
+IDCEVODEV-486442 -> IDCEVODEV-486442__speech_select_from_favourites.yaml :: Select a station via speech from favorites list
+IDCEVODEV-478222 -> IDCEVODEV-478222__speech_tune_from_all_stations.yaml :: tune a radio station via speech from All Station list
+IDCEVODEV-478219 -> IDCEVODEV-478219__shortcuts_recall_radio_source.yaml :: Recall Radio from shortcuts
+IDCEVODEV-478217 -> IDCEVODEV-478217__shortcuts_recall_station.yaml :: Recall a radio station from Shortcuts
+IDCEVODEV-478216 -> IDCEVODEV-478216__favourites_single_station_tune.yaml :: tune a station from Favorite with only station
+IDCEVODEV-478215 -> IDCEVODEV-478215__favourites_multi_station_tune.yaml :: tune a station from Favorite with > one station
+IDCEVODEV-478214 -> IDCEVODEV-478214__phud_stationlist_swag_select.yaml :: Select a station stationlist in PHUD via SWAG
+IDCEVODEV-478213 -> IDCEVODEV-478213__swag_skip_prev.yaml :: skip back to previous station via skip button in SWAG
+IDCEVODEV-478210 -> IDCEVODEV-478210__swag_skip_next.yaml :: skip to next station via skip button in SWAG
+IDCEVODEV-478207 -> IDCEVODEV-478207__bim_skip_prev.yaml :: skip back to previous station via skip button in BIM
+IDCEVODEV-478205 -> IDCEVODEV-478205__bim_skip_next.yaml :: skip to next station via skip button in BIM

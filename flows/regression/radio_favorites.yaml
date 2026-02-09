@@ -1,0 +1,30 @@
+# Group C: Favourites Logic (Complex State)
+# Covers: IDCEVODEV-600874, IDCEVODEV-478216
+
+appId: com.bmwgroup.idnext.launcher
+tags:
+  - regression
+  - favorites
+---
+- pressKey: home
+- tapOn:
+    id: "IconicBar.Det.Media"
+
+# 1. Add current station to favorites
+- tapOn: "All stations"
+- tapOn:
+    index: 0 # Select first station
+
+- tapOn:
+    point: 28%,74% # <--- FIND THIS ID (The "Add to Favs" button)
+
+# 2. Go to Favourites List
+- tapOn: "Favourites" # Text match
+
+# 3. Verify it exists
+- assertVisible:
+    index: 0 # Something should be in the list now
+
+# 4. Skip Next inside Favourites (IDCEVODEV-600874)
+- tapOn:
+    id: "idx_icon_forward" # Find ID
