@@ -76,7 +76,10 @@ def main() -> int:
     # 1) Run Maestro flow
     # Use --test-output-dir to co-locate Maestro artifacts with this run.
     maestro_out_dir = artifacts_dir / "maestro_output"
-    maestro_cmd = ["maestro", "test", str(flow_path), f"--test-output-dir={maestro_out_dir}", "--format=junit"]
+    # Allow overriding the Maestro CLI executable via environment variable `MAESTRO_CMD`.
+    # Example: set MAESTRO_CMD=C:\path\to\maestro.exe
+    maestro_exe = os.environ.get("MAESTRO_CMD", "maestro")
+    maestro_cmd = [maestro_exe, "test", str(flow_path), f"--test-output-dir={maestro_out_dir}", "--format=junit"]
     rc = run_cmd(maestro_cmd, cwd=root, log_file=flow_log)
     if rc != 0:
         return rc
