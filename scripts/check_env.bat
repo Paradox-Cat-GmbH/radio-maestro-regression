@@ -5,11 +5,12 @@ echo Checking environment for RadioRegression
 
 rem Check Python
 python --version >nul 2>&1
-if %ERRORLEVEL% neq 0 (
-  echo [ERROR] Python is not available on PATH. Install Python 3.x and add to PATH.
-) else (
-  echo [OK] Python found.
-)
+if %ERRORLEVEL% neq 0 goto python_fail
+echo [OK] Python found.
+goto python_done
+:python_fail
+echo [ERROR] Python is not available on PATH. Install Python 3.x and add to PATH.
+:python_done
 
 rem Check ADB (system or repo-local tools)
 where adb >nul 2>&1
