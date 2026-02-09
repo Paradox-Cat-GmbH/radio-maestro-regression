@@ -79,14 +79,33 @@ def main() -> int:
     # Allow overriding the Maestro CLI executable via environment variable `MAESTRO_CMD`.
     # Example: set MAESTRO_CMD=C:\path\to\maestro.exe
     maestro_exe = os.environ.get("MAESTRO_CMD", "maestro")
-    # Validate that the Maestro executable is resolvable. If MAESTRO_CMD points to
-    # a GUI application (e.g. "Maestro Studio.exe") it will likely fail; provide
-    # a helpful message instead of a cryptic FileNotFoundError.
+    # Resolve Maestro executable: prefer explicit file, then PATH lookup.
     import shutil
-    maestro_resolved = shutil.which(maestro_exe) if maestro_exe else None
-    if maestro_resolved is None and not Path(maestro_exe).exists():
+    maestro_path = None
+    # 1) If MAESTRO_CMD points to an existing file, use it.
+    if maestro_exe and Path(maestro_exe).exists():
+        maestro_path = str(Path(maestro_exe).resolve())
+    # 2) Try PATH lookup
+    if maestro_path is None:
+        which_res = shutil.which(maestro_exe)
+        if which_res:
+            maestro_path = which_res
+    # 3) Heuristic: user may have set MAESTRO_CMD to the GUI 'Maestro Studio.exe'.
+    # Try to find a CLI sibling 'maestro.exe' in common locations.
+    if maestro_path is None and maestro_exe and "maestro studio" in maestro_exe.lower():
+        p = Path(maestro_exe)
+        # same folder
+        candidate = p.parent / "maestro.exe"
+        if candidate.exists():
+            maestro_path = str(candidate)
+        # parent bin folder
+        candidate2 = p.parent / ".." / "bin" / "maestro.exe"
+        if maestro_path is None and Path(candidate2).exists():
+            maestro_path = str(Path(candidate2).resolve())
+    if maestro_path is None:
         print(f"Maestro executable not found: '{maestro_exe}'.\n\nPlease install the Maestro CLI or set the MAESTRO_CMD environment variable to the full path of the Maestro CLI executable. Example (PowerShell):\nsetx MAESTRO_CMD \"C:\\\\path\\\\to\\\\maestro.exe\"")
         return 3
+    maestro_exe = maestro_path
     maestro_cmd = [maestro_exe, "test", str(flow_path), f"--test-output-dir={maestro_out_dir}", "--format=junit"]
     rc = run_cmd(maestro_cmd, cwd=root, log_file=flow_log)
     if rc != 0:
