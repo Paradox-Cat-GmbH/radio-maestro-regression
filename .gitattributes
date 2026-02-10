@@ -1,2 +1,4 @@
-*.yml linguist-language=YAML
+﻿# Mark vendor files and force YAML attribution for Linguist
+tools/platform-tools/* linguist-vendored
 *.yaml linguist-language=YAML
+*.yml linguist-language=YAML
