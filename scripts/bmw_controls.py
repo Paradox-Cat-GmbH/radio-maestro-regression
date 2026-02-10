@@ -1,5 +1,7 @@
 import argparse
 import subprocess
+import os
+from pathlib import Path
 import sys
 from dataclasses import dataclass
 
@@ -27,15 +29,23 @@ class CmdResult:
     stderr: str
 
 
+def _adb_prefix() -> list[str]:
+    """Prefer repo-local scripts/adb.bat on Windows."""
+    if os.name == "nt":
+        repo = Path(__file__).resolve().parent.parent
+        adb_bat = repo / "scripts" / "adb.bat"
+        if adb_bat.exists():
+            return ["cmd", "/c", str(adb_bat)]
+    return ["adb"]
+
+
 def _run(cmd: list[str], timeout_s: int = 20) -> CmdResult:
     p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout_s)
     return CmdResult(cmd=cmd, returncode=p.returncode, stdout=p.stdout, stderr=p.stderr)
 
 
 def adb(*args: str, timeout_s: int = 20) -> CmdResult:
-    return _run(["adb", *args], timeout_s=timeout_s)
-
-
+    return _run(_adb_prefix() + list(args), timeout_s=timeout_s)
 def inject_custom_input(keycode: int) -> None:
     """
     Leandro's SWAG simulation pattern:
