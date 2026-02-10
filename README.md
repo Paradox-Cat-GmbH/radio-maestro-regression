@@ -130,3 +130,30 @@ Artifacts are written under `artifacts\runs\<timestamp>\demo\<flow>\` (logs + Ma
 ### Notes
 - SWAG/BIM flows rely on `# ACTION:` markers and must be executed via the runner (CLI), not just Maestro Studio.
 - Speech / PHUD flows are placeholders unless your rack supports those interactions.
+
+## Helper utilities
+
+This repository includes `scripts/helpers.py` — a lightweight, importable utility module that centralizes common test helpers:
+
+- `repo_root()` — returns repository root `Path`.
+- `find_maestro_exe(hint=None)` — locate the Maestro CLI executable by name, hint path, or PATH.
+- `read_action_tokens(flow_path)` — read `# ACTION:` token from a Maestro YAML flow.
+- `run_bmw_action_safe(tokens, log_path=None, timeout_s=30, retries=1)` — execute BMW ACTION tokens in a separate process with timeout and retries; writes a simple log and returns an exit code.
+- `verify_radio(package, require_focus=True, require_playing=True)` — wrapper around `scripts/verify_radio_state.py` verification function.
+
+Demo and tests
+--------------
+
+- `scripts/helpers_demo.py` — safe, non-destructive demo showing how to import and use `scripts.helpers`.
+- `scripts/helpers_test.py` — lightweight runtime checks that verify imports and module loading.
+- `scripts/helpers_unit_test.py` — small unit-style tests for timeout/retry behaviors (non-destructive).
+
+Run the demo/tests locally (no device required):
+
+```powershell
+python scripts\helpers_demo.py
+python scripts\helpers_test.py
+python scripts\helpers_unit_test.py
+```
+
+These utilities are intentionally conservative: device-affecting actions are executed in a subprocess with timeouts and retries so they won't hang the test runner.
