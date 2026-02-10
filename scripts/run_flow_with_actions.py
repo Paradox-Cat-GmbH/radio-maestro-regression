@@ -1,139 +1,161 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# Runs a Maestro YAML flow, optionally executes a host-side BMW input action (SWAG/BIM/etc),
+# then validates backend state via ADB (audio focus + media session).
+#
+# Action markers live in YAML as comments:
+#   # ACTION: swag media-next
+#   # ACTION: workaround next
+#   # ACTION: bim next
+#   # ACTION: ehh cid true
+
+from __future__ import annotations
+
 import argparse
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
 from pathlib import Path
 
 RE_ACTION = re.compile(r"^\s*#\s*ACTION:\s*(.+?)\s*$", re.IGNORECASE)
-
 EXPECTED_PACKAGE = "com.bmwgroup.apinext.tunermediaservice"
-EXPECTED_STATE = "Playing"
+
 
 def repo_root() -> Path:
-    # scripts/ -> repo root
     return Path(__file__).resolve().parent.parent
 
-def run_cmd(cmd: list[str], cwd: Path | None = None, log_file: Path | None = None) -> int:
-    text = f"$ {' '.join(cmd)}\n"
-    if log_file:
-        log_file.parent.mkdir(parents=True, exist_ok=True)
-        log_file.write_text(text, encoding="utf-8")
-    p = subprocess.Popen(cmd, cwd=str(cwd) if cwd else None, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-    out_lines = []
-    while True:
-        line = p.stdout.readline()
-        if not line and p.poll() is not None:
-            break
-        if line:
-            out_lines.append(line)
-    rc = p.wait()
-    if log_file:
-        with log_file.open("a", encoding="utf-8") as f:
-            f.writelines(out_lines)
-            f.write(f"\n[exit_code]={rc}\n")
-    else:
-        sys.stdout.write(''.join(out_lines))
-        sys.stdout.flush()
-    return rc
 
-def parse_action(flow_path: Path) -> list[str] | None:
+def timestamp_dir() -> str:
+    return time.strftime("%Y-%m-%d_%H%M%S")
+
+
+def find_maestro_exe(hint: str | None) -> str | None:
+    # Resolve Maestro CLI executable from file/dir/name or PATH.
+    # Accepts: maestro.exe / maestro.cmd / maestro.bat / maestro
+    names = {"maestro.exe", "maestro.cmd", "maestro.bat", "maestro"}
+
+    def search_dir(d: Path) -> str | None:
+        try:
+            for p in d.rglob("*"):
+                if p.is_file() and p.name.lower() in names:
+                    return str(p.resolve())
+        except Exception:
+            return None
+        return None
+
+    if hint:
+        p = Path(hint)
+        if p.exists():
+            if p.is_file():
+                return str(p.resolve())
+            if p.is_dir():
+                hit = search_dir(p)
+                if hit:
+                    return hit
+        w = shutil.which(hint)
+        if w:
+            return w
+
+    w = shutil.which("maestro")
+    if w:
+        return w
+    return None
+
+
+def read_action_tokens(flow_path: Path) -> list[str] | None:
     for line in flow_path.read_text(encoding="utf-8").splitlines():
         m = RE_ACTION.match(line)
         if m:
-            action = m.group(1).strip()
-            if action.lower() in {"none", "manual"}:
+            tokens = m.group(1).strip().split()
+            if not tokens:
                 return None
-            return action.split()
+            if tokens[0].lower() in {"manual", "none"}:
+                return None
+            return tokens
     return None
 
-def default_artifacts_dir() -> Path:
-    ts = time.strftime("%Y-%m-%d_%H%M%S")
-    return repo_root() / "artifacts" / "runs" / ts
+
+def run_and_log(cmd: list[str], cwd: Path, log_path: Path) -> int:
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    with log_path.open("w", encoding="utf-8") as f:
+        f.write("$ " + " ".join(cmd) + "\n\n")
+        p = subprocess.Popen(cmd, cwd=str(cwd), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        assert p.stdout is not None
+        for line in p.stdout:
+            f.write(line)
+        rc = p.wait()
+        f.write(f"\n[exit_code]={rc}\n")
+    return rc
+
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Run a Maestro flow, optionally inject BMW input, then validate Radio via ADB.")
-    ap.add_argument("flow", help="Path to the Maestro YAML flow")
-    ap.add_argument("--artifacts", default=str(default_artifacts_dir()), help="Where to store logs/artifacts")
-    ap.add_argument("--no-validate", action="store_true", help="Skip backend validation (audio focus + media session)")
+    ap = argparse.ArgumentParser()
+    ap.add_argument("flow", help="Path to Maestro YAML flow (relative to repo root or absolute).")
+    ap.add_argument("--artifacts", default=None, help="Artifacts base dir (default: artifacts/runs/<timestamp>)")
+    ap.add_argument("--no-validate", action="store_true", help="Skip backend validation step.")
+    ap.add_argument("--no-action", action="store_true", help="Ignore any '# ACTION:' marker.")
     args = ap.parse_args()
 
     root = repo_root()
-    flow_path = (root / args.flow).resolve() if not os.path.isabs(args.flow) else Path(args.flow).resolve()
+
+    flow_path = Path(args.flow)
+    if not flow_path.is_absolute():
+        flow_path = (root / flow_path).resolve()
+
     if not flow_path.exists():
         print(f"Flow not found: {flow_path}", file=sys.stderr)
         return 2
 
-    artifacts_dir = Path(args.artifacts).resolve()
-    artifacts_dir.mkdir(parents=True, exist_ok=True)
+    artifacts_base = Path(args.artifacts).resolve() if args.artifacts else (root / "artifacts" / "runs" / timestamp_dir())
+    test_dir = artifacts_base / "demo" / flow_path.stem
+    test_dir.mkdir(parents=True, exist_ok=True)
 
-    test_name = flow_path.stem
-    flow_log = artifacts_dir / f"{test_name}__maestro.log"
-    action_log = artifacts_dir / f"{test_name}__action.log"
-    validate_log = artifacts_dir / f"{test_name}__validate.log"
-
-    # 1) Run Maestro flow
-    # Use --test-output-dir to co-locate Maestro artifacts with this run.
-    maestro_out_dir = artifacts_dir / "maestro_output"
-    # Allow overriding the Maestro CLI executable via environment variable `MAESTRO_CMD`.
-    # Example: set MAESTRO_CMD=C:\path\to\maestro.exe
-    maestro_exe = os.environ.get("MAESTRO_CMD", "maestro")
-    # Resolve Maestro executable: prefer explicit file, then PATH lookup.
-    import shutil
-    maestro_path = None
-    # 1) If MAESTRO_CMD points to an existing file, use it.
-    if maestro_exe and Path(maestro_exe).exists():
-        maestro_path = str(Path(maestro_exe).resolve())
-    # 2) Try PATH lookup
-    if maestro_path is None:
-        which_res = shutil.which(maestro_exe)
-        if which_res:
-            maestro_path = which_res
-    # 3) Heuristic: user may have set MAESTRO_CMD to the GUI 'Maestro Studio.exe'.
-    # Try to find a CLI sibling 'maestro.exe' in common locations.
-    if maestro_path is None and maestro_exe and "maestro studio" in maestro_exe.lower():
-        p = Path(maestro_exe)
-        # same folder
-        candidate = p.parent / "maestro.exe"
-        if candidate.exists():
-            maestro_path = str(candidate)
-        # parent bin folder
-        candidate2 = p.parent / ".." / "bin" / "maestro.exe"
-        if maestro_path is None and Path(candidate2).exists():
-            maestro_path = str(Path(candidate2).resolve())
-    if maestro_path is None:
-        print(f"Maestro executable not found: '{maestro_exe}'.\n\nPlease install the Maestro CLI or set the MAESTRO_CMD environment variable to the full path of the Maestro CLI executable. Example (PowerShell):\nsetx MAESTRO_CMD \"C:\\\\path\\\\to\\\\maestro.exe\"")
+    maestro_hint = os.environ.get("MAESTRO_CMD") or "maestro"
+    maestro_exe = find_maestro_exe(maestro_hint)
+    if not maestro_exe:
+        print(
+            "Maestro CLI not found. Set MAESTRO_CMD to the CLI executable or its folder.\n"
+            "Example:\n  setx MAESTRO_CMD \"%USERPROFILE%\\Desktop\\maestro\\bin\"",
+            file=sys.stderr,
+        )
         return 3
-    maestro_exe = maestro_path
-    maestro_cmd = [maestro_exe, "test", str(flow_path), f"--test-output-dir={maestro_out_dir}", "--format=junit"]
-    rc = run_cmd(maestro_cmd, cwd=root, log_file=flow_log)
+
+    maestro_output = test_dir / "maestro_output"
+    maestro_log = test_dir / "maestro.log"
+    rc = run_and_log([maestro_exe, "test", str(flow_path), "--test-output-dir", str(maestro_output)], cwd=root, log_path=maestro_log)
     if rc != 0:
         return rc
 
-    # 2) Optional BMW input injection based on '# ACTION:' comment
-    action = parse_action(flow_path)
-    if action:
-        # Example: ['swag', 'media-next']
-        mode = action[0].lower()
-        key = action[1].lower() if len(action) > 1 else ""
-        if mode in {"swag", "bim", "workaround"}:
-            cmd = [sys.executable, str(root / "scripts" / "bmw_controls.py"), "inject", "--mode", mode, "--key", key]
-        else:
-            # unknown action; log it and continue
-            cmd = ["cmd", "/c", "echo", f"Unknown ACTION: {' '.join(action)}"]
-        rc = run_cmd(cmd, cwd=root, log_file=action_log)
-        if rc != 0:
-            return rc
+    if not args.no_action:
+        tokens = read_action_tokens(flow_path)
+        if tokens:
+            action_log = test_dir / "action.log"
+            rc = run_and_log([sys.executable, str(root / "scripts" / "bmw_controls.py"), *tokens], cwd=root, log_path=action_log)
+            if rc != 0:
+                return rc
+            time.sleep(0.8)
 
-    # 3) Backend validation
     if not args.no_validate:
-        validate_cmd = [sys.executable, str(root / "scripts" / "verify_radio_state.py"), "--package", EXPECTED_PACKAGE, "--state", EXPECTED_STATE]
-        rc = run_cmd(validate_cmd, cwd=root, log_file=validate_log)
+        verify_log = test_dir / "verify.log"
+        if os.name == "nt":
+            verify_cmd = ["cmd", "/c", str(root / "scripts" / "run_check.bat")]
+        else:
+            verify_cmd = [sys.executable, str(root / "scripts" / "verify_radio_state.py"),
+                          "--package", EXPECTED_PACKAGE, "--require-focus", "--require-playing"]
+        rc = run_and_log(verify_cmd, cwd=root, log_path=verify_log)
         if rc != 0:
             return rc
 
+    (test_dir / "SUMMARY.txt").write_text(
+        f"FLOW={flow_path.name}\nMAESTRO={maestro_exe}\nARTIFACTS={test_dir}\n",
+        encoding="utf-8",
+    )
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
