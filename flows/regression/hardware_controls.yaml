@@ -8,6 +8,7 @@
 
 appId: com.bmwgroup.idnext.launcher
 ---
+- evalScript: "${output.testId = 'hardware_controls'}"
 - pressKey: home
 - tapOn:
     id: "IconicBar.Det.Media"
@@ -23,3 +24,4 @@ appId: com.bmwgroup.idnext.launcher
 - waitForAnimationToEnd
 - pressKey: remote dpad center
 - waitForAnimationToEnd
+- runFlow: ../subflows/verify_radio_backend.yaml

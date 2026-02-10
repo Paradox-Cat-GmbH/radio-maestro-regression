@@ -6,6 +6,7 @@ tags:
   - regression
   - search
 ---
+- evalScript: "${output.testId = 'radio_search'}"
 - pressKey: home
 - tapOn:
     id: "IconicBar.Det.Media"
@@ -25,3 +26,4 @@ tags:
 # Select the first result
 - tapOn:
     index: 0
+- runFlow: ../subflows/verify_radio_backend.yaml

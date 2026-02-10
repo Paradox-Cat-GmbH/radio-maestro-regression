@@ -1,5 +1,8 @@
-# Ensures Radio is actively tuned by selecting the first station in the list.
-# Used as a stable precondition for hardware-based skip tests (SWAG/BIM).
+# Ensures Radio is actively tuned by selecting a RANDOM station in the list (bounded).
+# Rationale: Avoid hardcoding index:0 across runs; improve coverage while remaining stable.
+# Random selection is bounded to avoid out-of-range issues on flaky racks.
+#
+# Override bound with env var MAESTRO_RAND_MAX_INDEX (default 3).
 
 appId: com.bmwgroup.idnext.launcher
 ---
@@ -8,9 +11,7 @@ appId: com.bmwgroup.idnext.launcher
 - tapOn:
     text: "All stations"
 - waitForAnimationToEnd
-# Tap the first station row (static id + index).
-- tapOn:
-    id: "ListImageComponent ImageRightIcon"
-    index: 0
-    retryTapIfNoChange: true
+
+- evalScript: "${const max = parseInt(env.MAESTRO_RAND_MAX_INDEX || '3', 10); const idx = Math.floor(Math.random() * (max + 1)); output.randStationIndex = idx; output.randStationSelector = { id: 'ListImageComponent ImageRightIcon', index: idx, retryTapIfNoChange: true }; }"
+- tapOn: ${output.randStationSelector}
 - waitForAnimationToEnd

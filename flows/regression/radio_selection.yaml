@@ -6,6 +6,7 @@ tags:
   - regression
   - radio_core
 ---
+- evalScript: "${output.testId = 'radio_selection'}"
 # --- PRECONDITION: GO TO RADIO ---
 - pressKey: home
 - tapOn:
@@ -31,3 +32,4 @@ tags:
 - tapOn:
     id: idx_icon_forward
 # VALIDATE (Fixed Syntax: Single line string)
+- runFlow: ../subflows/verify_radio_backend.yaml

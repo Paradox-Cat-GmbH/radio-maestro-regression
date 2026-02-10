@@ -5,8 +5,10 @@ appId: com.bmwgroup.idnext.launcher
 tags:
   - manual
 ---
+- evalScript: "${output.testId = 'manual_placeholders'}"
 - pressKey: home
 - waitForAnimationToEnd
 - runFlow: ../subflows/open_media.yaml
 - assertVisible: "Radio"
 - waitForAnimationToEnd
+- runFlow: ../subflows/verify_radio_backend.yaml

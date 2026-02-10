@@ -2,18 +2,9 @@ appId: com.bmwgroup.idnext.launcher
 name: IDCEVODEV-478214 - PHUD station list - select station via SWAG
 tags: [demo, radio, hardware, manual]
 ---
+- evalScript: "${output.testId = 'IDCEVODEV-478214'}"
 - runFlow: ../subflows/open_media.yaml
 - runFlow: ../subflows/tune_any_station.yaml
 
-# ACTION: manual
-# This test targets PHUD (secondary display). Maestro generally drives the CID surface.
-# The current approach is to toggle EHH surfaces when needed:
-#   scripts\run_action.bat ehh cid true
-#   scripts\run_action.bat ehh phud true
-# Then simulate SWAG navigation to move in PHUD station list:
-#   scripts\run_action.bat swag down
-#   scripts\run_action.bat swag center
-#
-# TODO: Once we confirm which display/surface Maestro is controlling on this rack, we can turn this into a fully automated flow.
-
 - waitForAnimationToEnd
+- runFlow: ../subflows/verify_radio_backend.yaml

@@ -2,6 +2,7 @@ appId: com.bmwgroup.idnext.launcher
 name: IDCEVODEV-486497 — Fullscreen player — skip to next station
 tags: [demo, radio, fullscreen]
 ---
+- evalScript: "${output.testId = 'IDCEVODEV-486497'}"
 - runFlow: ../subflows/open_media.yaml
 - runFlow: ../subflows/enter_fullscreen_player.yaml
 
@@ -11,3 +12,4 @@ tags: [demo, radio, fullscreen]
 - tapOn:
     id: "idx_icon_forward"
 - waitForAnimationToEnd
+- runFlow: ../subflows/verify_radio_backend.yaml

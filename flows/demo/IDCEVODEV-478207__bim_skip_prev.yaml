@@ -2,11 +2,10 @@ appId: com.bmwgroup.idnext.launcher
 name: IDCEVODEV-478207 - BIM - skip back to previous station
 tags: [demo, radio, hardware]
 ---
+- evalScript: "${output.testId = 'IDCEVODEV-478207'}"
 - runFlow: ../subflows/open_media.yaml
 - runFlow: ../subflows/tune_any_station.yaml
-
-# ACTION: bim previous
-# How to execute the action:
-#   scripts\run_action.bat bim previous
+- runFlow: ../subflows/inject_bim_prev.yaml
 
 - waitForAnimationToEnd
+- runFlow: ../subflows/verify_radio_backend.yaml

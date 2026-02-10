@@ -2,6 +2,7 @@ appId: com.bmwgroup.idnext.launcher
 name: IDCEVODEV-478202 - Mediaminiplayer - skip to next station
 tags: [demo, radio, ui_only]
 ---
+- evalScript: "${output.testId = 'IDCEVODEV-478202'}"
 - runFlow: ../subflows/open_media.yaml
 - assertVisible:
     text: "Radio"
@@ -13,3 +14,4 @@ tags: [demo, radio, ui_only]
 - tapOn:
     id: "idx_icon_forward"
 - waitForAnimationToEnd
+- runFlow: ../subflows/verify_radio_backend.yaml

@@ -6,6 +6,7 @@ tags:
   - regression
   - favorites
 ---
+- evalScript: "${output.testId = 'radio_favorites'}"
 - pressKey: home
 - tapOn:
     id: "IconicBar.Det.Media"
@@ -28,3 +29,4 @@ tags:
 # 4. Skip Next inside Favourites (IDCEVODEV-600874)
 - tapOn:
     id: "idx_icon_forward" # Find ID
+- runFlow: ../subflows/verify_radio_backend.yaml
