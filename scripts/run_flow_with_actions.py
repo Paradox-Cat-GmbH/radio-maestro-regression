@@ -115,7 +115,12 @@ def main() -> int:
     test_dir.mkdir(parents=True, exist_ok=True)
 
     maestro_hint = os.environ.get("MAESTRO_CMD") or "maestro"
-    maestro_exe = find_maestro_exe(maestro_hint)
+    # Use centralized helper to locate Maestro (CLI or Studio)
+    try:
+        import scripts.helpers as helpers
+        maestro_exe = helpers.find_maestro_exe(maestro_hint)
+    except Exception:
+        maestro_exe = find_maestro_exe(maestro_hint)
     if not maestro_exe:
         print(
             "Maestro CLI not found. Set MAESTRO_CMD to the CLI executable or its folder.\n"
@@ -126,7 +131,11 @@ def main() -> int:
 
     maestro_output = test_dir / "maestro_output"
     maestro_log = test_dir / "maestro.log"
-    rc = run_and_log([maestro_exe, "test", str(flow_path), "--test-output-dir", str(maestro_output)], cwd=root, log_path=maestro_log)
+    cmd = [maestro_exe, "test", str(flow_path), "--test-output-dir", str(maestro_output)]
+    # On Windows, prefer running batch/cmd via cmd /c
+    if os.name == "nt" and maestro_exe.lower().endswith(('.bat', '.cmd')):
+        cmd = ["cmd", "/c"] + cmd
+    rc = run_and_log(cmd, cwd=root, log_path=maestro_log)
     if rc != 0:
         return rc
 
@@ -134,9 +143,20 @@ def main() -> int:
         tokens = read_action_tokens(flow_path)
         if tokens:
             action_log = test_dir / "action.log"
-            rc = run_and_log([sys.executable, str(root / "scripts" / "bmw_controls.py"), *tokens], cwd=root, log_path=action_log)
-            if rc != 0:
-                return rc
+            # Use in-repo helpers to execute ACTION tokens (keeps things importable and testable).
+            try:
+                with action_log.open("w", encoding="utf-8") as f:
+                    f.write("$ ACTION: " + " ".join(tokens) + "\n")
+                    # import locally to avoid top-level import side-effects
+                    import scripts.helpers as helpers
+                    # use the safe wrapper (timeout + retries + logging) to avoid hangs
+                    rc = helpers.run_bmw_action_safe(tokens, log_path=action_log, timeout_s=10, retries=1)
+                    if rc != 0:
+                        return rc
+            except Exception as e:
+                with action_log.open("a", encoding="utf-8") as f:
+                    f.write(f"[exit_code]=2\nERROR: {e}\n")
+                return 2
             time.sleep(0.8)
 
     if not args.no_validate:
