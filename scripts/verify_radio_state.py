@@ -17,6 +17,8 @@ Exit codes:
 from __future__ import annotations
 
 import argparse
+import os
+from pathlib import Path
 import re
 import subprocess
 import sys
@@ -84,6 +86,16 @@ class MediaSession:
     description: List[str]
 
 
+def _adb_prefix() -> List[str]:
+    """Prefer repo-local scripts/adb.bat on Windows."""
+    if os.name == "nt":
+        repo = Path(__file__).resolve().parent.parent
+        adb_bat = repo / "scripts" / "adb.bat"
+        if adb_bat.exists():
+            return ["cmd", "/c", str(adb_bat)]
+    return ["adb"]
+
+
 def _run_adb(cmd: List[str], retries: int = 2, retry_delay_s: float = 0.7, timeout_s: int = 20) -> str:
     """
     Run an adb command with small retries (racks can be flaky).
@@ -105,7 +117,7 @@ def _run_adb(cmd: List[str], retries: int = 2, retry_delay_s: float = 0.7, timeo
 
 
 def get_current_user_id() -> int:
-    out = _run_adb(["adb", "shell", "am", "get-current-user"]).strip()
+    out = _run_adb(_adb_prefix() + [ "shell", "am", "get-current-user"]).strip()
     m = re.search(r"(\d+)", out)
     return int(m.group(1)) if m else 0
 
@@ -153,7 +165,7 @@ def is_playing_state(state: Optional[str]) -> bool:
 
 
 def verify_radio(package: str, require_focus: bool, require_playing: bool) -> bool:
-    audio = _run_adb(["adb", "shell", "dumpsys", "audio"])
+    audio = _run_adb(_adb_prefix() + [ "shell", "dumpsys", "audio"])
     focus_packs = set(parse_audio_focus_packages(audio))
 
     has_focus = package in focus_packs
@@ -163,7 +175,7 @@ def verify_radio(package: str, require_focus: bool, require_playing: bool) -> bo
         return False
 
     user_id = get_current_user_id()
-    ms_dump = _run_adb(["adb", "shell", "dumpsys", "media_session"])
+    ms_dump = _run_adb(_adb_prefix() + [ "shell", "dumpsys", "media_session"])
     entries = func(ms_dump, user_id=user_id)
     sessions = parse_media_sessions(user_id, entries)
 

@@ -88,3 +88,45 @@ so artifacts can be stored inside the repo when using the CLI (or by setting `--
 - ADB validations target:
   - audio focus `pack:` contains `com.bmwgroup.apinext.tunermediaservice`
   - media session for the current Android user is active and **PLAYING**
+
+## Quick start (Windows racks)
+
+### 1) Set Maestro CLI (required)
+Your current CLI folder (given): `%USERPROFILE%\Desktop\maestro\bin`
+
+Run:
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\setup_maestro.ps1
+```
+
+### 2) Install repo-local ADB (recommended)
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\install_platform_tools.ps1
+```
+
+### 3) Check environment
+```bat
+scripts\check_env.bat
+```
+
+### 4) Run suites
+- All 20 PDF demo flows (includes SWAG/BIM host-side actions + backend verification):
+```bat
+run_demo_suite.bat
+```
+
+- Lightning Talk subset:
+```bat
+run_lightning_demo.bat
+```
+
+- Core regression YAMLs:
+```bat
+run_suite.bat
+```
+
+Artifacts are written under `artifacts\runs\<timestamp>\demo\<flow>\` (logs + Maestro output).
+
+### Notes
+- SWAG/BIM flows rely on `# ACTION:` markers and must be executed via the runner (CLI), not just Maestro Studio.
+- Speech / PHUD flows are placeholders unless your rack supports those interactions.
