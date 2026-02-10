@@ -2,6 +2,7 @@ appId: com.bmwgroup.idnext.launcher
 name: IDCEVODEV-478199 - All stations list - select station
 tags: [demo, radio, ui_only]
 ---
+- evalScript: "${output.testId = 'IDCEVODEV-478199'}"
 - runFlow: ../subflows/open_media.yaml
 
 # Step 1: Select Radio from Source selector (best-effort, adjust selector if needed)
@@ -18,3 +19,4 @@ tags: [demo, radio, ui_only]
     index: 0
     retryTapIfNoChange: true
 - waitForAnimationToEnd
+- runFlow: ../subflows/verify_radio_backend.yaml

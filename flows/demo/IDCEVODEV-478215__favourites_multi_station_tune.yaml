@@ -2,6 +2,7 @@ appId: com.bmwgroup.idnext.launcher
 name: IDCEVODEV-478215 — Favourites — tune when >1 favourites exist
 tags: [demo, radio, favourites, requires_setup]
 ---
+- evalScript: "${output.testId = 'IDCEVODEV-478215'}"
 - runFlow: ../subflows/open_media.yaml
 - runFlow: ../subflows/open_all_stations.yaml
 
@@ -26,3 +27,4 @@ tags: [demo, radio, favourites, requires_setup]
 # Tune one favourite.
 - tapOn: "089Kult"
 - waitForAnimationToEnd
+- runFlow: ../subflows/verify_radio_backend.yaml

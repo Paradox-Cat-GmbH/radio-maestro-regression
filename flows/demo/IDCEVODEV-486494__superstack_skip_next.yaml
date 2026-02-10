@@ -2,6 +2,7 @@ appId: com.bmwgroup.idnext.launcher
 name: IDCEVODEV-486494 — Superstack media widget — skip to next station
 tags: [demo, radio, superstack, keyevent_first]
 ---
+- evalScript: "${output.testId = 'IDCEVODEV-486494'}"
 - runFlow: ../subflows/open_media.yaml
 - pressKey: home
 - waitForAnimationToEnd
@@ -13,3 +14,4 @@ tags: [demo, radio, superstack, keyevent_first]
 # Optional refinement:
 # If your Superstack widget has a tappable "next" button with a stable id, you can replace the key event above with:
 # - tapOn: { id: "<SUPERSTACK_SKIP_NEXT_ID>" }
+- runFlow: ../subflows/verify_radio_backend.yaml

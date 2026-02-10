@@ -2,6 +2,7 @@ appId: com.bmwgroup.idnext.launcher
 name: IDCEVODEV-478219 — Shortcuts — recall Radio source
 tags: [demo, radio, shortcuts]
 ---
+- evalScript: "${output.testId = 'IDCEVODEV-478219'}"
 - runFlow: ../subflows/open_media.yaml
 - runFlow: ../subflows/open_source_selector.yaml
 
@@ -15,3 +16,4 @@ tags: [demo, radio, shortcuts]
 - runFlow: ../subflows/open_shortcuts.yaml
 - tapOn: "Radio"
 - waitForAnimationToEnd
+- runFlow: ../subflows/verify_radio_backend.yaml

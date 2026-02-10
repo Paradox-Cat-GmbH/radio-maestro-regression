@@ -1,0 +1,5 @@
+# Inject BIM media-prev via host control server (KEYCODE_MUTE + workaround)
+appId: com.bmwgroup.idnext.launcher
+---
+- evalScript: "${const backendUrl = env.MAESTRO_BACKEND_URL || 'http://127.0.0.1:4567'; const deviceId = env.ANDROID_SERIAL || ''; const runDir = env.MAESTRO_RUN_DIR || ''; const testId = output.testId || 'unknown_test'; const payload = { deviceId: deviceId, target: 'prev', runDir: runDir, testId: testId }; const data = json(http.post(backendUrl + '/inject/bim', json(payload))); output.inject = data; output.injectOk = (data && data.ok === true); }"
+- assertTrue: "${output.injectOk == true}"
