@@ -1,51 +1,44 @@
 <#
-Download and extract Android Platform Tools (Windows) into repo-local tools/platform-tools.
-This does NOT modify system PATH. After running, use scripts\adb.bat to invoke adb from the local tools.
+Installs Android Platform Tools (Windows) into repo-local tools/platform-tools.
+
+Usage (PowerShell):
+  powershell -ExecutionPolicy Bypass -File scripts\install_platform_tools.ps1
+
+Afterwards:
+  scripts\adb.bat version
 #>
 
-$out = Join-Path $PSScriptRoot "..\tools\platform-tools"
-$zip = Join-Path $PSScriptRoot "platform-tools-latest.zip"
-$out = Join-Path $PSScriptRoot "..\tools\platform-tools"
-$zip = Join-Path $PSScriptRoot "platform-tools-latest.zip"
+$ErrorActionPreference = "Stop"
 
-Write-Host "Installing platform-tools to: $out"
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
+$toolsDir = Join-Path $repoRoot "tools"
+$outDir   = Join-Path $toolsDir "platform-tools"
+$tmpZip   = Join-Path $PSScriptRoot "platform-tools-latest-windows.zip"
+$url      = "https://dl.google.com/android/repository/platform-tools-latest-windows.zip"
 
-$url = 'https://dl.google.com/android/repository/platform-tools-latest-windows.zip'
+Write-Host "Repo root: $repoRoot"
+Write-Host "Install dir: $outDir"
 
-if (Test-Path $out) {
-    Write-Host "Platform-tools already exist at $out. Remove the folder to reinstall."
-    <#
-    Download and extract Android Platform Tools (Windows) into repo-local tools/platform-tools.
-    This does NOT modify system PATH. After running, use scripts\adb.bat to invoke adb from the local tools.
-    #>
+if (Test-Path $outDir) {
+    Write-Host "platform-tools already present at $outDir"
+    exit 0
+}
 
-    param()
+New-Item -ItemType Directory -Force -Path $toolsDir | Out-Null
 
-    $out = Join-Path $PSScriptRoot "..\tools\platform-tools"
-    $zip = Join-Path $PSScriptRoot "platform-tools-latest.zip"
+Write-Host "Downloading platform-tools..."
+Invoke-WebRequest -Uri $url -OutFile $tmpZip -UseBasicParsing
 
-    Write-Host "Installing platform-tools to: $out"
+Write-Host "Extracting..."
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+[System.IO.Compression.ZipFile]::ExtractToDirectory($tmpZip, $toolsDir)
 
-    $url = 'https://dl.google.com/android/repository/platform-tools-latest-windows.zip'
+Remove-Item $tmpZip -Force
 
-    if (Test-Path $out) {
-        Write-Host "Platform-tools already exist at $out. Remove the folder to reinstall."
-        exit 0
-    }
+$adbExe = Join-Path $outDir "adb.exe"
+if (-not (Test-Path $adbExe)) {
+    throw "adb.exe not found after extraction. Expected: $adbExe"
+}
 
-    Write-Host "Downloading platform-tools..."
-    Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing
-
-    Write-Host "Extracting..."
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-    [System.IO.Compression.ZipFile]::ExtractToDirectory($zip, (Join-Path $PSScriptRoot ".."))
-
-    Remove-Item $zip -Force
-
-    Write-Host "Creating scripts\adb.bat wrapper..."
-    $wrapper = Join-Path $PSScriptRoot "adb.bat"
-    $toolsAdb = Join-Path $PSScriptRoot "..\tools\platform-tools\adb.exe"
-    "@echo off" | Out-File -FilePath $wrapper -Encoding ASCII
-    "%~dp0\..\tools\platform-tools\adb.exe %*" | Out-File -FilePath $wrapper -Encoding ASCII -Append
-
-    Write-Host "Done. Use .\scripts\adb.bat to run adb from the repo-local platform-tools."
+Write-Host "OK. ADB installed at: $adbExe"
+Write-Host "Try: scripts\adb.bat devices -l"
