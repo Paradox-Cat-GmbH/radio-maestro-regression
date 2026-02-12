@@ -1,11 +1,15 @@
 appId: com.bmwgroup.idnext.launcher
 tags: [helper]
 ---
+# Open Media/Radio without depending on launcher view-ids.
+# Preferred path: OEM input (SWAG “MEDIA” key) via host control server.
 - pressKey: home
-- extendedWaitUntil:
-    visible:
-      id: "IconicBar.Det.Media"
-    timeout: 20000
+- waitForAnimationToEnd
+- evalScript: "${const backendUrl = env.MAESTRO_BACKEND_URL || 'http://127.0.0.1:4567'; const deviceId = env.ANDROID_SERIAL || env.MAESTRO_DEVICE_ID || ''; const runDir = env.MAESTRO_RUN_DIR || ''; const testId = output.testId || 'open_media'; const payload = { deviceId, runDir, testId, stamp: output.stamp }; const resp = http.post(backendUrl + '/media/open', json(payload)); output.mediaOpen = json(resp); }"
+- waitForAnimationToEnd
+
+# Best-effort: ensure Radio surface is selected if a source selector exists
 - tapOn:
-    id: "IconicBar.Det.Media"
+    text: "Radio"
+    optional: true
 - waitForAnimationToEnd

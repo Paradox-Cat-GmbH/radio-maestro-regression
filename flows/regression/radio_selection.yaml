@@ -8,9 +8,7 @@ tags:
 ---
 - evalScript: "${output.testId = 'radio_selection'}"
 # --- PRECONDITION: GO TO RADIO ---
-- pressKey: home
-- tapOn:
-    id: "IconicBar.Det.Media"
+- runFlow: ../subflows/open_media.yaml
 - assertVisible:
     text: "Radio"
 

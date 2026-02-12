@@ -45,6 +45,8 @@ The runners start it automatically via:
 Logs: `artifacts\control_server.log`
 
 ### 2) Maestro flows
+`flows\subflows\open_media.yaml` now launches the Media app directly (no dependency on launcher IconicBar ids), then best-effort selects **Radio**.
+
 All `flows\demo\*.yaml`:
 - set `output.testId`
 - perform UI actions
@@ -65,6 +67,17 @@ scripts\adb.bat devices -l
 ```
 
 ### B) Run all 20 demo tests
+
+### B1) Run a single flow (fast iteration)
+```bat
+run_single_flow.bat <DEVICE_ID> <FLOW_PATH>
+```
+
+Example:
+```bat
+run_single_flow.bat 169.254.107.117:5555 flows\demo\IDCEVODEV-478199__all_stations_select.yaml
+```
+
 Pass a device id (recommended) or rely on `ANDROID_SERIAL`.
 
 ```bat
@@ -115,3 +128,19 @@ run_suite.bat <DEVICE_ID>
 The previous Python-based workflow remains in `scripts\`:
 - `run_flow_with_actions.py`, `verify_radio_state.py`, etc.
 Not used by default runners, but kept as reference / fallback.
+
+
+## Maestro Studio quick test
+
+1. Connect the rack (USB or ADB-over-IP), then (recommended):
+   - `adb root`
+   - `adb -s <DEVICE> forward tcp:7001 tcp:7001`
+2. Start the control server:
+   - `scripts\control_server\ensure_server.bat`
+   - Verify in a browser: `http://127.0.0.1:4567/health`
+3. Launch Studio:
+   - `maestro studio`
+4. Run the smoke flow from Studio:
+   - `flows/smoke/_smoke_open_media_and_backend_check.yaml`
+
+If the smoke flow fails, open the generated `backend_verdict.json` (and the saved `dumpsys_*` files) under `artifacts\runs\...\backend\...` to see whether the failure is **UI/state** or **audio/session**.

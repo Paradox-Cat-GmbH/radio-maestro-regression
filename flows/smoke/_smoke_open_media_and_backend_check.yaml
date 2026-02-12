@@ -1,0 +1,7 @@
+appId: com.bmwgroup.idnext.launcher
+name: "SMOKE - Open Media then backend check"
+tags: [smoke]
+---
+- evalScript: "${if (!output.stamp) { const d = new Date(); const p = (n) => String(n).padStart(2,'0'); output.stamp = `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`; } output.testId = 'smoke_open_media_backend_check'; }"
+- runFlow: "../subflows/open_media.yaml"
+- runFlow: "../subflows/verify_radio_backend.yaml"
