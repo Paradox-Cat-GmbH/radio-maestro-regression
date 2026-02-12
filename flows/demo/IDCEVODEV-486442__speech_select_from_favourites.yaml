@@ -1,5 +1,5 @@
 appId: com.bmwgroup.idnext.launcher
-name: IDCEVODEV-486442 — Speech — select station from Favourites
+name: IDCEVODEV-486442 - Speech - select station from Favourites
 tags: [demo, radio, speech, manual_step]
 ---
 - evalScript: "${output.testId = 'IDCEVODEV-486442'}"

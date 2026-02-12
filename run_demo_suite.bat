@@ -1,11 +1,13 @@
 @echo off
+echo [DEBUG] echo on for tracing
+echo on
 setlocal enabledelayedexpansion
 
 rem === Java (JBR) - preferred ===
 set "JBR_BIN=C:\Android\jbr\bin"
 if exist "%JBR_BIN%\java.exe" (
   for %%I in ("%JBR_BIN%\..") do set "JAVA_HOME=%%~fI"
-  set "PATH=%JBR_BIN%;%PATH%"
+  set "PATH=%JBR_BIN%;!PATH!"
 )
 
 rem === Determine device ===
@@ -20,9 +22,10 @@ if "%DEVICE_ID%"=="" (
         goto :gotDevice
       )
     )
-    :gotDevice
   )
 )
+
+:gotDevice
 
 if "%DEVICE_ID%"=="" (
   echo [ERROR] No device found. Provide one:
@@ -67,12 +70,16 @@ set "MAESTRO_BACKEND_URL=http://127.0.0.1:4567"
 set "MAESTRO_RADIO_PACKAGE=com.bmwgroup.apinext.tunermediaservice"
 if "%MAESTRO_RAND_MAX_INDEX%"=="" set "MAESTRO_RAND_MAX_INDEX=3"
 
-call scripts\control_server\ensure_server.bat
-if errorlevel 1 exit /b %ERRORLEVEL%
+rem call scripts\control_server\ensure_server.bat
+rem if errorlevel 1 exit /b %ERRORLEVEL%
 
 rem === Detect optional Maestro flags ===
 set "USE_DEVICE_FLAG=0"
 "%MAESTRO_EXE%" --help 2>&1 | findstr /C:"--device" >nul && set "USE_DEVICE_FLAG=1"
+
+rem === Ensure UTF-8 for Java and console to avoid filename encoding issues ===
+chcp 65001 >nul
+if "%JAVA_TOOL_OPTIONS%"=="" set "JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8"
 
 
 echo [INFO] Device: %DEVICE_ID%

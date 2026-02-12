@@ -1,5 +1,5 @@
 appId: com.bmwgroup.idnext.launcher
-name: IDCEVODEV-478215 — Favourites — tune when >1 favourites exist
+name: IDCEVODEV-478215 - Favourites - tune when 1_plus favourites exist
 tags: [demo, radio, favourites, requires_setup]
 ---
 - evalScript: "${output.testId = 'IDCEVODEV-478215'}"

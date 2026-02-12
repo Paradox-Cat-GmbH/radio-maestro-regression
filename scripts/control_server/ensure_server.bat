@@ -18,7 +18,7 @@ echo [INFO] Starting control server (%HOST%:%PORT%)...
 set "LOG=%~dp0\..\..\artifacts\control_server.log"
 if not exist "%~dp0\..\..\artifacts" mkdir "%~dp0\..\..\artifacts"
 
-start "radio-control-server" /min cmd /c node "%~dp0server.js" 1>> "%LOG%" 2>>&1
+start "radio-control-server" /min cmd /c node "%~dp0server.js" 1>> "%LOG%" 2>&1
 
 rem Wait a moment then re-check
 timeout /t 1 >nul

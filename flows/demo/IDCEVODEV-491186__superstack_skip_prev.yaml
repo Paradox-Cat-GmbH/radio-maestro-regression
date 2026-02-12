@@ -1,5 +1,5 @@
 appId: com.bmwgroup.idnext.launcher
-name: IDCEVODEV-491186 — Superstack media widget — skip to previous station
+name: IDCEVODEV-491186 - Superstack media widget - skip to previous station
 tags: [demo, radio, superstack, keyevent_first]
 ---
 - evalScript: "${output.testId = 'IDCEVODEV-491186'}"
