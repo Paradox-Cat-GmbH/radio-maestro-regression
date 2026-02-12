@@ -1,13 +1,6 @@
 # Backend verification (ADB truth via host control server)
-# Requires env vars set by runner:
-# - ANDROID_SERIAL (device id)
-# - MAESTRO_BACKEND_URL (e.g. http://127.0.0.1:4567)
-# - MAESTRO_RUN_DIR (absolute path to artifacts run dir)
-# - MAESTRO_RADIO_PACKAGE (expected package)
-#
-# Requires: output.testId is set by the calling flow.
-
+# Runnable from both Maestro CLI and Maestro Studio.
 appId: com.bmwgroup.idnext.launcher
 ---
-- evalScript: "${const backendUrl = env.MAESTRO_BACKEND_URL || 'http://127.0.0.1:4567'; const deviceId = env.ANDROID_SERIAL || ''; const runDir = env.MAESTRO_RUN_DIR || ''; const pkg = env.MAESTRO_RADIO_PACKAGE || 'com.bmwgroup.apinext.tunermediaservice'; const testId = output.testId || 'unknown_test'; const payload = { deviceId: deviceId, packageName: pkg, runDir: runDir, testId: testId }; const resp = http.post(backendUrl + '/radio/check', json(payload)); const data = json(resp); output.radioCheck = data; output.radioOk = (data && data.ok === true); }"
+- evalScript: "${const backendUrl = env.MAESTRO_BACKEND_URL || 'http://127.0.0.1:4567'; const deviceId = (env.ANDROID_SERIAL || env.MAESTRO_DEVICE_ID || output.deviceId || ''); const runDir = env.MAESTRO_RUN_DIR || ''; const pkg = env.MAESTRO_RADIO_PACKAGE || 'com.bmwgroup.apinext.tunermediaservice'; const testId = output.testId || 'unknown_test'; const extraPkgs = (env.MAESTRO_EXPECTED_SESSION_PKGS || '').split(',').map(s => s.trim()).filter(Boolean); const payload = { deviceId: deviceId, packageName: pkg, runDir: runDir, stamp: output.stamp, testId: testId }; if (extraPkgs.length) { payload.expectedPackages = [pkg, ...extraPkgs]; } const resp = http.post(backendUrl + '/radio/check', json(payload)); const parsed = json(resp); output.radioOk = (parsed && parsed.ok === true); output.radioVerdict = parsed; }"
 - assertTrue: "${output.radioOk == true}"

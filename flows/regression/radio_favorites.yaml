@@ -7,10 +7,7 @@ tags:
   - favorites
 ---
 - evalScript: "${output.testId = 'radio_favorites'}"
-- pressKey: home
-- tapOn:
-    id: "IconicBar.Det.Media"
-
+- runFlow: ../subflows/open_media.yaml
 # 1. Add current station to favorites
 - tapOn: "All stations"
 - tapOn:

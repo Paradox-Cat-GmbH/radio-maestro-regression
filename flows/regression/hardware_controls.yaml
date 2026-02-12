@@ -9,10 +9,7 @@
 appId: com.bmwgroup.idnext.launcher
 ---
 - evalScript: "${output.testId = 'hardware_controls'}"
-- pressKey: home
-- tapOn:
-    id: "IconicBar.Det.Media"
-
+- runFlow: ../subflows/open_media.yaml
 # Remote media next/prev (may or may not map to SWAG/BIM on your build)
 - pressKey: remote media next
 - waitForAnimationToEnd
