@@ -1,5 +1,5 @@
 appId: com.bmwgroup.idnext.launcher
-name: IDCEVODEV-478222 — Speech — tune station from All stations list
+name: IDCEVODEV-478222 - Speech - tune station from All stations list
 tags: [demo, radio, speech, manual_step]
 ---
 - evalScript: "${output.testId = 'IDCEVODEV-478222'}"

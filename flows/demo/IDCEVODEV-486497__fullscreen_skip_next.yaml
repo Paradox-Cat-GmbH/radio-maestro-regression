@@ -1,5 +1,5 @@
 appId: com.bmwgroup.idnext.launcher
-name: IDCEVODEV-486497 — Fullscreen player — skip to next station
+name: IDCEVODEV-486497 - Fullscreen player - skip to next station
 tags: [demo, radio, fullscreen]
 ---
 - evalScript: "${output.testId = 'IDCEVODEV-486497'}"

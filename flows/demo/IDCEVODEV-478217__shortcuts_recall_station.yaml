@@ -1,5 +1,5 @@
 appId: com.bmwgroup.idnext.launcher
-name: IDCEVODEV-478217 — Shortcuts — recall a radio station
+name: IDCEVODEV-478217 - Shortcuts - recall a radio station
 tags: [demo, radio, shortcuts]
 ---
 - evalScript: "${output.testId = 'IDCEVODEV-478217'}"
