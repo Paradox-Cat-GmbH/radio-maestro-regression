@@ -1,13 +1,12 @@
-# Group B: Search & Input
-# Covers: IDCEVODEV-478229
-
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: radio_search
 tags:
   - regression
   - search
 ---
 - evalScript: "${output.testId = 'radio_search'}"
-- runFlow: ../subflows/open_media.yaml
+- runFlow: ../subflows/ensure_radio_source.yaml
 # ROBUSTNESS: Ensure we are in a state where Search is visible
 - tapOn: "Search"
 - tapOn:

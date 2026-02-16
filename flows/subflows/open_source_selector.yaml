@@ -1,7 +1,21 @@
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
 name: Open Source selector
-tags: [subflow, radio]
+tags:
+  - subflow
+  - radio
 ---
-# Opens the Source selector. If 'Source' text is not tappable on your build, capture the selector ID in Maestro Studio and replace the tap below.
-- tapOn: 'Source'
-- waitForAnimationToEnd
+# In Media surface, the "Source" entry is present under Media.
+# Prefer the stable id from Inspect Screen.
+- tapOn:
+    id: media_app_source_selector_lb
+    text: Source
+    optional: true
+
+# Fallbacks (text-only, build dependent)
+- tapOn:
+    text: "Source"
+    optional: true
+- tapOn:
+    text: "Sources"
+    optional: true

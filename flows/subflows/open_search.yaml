@@ -1,6 +1,9 @@
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
 name: Open Search
-tags: [subflow, radio]
+tags:
+  - subflow
+  - radio
 ---
 - tapOn: "Search"
 - waitForAnimationToEnd

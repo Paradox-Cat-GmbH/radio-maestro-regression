@@ -1,6 +1,13 @@
-# Backend verification (ADB truth via host control server)
-# Runnable from both Maestro CLI and Maestro Studio.
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: verify_radio_backend
+tags:
+  - helper
+  - subflow
+  - backend
+  - radio
 ---
-- evalScript: "${const backendUrl = env.MAESTRO_BACKEND_URL || 'http://127.0.0.1:4567'; const deviceId = (env.ANDROID_SERIAL || env.MAESTRO_DEVICE_ID || output.deviceId || ''); const runDir = env.MAESTRO_RUN_DIR || ''; const pkg = env.MAESTRO_RADIO_PACKAGE || 'com.bmwgroup.apinext.tunermediaservice'; const testId = output.testId || 'unknown_test'; const extraPkgs = (env.MAESTRO_EXPECTED_SESSION_PKGS || '').split(',').map(s => s.trim()).filter(Boolean); const payload = { deviceId: deviceId, packageName: pkg, runDir: runDir, stamp: output.stamp, testId: testId }; if (extraPkgs.length) { payload.expectedPackages = [pkg, ...extraPkgs]; } const resp = http.post(backendUrl + '/radio/check', json(payload)); const parsed = json(resp); output.radioOk = (parsed && parsed.ok === true); output.radioVerdict = parsed; }"
-- assertTrue: "${output.radioOk == true}"
+- runScript:
+    file: ../../scripts/maestro/radio_check.js
+
+- assertTrue: ${output.radioOk == true}

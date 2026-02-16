@@ -1,9 +1,12 @@
 appId: com.bmwgroup.idnext.launcher
-name: IDCEVODEV-478213 - SWAG - skip back to previous station
-tags: [demo, radio, hardware]
+jsEngine: graaljs
+name: IDCEVODEV-478213 - SWAG - skip to previous station
+tags:
+  - demo
+  - radio
+  - hardware
 ---
 - evalScript: "${output.testId = 'IDCEVODEV-478213'}"
-- runFlow: ../subflows/open_media.yaml
 - runFlow: ../subflows/tune_any_station.yaml
 - runFlow: ../subflows/inject_swag_prev.yaml
 

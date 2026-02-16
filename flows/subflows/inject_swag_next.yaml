@@ -1,5 +1,9 @@
-# Inject SWAG media-next via host control server (Leandro workaround)
 appId: com.bmwgroup.idnext.launcher
+name: inject_swag_next
 ---
-- evalScript: "${const backendUrl = env.MAESTRO_BACKEND_URL || 'http://127.0.0.1:4567'; const deviceId = env.ANDROID_SERIAL || ''; const runDir = env.MAESTRO_RUN_DIR || ''; const testId = output.testId || 'unknown_test'; const payload = { deviceId: deviceId, target: 'next', runDir: runDir, testId: testId }; const data = json(http.post(backendUrl + '/inject/swag', json(payload))); output.inject = data; output.injectOk = (data && data.ok === true); }"
-- assertTrue: "${output.injectOk == true}"
+- runFlow:
+    file: ../subflows/backend_inject.yaml
+    env:
+      KIND: swag
+      TARGET: next
+- assertTrue: ${output.injectOk == true}

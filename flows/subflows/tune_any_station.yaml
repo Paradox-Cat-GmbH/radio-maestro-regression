@@ -1,17 +1,21 @@
-# Ensures Radio is actively tuned by selecting a RANDOM station in the list (bounded).
-# Rationale: Avoid hardcoding index:0 across runs; improve coverage while remaining stable.
-# Random selection is bounded to avoid out-of-range issues on flaky racks.
-#
-# Override bound with env var MAESTRO_RAND_MAX_INDEX (default 3).
-
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: Tune any station (bounded random)
+tags:
+  - subflow
+  - radio
 ---
-- assertVisible:
-    text: "Radio"
-- tapOn:
-    text: "All stations"
-- waitForAnimationToEnd
+# Select a bounded random station from "All stations".
+# Override max bound via MAESTRO_RAND_MAX_INDEX (default 3).
 
-- evalScript: "${const max = parseInt(env.MAESTRO_RAND_MAX_INDEX || '3', 10); const idx = Math.floor(Math.random() * (max + 1)); output.randStationIndex = idx; output.randStationSelector = { id: 'ListImageComponent ImageRightIcon', index: idx, retryTapIfNoChange: true }; }"
+- runFlow: ../subflows/ensure_radio_source.yaml
+- runFlow: ../subflows/open_all_stations.yaml
+
+- runScript:
+    file: ../../scripts/maestro/pick_random_station.js
+    env:
+      RAND_MAX: ${typeof MAESTRO_RAND_MAX_INDEX !== 'undefined' && MAESTRO_RAND_MAX_INDEX ? MAESTRO_RAND_MAX_INDEX : 3}
+
 - tapOn: ${output.randStationSelector}
-- waitForAnimationToEnd
+
+- runFlow: ../subflows/verify_radio_backend.yaml

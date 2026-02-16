@@ -1,5 +1,15 @@
 # RadioRegression (Maestro) + ADB Truth (JS-first)
 
+
+
+## JavaScript engine (Rhino vs GraalJS)
+
+This workspace opts into **GraalJS** for all flows (`jsEngine: graaljs`) to avoid Rhino’s limited JavaScript support and to keep inline scripts reliable in Maestro Studio and Maestro CLI.  
+
+- Ensure Maestro is running on **Java 17+** (GraalJS support requires it).
+- For CLI runs you can also force it globally via `MAESTRO_USE_GRAALJS=true` (optional if the flow already sets `jsEngine`).
+
+
 ## What this repo is
 A practical Maestro-based UI regression suite for BMW iDrive / AAOS **Radio**, with **ADB truth validation** to avoid “UI lies”.
 
@@ -35,8 +45,8 @@ A practical Maestro-based UI regression suite for BMW iDrive / AAOS **Radio**, w
 ### 1) Control server (host-side)
 `scripts\control_server\server.js` exposes HTTP endpoints that run ADB commands:
 - `/radio/check` → dumpsys audio + media_session + current user, parses, returns verdict
-- `/inject/swag` → Leandro workaround (car_service inject 1014/1015 + keyevent next/prev)
-- `/inject/bim` → KEYCODE_MUTE + same workaround (best-effort, can be adjusted)
+- `/inject/swag` → SWAG injection (key press/release via car_service). Supports `target: media` to open Media, and `target: next|prev` (workaround: MEDIA + KEYCODE_MEDIA_NEXT/PREVIOUS).
+- `/inject/bim` → BIM injection. Supports `target: mute` (KEYCODE_MUTE), and `target: next|prev` (KEYCODE_MUTE + MEDIA + KEYCODE_MEDIA_NEXT/PREVIOUS workaround).
 - `/ehh/set` → CID/PHUD EHH toggles via setprop
 
 The runners start it automatically via:
@@ -45,7 +55,7 @@ The runners start it automatically via:
 Logs: `artifacts\control_server.log`
 
 ### 2) Maestro flows
-`flows\subflows\open_media.yaml` now launches the Media app directly (no dependency on launcher IconicBar ids), then best-effort selects **Radio**.
+`flows\subflows\open_media.yaml` opens Media using SWAG injection (1014/1015) via the control server (`/inject/swag` with `target: media`), then best-effort selects **Radio**.
 
 All `flows\demo\*.yaml`:
 - set `output.testId`
@@ -96,7 +106,7 @@ Outputs:
   - `dumpsys_media_session.txt`
   - `current_user.txt`
   - `backend_verdict.json`
-  - `action_*.json` (for HW injections)
+  - `action_<kind>_<timestamp>.json` (for HW injections)
 
 ### C) Lightning subset (presentation order)
 ```bat
@@ -115,6 +125,9 @@ run_suite.bat <DEVICE_ID>
 - `MAESTRO_CMD` — optional explicit Maestro CLI path
 - `MAESTRO_RAND_MAX_INDEX` — max random station row index (default `3`)
 - `MAESTRO_CONTROL_PORT` — control server port (default `4567`)
+- `MAESTRO_BACKEND_URL` — override backend base URL used by flows (default `http://127.0.0.1:4567`)
+- `MAESTRO_NODE_EXE` — full path to `node.exe` if Node is not on PATH (Windows), e.g. `C:\Program Files\nodejs\node.exe`
+
 
 ---
 

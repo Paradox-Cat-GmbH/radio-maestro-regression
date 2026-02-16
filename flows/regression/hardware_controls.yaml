@@ -1,15 +1,9 @@
-# Group D: Hardware Simulation (SWAG / BIM)
-# Covers: IDCEVODEV-478214, 478210, 478207, 478205
-# Context: "SWAG" is steering wheel input. "BIM" is center console/button input.
-#
-# IMPORTANT:
-# - Maestro `pressKey` only supports a limited set of *remote* key names.
-# - On current builds, SWAG/BIM may require host-side injection (see demo flows).
-
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: hardware_controls
 ---
 - evalScript: "${output.testId = 'hardware_controls'}"
-- runFlow: ../subflows/open_media.yaml
+- runFlow: ../subflows/ensure_radio_source.yaml
 # Remote media next/prev (may or may not map to SWAG/BIM on your build)
 - pressKey: remote media next
 - waitForAnimationToEnd

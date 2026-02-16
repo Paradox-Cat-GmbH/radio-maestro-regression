@@ -1,20 +1,18 @@
-# Group A: Core Navigation & Selection (The Basics)
-# Covers: IDCEVODEV-478199, IDCEVODEV-600874, IDCEVODEV-478202
-
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: radio_selection
 tags:
   - regression
   - radio_core
 ---
 - evalScript: "${output.testId = 'radio_selection'}"
 # --- PRECONDITION: GO TO RADIO ---
-- runFlow: ../subflows/open_media.yaml
-- assertVisible:
-    text: "Radio"
+- runFlow: ../subflows/ensure_radio_source.yaml
 
 # --- TEST 1: Select Station from All Stations ---
 - tapOn: "All stations"
 - tapOn:
+    id: ListImageComponent ImageRightIcon
     index: 0
     retryTapIfNoChange: true
 

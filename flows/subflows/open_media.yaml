@@ -1,15 +1,16 @@
 appId: com.bmwgroup.idnext.launcher
-tags: [helper]
+jsEngine: graaljs
+name: "Open Media surface (Home -> Media DET)"
+tags:
+  - helper
+  - subflow
+  - media
 ---
-# Open Media/Radio without depending on launcher view-ids.
-# Preferred path: OEM input (SWAG “MEDIA” key) via host control server.
+# Step 1: Go Home (touch + key fallback)
 - pressKey: home
-- waitForAnimationToEnd
-- evalScript: "${const backendUrl = env.MAESTRO_BACKEND_URL || 'http://127.0.0.1:4567'; const deviceId = env.ANDROID_SERIAL || env.MAESTRO_DEVICE_ID || ''; const runDir = env.MAESTRO_RUN_DIR || ''; const testId = output.testId || 'open_media'; const payload = { deviceId, runDir, testId, stamp: output.stamp }; const resp = http.post(backendUrl + '/media/open', json(payload)); output.mediaOpen = json(resp); }"
-- waitForAnimationToEnd
-
-# Best-effort: ensure Radio surface is selected if a source selector exists
 - tapOn:
-    text: "Radio"
+    id: IconicBar.Det.Home
     optional: true
-- waitForAnimationToEnd
+
+# Step 2: Tap Media DET (touch, then SWAG fallback via host control server)
+- runFlow: ../subflows/tap_media_det.yaml

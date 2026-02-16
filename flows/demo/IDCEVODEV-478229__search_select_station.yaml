@@ -1,10 +1,12 @@
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
 name: IDCEVODEV-478229 - Search - select station from search results
-tags: [demo, radio, ui_only]
+tags:
+  - demo
+  - radio
+  - ui_only
 ---
 - evalScript: "${output.testId = 'IDCEVODEV-478229'}"
-- runFlow: ../subflows/open_media.yaml
-
 # TODO: Ensure you are on the Radio browse/search surface.
 - tapOn: "Search"
 - waitForAnimationToEnd

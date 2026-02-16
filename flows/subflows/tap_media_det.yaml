@@ -1,0 +1,16 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: Tap Media DET
+tags:
+  - helper
+  - subflow
+  - media
+---
+# Single tap on the bottom bar Media entry (DET).
+# On this build: single tap -> Media surface.
+- tapOn:
+    id: IconicBar.Det.Media
+    optional: true
+- tapOn:
+    text: Media
+    optional: true
