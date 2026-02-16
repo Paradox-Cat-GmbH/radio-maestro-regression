@@ -1,0 +1,207 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: Preconditions - Radio settings baseline (Leandro)
+tags:
+  - subflow
+  - preconditions
+  - radio
+---
+# Leandro baseline from Radio:
+# 1) Open settings
+# 2) Disable "Auto Media Fullscreen" (if enabled) and confirm disabled
+# 3) Open Radio settings
+# 4) Ensure station sorting is Alphabetically
+# 5) Disable "Radio info" (if enabled) and confirm disabled
+# 6) Close Radio settings
+# 7) Close Settings
+#
+# Assumes caller already navigated to Radio (e.g., "All stations" visible).
+
+- extendedWaitUntil:
+    visible:
+      text: "All stations"
+    timeout: 20000
+
+# 1) Open settings (from Radio)
+- tapOn:
+    id: idx_icon_settings
+
+# Wait until Settings has loaded (fullscreen toggle exists there)
+- extendedWaitUntil:
+    visible:
+      id: media_app_auto_media_fullscreen_toggle_bt
+    timeout: 20000
+
+# 2) Auto Media Fullscreen toggle: disable if enabled; confirm disabled
+- evalScript: ${output.fullscreenDisabled = false}
+
+- repeat:
+    times: 2
+    while:
+      true: ${output.fullscreenDisabled != true}
+    commands:
+      # If already disabled (checked=false or selected=false)
+      - runFlow:
+          when:
+            visible:
+              id: media_app_auto_media_fullscreen_toggle_bt
+              checked: false
+          commands:
+            - evalScript: ${output.fullscreenDisabled = true}
+
+      - runFlow:
+          when:
+            visible:
+              id: media_app_auto_media_fullscreen_toggle_bt
+              selected: false
+          commands:
+            - evalScript: ${output.fullscreenDisabled = true}
+
+      # Otherwise tap once to toggle
+      - runFlow:
+          when:
+            true: ${output.fullscreenDisabled != true}
+          commands:
+            - tapOn:
+                id: media_app_auto_media_fullscreen_toggle_bt
+            - waitForAnimationToEnd
+
+- assertTrue: ${output.fullscreenDisabled == true}
+
+# 3) From Settings, open Radio settings
+- tapOn:
+    id: media_app_source_settings_bt
+
+# Wait until Radio settings screen is visible (radio info toggle exists there)
+- extendedWaitUntil:
+    visible:
+      id: tuner_service_settings_radio_info_opt
+    timeout: 20000
+
+# 4) Sorting: ensure "Alphabetically"
+# Open the sorting chooser if needed (best-effort by label)
+- runFlow:
+    when:
+      visible:
+        text: "Default sorting"
+    commands:
+      - tapOn:
+          text: "Default sorting"
+
+- runFlow:
+    when:
+      visible:
+        text: "Default Sorting"
+    commands:
+      - tapOn:
+          text: "Default Sorting"
+
+# Now we may be in the sorting options list/dialog.
+- evalScript: ${output.sortAlphabetically = false}
+
+- repeat:
+    times: 2
+    while:
+      true: ${output.sortAlphabetically != true}
+    commands:
+      # If already selected
+      - runFlow:
+          when:
+            visible:
+              text: "Alphabetically"
+          commands:
+            - evalScript: ${output.sortAlphabetically = true}
+      - runFlow:
+          when:
+            visible:
+              id: tuner_service_settings_station_sorting_option_alphanumerical_opt
+              text: "Alphabetically"
+              checked: true
+          commands:
+            - evalScript: ${output.sortAlphabetically = true}
+
+      - runFlow:
+          when:
+            visible:
+              id: tuner_service_settings_station_sorting_option_alphanumerical_opt
+              text: "Alphabetically"
+              selected: true
+          commands:
+            - evalScript: ${output.sortAlphabetically = true}
+
+      # Otherwise choose Alphabetically (ID -> text -> coordinate fallback)
+      - runFlow:
+          when:
+            true: ${output.sortAlphabetically != true}
+          commands:
+            - tapOn:
+                id: tuner_service_settings_station_sorting_option_alphanumerical_opt
+                text: "Alphabetically"
+                optional: true
+
+            - tapOn:
+                text: "Alphabetically"
+                optional: true
+
+            - runFlow:
+                when:
+                  visible:
+                    id: tuner_service_settings_station_sorting_option_alphanumerical_opt
+                    text: "Alphabetically"
+                commands:
+                  - tapOn:
+                      point: "31%,49%"
+                  - waitForAnimationToEnd
+
+- assertTrue: ${output.sortAlphabetically == true}
+
+# If still in the sorting dialog/list (e.g., "By frequency" visible), go back to Radio settings
+- runFlow:
+    when:
+      visible:
+        text: "By frequency"
+    commands:
+      - pressKey: back
+
+# 5) Radio info toggle: disable if enabled; confirm disabled
+- evalScript: ${output.radioInfoDisabled = false}
+
+- repeat:
+    times: 2
+    while:
+      true: ${output.radioInfoDisabled != true}
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: tuner_service_settings_radio_info_opt
+              checked: false
+          commands:
+            - evalScript: ${output.radioInfoDisabled = true}
+
+      - runFlow:
+          when:
+            visible:
+              id: tuner_service_settings_radio_info_opt
+              selected: false
+          commands:
+            - evalScript: ${output.radioInfoDisabled = true}
+
+      - runFlow:
+          when:
+            true: ${output.radioInfoDisabled != true}
+          commands:
+            - tapOn:
+                id: tuner_service_settings_radio_info_opt
+            - waitForAnimationToEnd
+
+- assertTrue: ${output.radioInfoDisabled == true}
+
+# 6) Close Radio settings
+- pressKey: back
+
+# Verify we returned to Radio
+- extendedWaitUntil:
+    visible:
+      text: "All stations"
+    timeout: 20000
