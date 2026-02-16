@@ -1,6 +1,12 @@
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
 name: Open All stations list
-tags: [subflow, radio]
+tags:
+  - subflow
+  - radio
 ---
-- tapOn: All stations
-- waitForAnimationToEnd
+- tapOn: "All stations"
+- extendedWaitUntil:
+    visible:
+      id: "ListImageComponent ImageRightIcon"
+    timeout: 20000

@@ -1,9 +1,12 @@
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
 name: IDCEVODEV-486497 - Fullscreen player - skip to next station
-tags: [demo, radio, fullscreen]
+tags:
+  - demo
+  - radio
+  - fullscreen
 ---
 - evalScript: "${output.testId = 'IDCEVODEV-486497'}"
-- runFlow: ../subflows/open_media.yaml
 - runFlow: ../subflows/enter_fullscreen_player.yaml
 
 # Skip to next station (Fullscreen).

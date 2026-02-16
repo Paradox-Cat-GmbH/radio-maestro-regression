@@ -1,9 +1,13 @@
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
 name: IDCEVODEV-478222 - Speech - tune station from All stations list
-tags: [demo, radio, speech, manual_step]
+tags:
+  - demo
+  - radio
+  - speech
+  - manual_step
 ---
 - evalScript: "${output.testId = 'IDCEVODEV-478222'}"
-- runFlow: ../subflows/open_media.yaml
 - runFlow: ../subflows/open_all_stations.yaml
 
 # Manual step:

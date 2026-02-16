@@ -1,22 +1,21 @@
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
 name: IDCEVODEV-478199 - All stations list - select station
-tags: [demo, radio, ui_only]
+tags:
+  - demo
+  - radio
+  - ui_only
 ---
 - evalScript: "${output.testId = 'IDCEVODEV-478199'}"
-- runFlow: ../subflows/open_media.yaml
-
-# Step 1: Select Radio from Source selector (best-effort, adjust selector if needed)
-- assertVisible:
-    text: "Radio"
+# Step 1: Ensure Radio source is active
+- runFlow: ../subflows/ensure_radio_source.yaml
 
 # Step 2: Open All stations list and tune any station via touch
-- tapOn: "All stations"
-- waitForAnimationToEnd
+- runFlow: ../subflows/open_all_stations.yaml
 
 # Tap first station in the list
 - tapOn:
     id: ListImageComponent ImageRightIcon
     index: 0
     retryTapIfNoChange: true
-- waitForAnimationToEnd
 - runFlow: ../subflows/verify_radio_backend.yaml

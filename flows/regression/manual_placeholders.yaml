@@ -1,14 +1,12 @@
-# Group E: The "Manual/Impossible" Tests (Speech)
-# Covers: IDCEVODEV-486442, 478222
-
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: manual_placeholders
 tags:
   - manual
 ---
 - evalScript: "${output.testId = 'manual_placeholders'}"
 - pressKey: home
 - waitForAnimationToEnd
-- runFlow: ../subflows/open_media.yaml
-- assertVisible: "Radio"
+- runFlow: ../subflows/ensure_radio_source.yaml
 - waitForAnimationToEnd
 - runFlow: ../subflows/verify_radio_backend.yaml

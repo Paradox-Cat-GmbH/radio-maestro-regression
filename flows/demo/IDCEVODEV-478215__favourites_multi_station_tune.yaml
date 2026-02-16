@@ -1,9 +1,13 @@
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
 name: IDCEVODEV-478215 - Favourites - tune when 1_plus favourites exist
-tags: [demo, radio, favourites, requires_setup]
+tags:
+  - demo
+  - radio
+  - favourites
+  - requires_setup
 ---
 - evalScript: "${output.testId = 'IDCEVODEV-478215'}"
-- runFlow: ../subflows/open_media.yaml
 - runFlow: ../subflows/open_all_stations.yaml
 
 # Precondition setup (best-effort):

@@ -1,9 +1,12 @@
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
 name: IDCEVODEV-478207 - BIM - skip back to previous station
-tags: [demo, radio, hardware]
+tags:
+  - demo
+  - radio
+  - hardware
 ---
 - evalScript: "${output.testId = 'IDCEVODEV-478207'}"
-- runFlow: ../subflows/open_media.yaml
 - runFlow: ../subflows/tune_any_station.yaml
 - runFlow: ../subflows/inject_bim_prev.yaml
 

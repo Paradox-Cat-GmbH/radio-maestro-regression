@@ -1,9 +1,14 @@
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
 name: IDCEVODEV-600874 - Favourites - skip to next station when 1_plus favourites exist
-tags: [demo, radio, favourites, requires_setup, keyevent_first]
+tags:
+  - demo
+  - radio
+  - favourites
+  - requires_setup
+  - keyevent_first
 ---
 - evalScript: "${output.testId = 'IDCEVODEV-600874'}"
-- runFlow: ../subflows/open_media.yaml
 - runFlow: ../subflows/open_favourites.yaml
 
 # Precondition: favourites contains >1 station.

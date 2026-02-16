@@ -1,16 +1,16 @@
-# Group C: Favourites Logic (Complex State)
-# Covers: IDCEVODEV-600874, IDCEVODEV-478216
-
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: radio_favorites
 tags:
   - regression
   - favorites
 ---
 - evalScript: "${output.testId = 'radio_favorites'}"
-- runFlow: ../subflows/open_media.yaml
+- runFlow: ../subflows/ensure_radio_source.yaml
 # 1. Add current station to favorites
 - tapOn: "All stations"
 - tapOn:
+    id: ListImageComponent ImageRightIcon
     index: 0 # Select first station
 
 - tapOn:

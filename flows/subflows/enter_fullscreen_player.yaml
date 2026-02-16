@@ -1,6 +1,9 @@
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
 name: Enter Fullscreen player
-tags: [subflow, radio]
+tags:
+  - subflow
+  - radio
 ---
 # Best-effort: many builds allow entering Fullscreen by tapping the mini-player control/artwork area.
 # If this does not open Fullscreen on your rack:

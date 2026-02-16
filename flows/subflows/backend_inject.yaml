@@ -1,0 +1,13 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: backend_inject
+tags:
+  - helper
+  - subflow
+  - backend
+---
+- runScript:
+    file: ../../scripts/maestro/backend_inject.js
+    env:
+      KIND: ${KIND}
+      TARGET: ${TARGET}

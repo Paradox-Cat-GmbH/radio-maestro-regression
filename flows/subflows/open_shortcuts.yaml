@@ -1,6 +1,9 @@
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
 name: Open Shortcuts panel
-tags: [subflow, radio]
+tags:
+  - subflow
+  - radio
 ---
 # Build-dependent entry point.
 # Try tapping the visible "Shortcuts" entry. If your build shows only an icon (no text),

@@ -24,8 +24,7 @@ const outDir=(p,st,id)=>p.runDir?path.join(p.runDir,'backend',id):path.join(REPO
 const audioPkgs=txt=>Array.from((txt||'').matchAll(/\bpack:\s*([^\s]+)/g)).map(m=>m[1]);
 const userIdFrom=txt=>{const m=(txt||'').match(/(\d+)/);return m?parseInt(m[1],10):-1;};
 const sessionsBlock=(txt,uid)=>{txt=txt||'';const re=/Record for full_user=(\d+)/g;const ms=Array.from(txt.matchAll(re)).map(m=>({uid:parseInt(m[1],10),i:m.index??0}));
-const idx=new Map(ms.map(m=>[m.uid,m.i]));if(!idx.has(uid))return '';const start=idx.get(uid);
-const next=ms.map(m=>m.uid).filter(u=>u>uid).sort((a,b)=>a-b);const end=next.length?(idx.get(next[0])??txt.length):txt.length;
+const at=ms.findIndex(m=>m.uid===uid);if(at<0)return '';const start=ms[at].i;const end=(at+1<ms.length)?ms[at+1].i:txt.length;
 const block=txt.slice(start,end);const s=block.search(/Sessions Stack\s*-\s*have\s*\d+\s*sessions:/);return s<0?'':block.slice(s).trim();};
 const splitEntries=blk=>{if(!blk)return [];const parts=blk.split(/\n\s{4}(?=\S)/).map(s=>s.trim()).filter(Boolean);return parts.length>1?parts.slice(1):[];};
 const parseSessions=(txt,uid)=>splitEntries(sessionsBlock(txt,uid)).map(raw=>{const pkg=(raw.match(/package=([\w\.]+)/m)||[])[1]||null;
@@ -57,22 +56,6 @@ async function radioCheck(p){
   write(dir,'backend_verdict.json',JSON.stringify(verdict,null,2));return verdict;
 }
 
-async function mediaOpen(p){
-  const dev=p.deviceId||'';const st=p.stamp||stamp();const id=p.testId||'open_media';const dir=outDir(p,st,id);
-  const steps=[];
-  const r1=await inject(dev,1014);steps.push(step('swag media (1014)',r1));
-  const r2=await inject(dev,1015);steps.push(step('swag media release (1015)',r2));
-  let method='swag_media',permissionGated=false;
-  if(String(p.tryStartActivity||'').toLowerCase()==='true'){
-    const act=p.activity||'com.bmwgroup.apinext.mediaapp/.ui.MainActivity';
-    const r=await run(adbArgs(dev,['shell','am','start','-n',act]));steps.push(step(`am start ${act}`,r));
-    const all=(r.stderr||'')+(r.stdout||'');if(/SecurityException/i.test(all)&&/requires\s+com\.bmwgroup\.idnext\.launcher\.START_ACTIVITY/i.test(all))permissionGated=true;
-    if((r.code??0)===0&&!permissionGated)method='am_start';
-  }
-  const ok=(r1.code??0)===0&&(r2.code??0)===0;
-  const res={ok,deviceId:dev,stamp:st,testId:id,method,permissionGated,outDir:dir,steps};write(dir,'action_media_open.json',JSON.stringify(res,null,2));return res;
-}
-
 async function injectAction(p,kind){
   const dev=p.deviceId||'';const st=p.stamp||stamp();const id=p.testId||'inject';const dir=outDir(p,st,id);const steps=[];
   const push=async(name,promise)=>{const r=await promise;steps.push(step(name,r));return r;};
@@ -85,22 +68,36 @@ async function injectAction(p,kind){
     if(p.cidDisabled===undefined&&p.phudDisabled===undefined){await setOne((p.which||'cid')==='phud'?'phud':'cid',p.disabled??true);}
   }
 
-  if(kind==='bim'){const action=String(p.action||'mute').toLowerCase();if(action==='mute')await push('KEYCODE_MUTE',run(adbArgs(dev,['shell','input','keyevent','KEYCODE_MUTE'])));}
+  if(kind==='bim'){
+    const raw=String((p.target!=null?p.target:p.action)||'mute').toLowerCase().trim();
+    const action=(raw==='next')?'media-next':((raw==='prev'||raw==='previous')?'media-previous':raw);
+    const doMuteFirst=String(p.muteFirst??'true').toLowerCase()!=='false';
+    if(action==='mute'){
+      await push('KEYCODE_MUTE',run(adbArgs(dev,['shell','input','keyevent','KEYCODE_MUTE'])));
+    }else if(action==='media-next'||action==='media-previous'){
+      if(doMuteFirst) await push('KEYCODE_MUTE',run(adbArgs(dev,['shell','input','keyevent','KEYCODE_MUTE'])));
+      await push('swag media (1014)',inject(dev,1014));await push('swag media release (1015)',inject(dev,1015));
+      const ev=action==='media-previous'?'KEYCODE_MEDIA_PREVIOUS':'KEYCODE_MEDIA_NEXT';await push(ev,run(adbArgs(dev,['shell','input','keyevent',ev])));
+    }else{
+      return{ok:false,kind,deviceId:dev,stamp:st,outDir:dir,error:'unknown_target',target:raw,allowedTargets:['mute','next','prev','previous','media-next','media-previous']};
+    }
+  }
 
   if(kind==='swag'){
-    const action=String(p.action||'').toLowerCase();
+    const raw=String((p.target!=null?p.target:p.action)||'').toLowerCase().trim();
+    const action=(raw==='next')?'media-next':((raw==='prev'||raw==='previous')?'media-previous':raw);
     if(action==='media-next'||action==='media-previous'){
       await push('swag media (1014)',inject(dev,1014));await push('swag media release (1015)',inject(dev,1015));
       const ev=action==='media-previous'?'KEYCODE_MEDIA_PREVIOUS':'KEYCODE_MEDIA_NEXT';await push(ev,run(adbArgs(dev,['shell','input','keyevent',ev])));
     }else{
       const code=(p.keyCode!=null)?parseInt(p.keyCode,10):(SWAG[action]??null);
-      if(code==null||Number.isNaN(code))return{ok:false,kind,deviceId:dev,stamp:st,outDir:dir,error:'unknown_action',action,allowed:Object.keys(SWAG).concat(['media-next','media-previous'])};
+      if(code==null||Number.isNaN(code))return{ok:false,kind,deviceId:dev,stamp:st,outDir:dir,error:'unknown_target',target:raw,allowedTargets:Object.keys(SWAG).concat(['next','prev','previous','media-next','media-previous'])};
       await push(`inject ${code}`,inject(dev,code));await push(`inject ${code+1}`,inject(dev,code+1));
     }
   }
 
-  const ok=steps.every(s=>(s.code??0)===0);const res={ok,kind,deviceId:dev,stamp:st,testId:id,outDir:dir,steps};
-  write(dir,`action_${kind}.json`,JSON.stringify(res,null,2));return res;
+  const ok=steps.every(s=>(s.code??0)===0);const actionStamp=stamp();const file=`action_${kind}_${actionStamp}.json`;const res={ok,kind,deviceId:dev,stamp:st,actionStamp,testId:id,outDir:dir,artifactFile:file,steps,request:p};
+  write(dir,file,JSON.stringify(res,null,2));return res;
 }
 
 // --- http server ---
@@ -109,7 +106,6 @@ http.createServer(async(req,res)=>{
   try{
     if(req.method==='GET'&&req.url==='/health')return jres(res,200,{ok:true,host:HOST,port:PORT});
     if(req.method==='POST'&&req.url==='/radio/check')return jres(res,200,await radioCheck(await readJson(req)));
-    if(req.method==='POST'&&req.url==='/media/open')return jres(res,200,await mediaOpen(await readJson(req)));
     if(req.method==='POST'&&req.url==='/inject/swag')return jres(res,200,await injectAction(await readJson(req),'swag'));
     if(req.method==='POST'&&req.url==='/inject/bim')return jres(res,200,await injectAction(await readJson(req),'bim'));
     if(req.method==='POST'&&req.url==='/ehh/set')return jres(res,200,await injectAction(await readJson(req),'ehh'));

@@ -1,11 +1,13 @@
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
 name: IDCEVODEV-478202 - Mediaminiplayer - skip to next station
-tags: [demo, radio, ui_only]
+tags:
+  - demo
+  - radio
+  - ui_only
 ---
 - evalScript: "${output.testId = 'IDCEVODEV-478202'}"
-- runFlow: ../subflows/open_media.yaml
-- assertVisible:
-    text: "Radio"
+- runFlow: ../subflows/ensure_radio_source.yaml
 # Precondition: Radio is the active source and the mini player is visible
 - extendedWaitUntil:
     visible:

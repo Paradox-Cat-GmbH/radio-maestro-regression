@@ -1,0 +1,15 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: Double tap Media DET
+tags:
+  - helper
+  - subflow
+  - media
+---
+# On this build: double tap -> Radio.
+- doubleTapOn:
+    id: IconicBar.Det.Media
+    optional: true
+- doubleTapOn:
+    text: Media
+    optional: true

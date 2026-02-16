@@ -1,9 +1,13 @@
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
 name: IDCEVODEV-486494 - Superstack media widget - skip to next station
-tags: [demo, radio, superstack, keyevent_first]
+tags:
+  - demo
+  - radio
+  - superstack
+  - keyevent_first
 ---
 - evalScript: "${output.testId = 'IDCEVODEV-486494'}"
-- runFlow: ../subflows/open_media.yaml
 - pressKey: home
 - waitForAnimationToEnd
 

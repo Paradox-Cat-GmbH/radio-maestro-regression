@@ -1,0 +1,63 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: Ensure Radio source (Leandro workflow)
+tags:
+  - subflow
+  - radio
+---
+- evalScript: ${output.onRadio = false; output._attempt = 0}
+
+- runFlow: ../subflows/open_media.yaml
+
+- repeat:
+    times: 6
+    while:
+      true: ${output.onRadio != true}
+    commands:
+      - evalScript: ${output.didAction = false; output._attempt = (output._attempt || 0) + 1}
+
+      - runFlow:
+          when:
+            visible:
+              text: "All stations"
+          commands:
+            - evalScript: ${output.onRadio = true; output.didAction = true}
+
+      - runFlow:
+          when:
+            visible:
+              id: "SourceAvailableInList_DynamicString(text=Radio, testTag=null)"
+              text: "Radio"
+          commands:
+            - tapOn:
+                id: "SourceAvailableInList_DynamicString(text=Radio, testTag=null)"
+                text: "Radio"
+            - evalScript: ${output.didAction = true}
+
+      - runFlow:
+          when:
+            visible:
+              id: media_app_source_selector_lb
+              text: "Source"
+          commands:
+            - runFlow: ../subflows/open_source_selector.yaml
+            - evalScript: ${output.didAction = true}
+
+      - runFlow:
+          when:
+            true: ${output.didAction != true}
+          commands:
+            - runFlow: ../subflows/tap_media_det.yaml
+            - runFlow:
+                when:
+                  true: ${output._attempt >= 3}
+                commands:
+                  - runFlow: ../subflows/double_tap_media_det.yaml
+
+- extendedWaitUntil:
+    visible:
+      text: "All stations"
+    timeout: 20000
+
+- assertVisible:
+    text: "All stations"

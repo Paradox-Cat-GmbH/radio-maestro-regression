@@ -1,9 +1,12 @@
 appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
 name: IDCEVODEV-478219 - Shortcuts - recall Radio source
-tags: [demo, radio, shortcuts]
+tags:
+  - demo
+  - radio
+  - shortcuts
 ---
 - evalScript: "${output.testId = 'IDCEVODEV-478219'}"
-- runFlow: ../subflows/open_media.yaml
 - runFlow: ../subflows/open_source_selector.yaml
 
 # Optional (for stronger proof): switch to a different source first (Bluetooth/USB/etc).
