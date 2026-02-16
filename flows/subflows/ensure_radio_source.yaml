@@ -54,6 +54,15 @@ tags:
                 commands:
                   - runFlow: ../subflows/double_tap_media_det.yaml
 
+
+# Run preconditions once per test run (stable settings baseline)
+- runFlow:
+    when:
+      true: ${output.preconditionsDone != true}
+    commands:
+      - runFlow: ../subflows/preconditions_radio_settings.yaml
+      - evalScript: ${output.preconditionsDone = true}
+
 - extendedWaitUntil:
     visible:
       text: "All stations"
