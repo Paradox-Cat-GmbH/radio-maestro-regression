@@ -240,7 +240,7 @@ tags:
     while:
       true: ${output.radioInfoOff != true}
     commands:
-      - evalScript: ${output.radioInfoOn = false}
+      - evalScript: ${output.radioInfoOn = false; output.radioInfoOffDetected = false; output.radioInfoStateKnown = false}
 
       - runFlow:
           when:
@@ -248,15 +248,40 @@ tags:
               id: tuner_service_settings_radio_info_opt
               checked: true
           commands:
-            - evalScript: ${output.radioInfoOn = true; output.radioInfoSignalKnown = true}
+            - evalScript: ${output.radioInfoOn = true; output.radioInfoStateKnown = true; output.radioInfoSignalKnown = true}
 
       - runFlow:
           when:
             visible:
               id: tuner_service_settings_radio_info_opt
-              selected: true
+              checked: false
           commands:
-            - evalScript: ${output.radioInfoOn = true; output.radioInfoSignalKnown = true}
+            - evalScript: ${output.radioInfoOffDetected = true; output.radioInfoStateKnown = true; output.radioInfoSignalKnown = true}
+
+      - runFlow:
+          when:
+            true: ${output.radioInfoStateKnown != true}
+          commands:
+            - runFlow:
+                when:
+                  visible:
+                    id: tuner_service_settings_radio_info_opt
+                    selected: true
+                commands:
+                  - evalScript: ${output.radioInfoOn = true; output.radioInfoStateKnown = true; output.radioInfoSignalKnown = true}
+            - runFlow:
+                when:
+                  visible:
+                    id: tuner_service_settings_radio_info_opt
+                    selected: false
+                commands:
+                  - evalScript: ${output.radioInfoOffDetected = true; output.radioInfoStateKnown = true; output.radioInfoSignalKnown = true}
+
+      - runFlow:
+          when:
+            true: ${output.radioInfoOffDetected == true}
+          commands:
+            - evalScript: ${output.radioInfoOff = true}
 
       - runFlow:
           when:
@@ -268,40 +293,48 @@ tags:
                 retryTapIfNoChange: true
             - waitForAnimationToEnd
 
-      # If ON was not explicitly detected, do one probe tap before concluding OFF.
-      - runFlow:
-          when:
-            true: ${output.radioInfoOn != true && output.radioInfoToggleAttempts == 0}
-          commands:
-            - evalScript: ${output.radioInfoToggleAttempts = output.radioInfoToggleAttempts + 1; output.radioInfoSignalKnown = true}
-            - tapOn:
-                id: tuner_service_settings_radio_info_opt
-                retryTapIfNoChange: true
-            - waitForAnimationToEnd
+            - evalScript: ${output.radioInfoOnAfter = false; output.radioInfoOffAfter = false; output.radioInfoStateKnownAfter = false}
 
-      - evalScript: ${output.radioInfoOnAfter = false; output.radioInfoOffAfter = false}
+            - runFlow:
+                when:
+                  visible:
+                    id: tuner_service_settings_radio_info_opt
+                    checked: true
+                commands:
+                  - evalScript: ${output.radioInfoOnAfter = true; output.radioInfoStateKnownAfter = true; output.radioInfoSignalKnown = true}
 
-      - runFlow:
-          when:
-            visible:
-              id: tuner_service_settings_radio_info_opt
-              checked: true
-          commands:
-            - evalScript: ${output.radioInfoOnAfter = true; output.radioInfoSignalKnown = true}
+            - runFlow:
+                when:
+                  visible:
+                    id: tuner_service_settings_radio_info_opt
+                    checked: false
+                commands:
+                  - evalScript: ${output.radioInfoOffAfter = true; output.radioInfoStateKnownAfter = true; output.radioInfoSignalKnown = true}
 
-      - runFlow:
-          when:
-            visible:
-              id: tuner_service_settings_radio_info_opt
-              selected: true
-          commands:
-            - evalScript: ${output.radioInfoOnAfter = true; output.radioInfoSignalKnown = true}
+            - runFlow:
+                when:
+                  true: ${output.radioInfoStateKnownAfter != true}
+                commands:
+                  - runFlow:
+                      when:
+                        visible:
+                          id: tuner_service_settings_radio_info_opt
+                          selected: true
+                      commands:
+                        - evalScript: ${output.radioInfoOnAfter = true; output.radioInfoStateKnownAfter = true; output.radioInfoSignalKnown = true}
+                  - runFlow:
+                      when:
+                        visible:
+                          id: tuner_service_settings_radio_info_opt
+                          selected: false
+                      commands:
+                        - evalScript: ${output.radioInfoOffAfter = true; output.radioInfoStateKnownAfter = true; output.radioInfoSignalKnown = true}
 
-      - runFlow:
-          when:
-            true: ${output.radioInfoOnAfter != true && output.radioInfoToggleAttempts > 0}
-          commands:
-            - evalScript: ${output.radioInfoOff = true}
+            - runFlow:
+                when:
+                  true: ${output.radioInfoOffAfter == true}
+                commands:
+                  - evalScript: ${output.radioInfoOff = true}
 
       - runFlow:
           when:
