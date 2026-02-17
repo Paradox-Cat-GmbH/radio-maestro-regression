@@ -6,7 +6,37 @@ tags:
   - radio
 ---
 - tapOn: "All stations"
-- extendedWaitUntil:
-    visible:
-      id: "ListImageComponent ImageRightIcon"
-    timeout: 20000
+
+- evalScript: ${output.allStationsListReady = false}
+
+- repeat:
+    times: 3
+    while:
+      true: ${output.allStationsListReady != true}
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "ListImageComponent ImageRightIcon"
+              index: 0
+          commands:
+            - evalScript: ${output.allStationsListReady = true}
+
+      - runFlow:
+          when:
+            visible:
+              id: "ListlmageComponent ImageRightlcon"
+              index: 0
+          commands:
+            - evalScript: ${output.allStationsListReady = true}
+
+      - runFlow:
+          when:
+            true: ${output.allStationsListReady != true}
+          commands:
+            - waitForAnimationToEnd
+            - tapOn:
+                text: "All stations"
+                optional: true
+
+- assertTrue: ${output.allStationsListReady == true}

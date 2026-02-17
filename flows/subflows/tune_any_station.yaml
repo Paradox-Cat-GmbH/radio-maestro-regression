@@ -16,6 +16,6 @@ tags:
     env:
       RAND_MAX: ${typeof MAESTRO_RAND_MAX_INDEX !== 'undefined' && MAESTRO_RAND_MAX_INDEX ? MAESTRO_RAND_MAX_INDEX : 3}
 
-- tapOn: ${output.randStationSelector}
+- runFlow: ../subflows/tap_random_all_stations_entry.yaml
 
 - runFlow: ../subflows/verify_radio_backend.yaml

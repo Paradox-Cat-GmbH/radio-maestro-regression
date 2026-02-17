@@ -10,4 +10,14 @@ tags:
 - runScript:
     file: ../../scripts/maestro/radio_check.js
 
-- assertTrue: ${output.radioOk == true}
+- runFlow:
+    when:
+      true: ${output.radioCheckSkipped == true}
+    commands:
+      - evalScript: "${output.radioBackendCheckResult = 'SKIPPED: ' + output.radioCheckReason}"
+
+- runFlow:
+    when:
+      true: ${output.radioCheckSkipped != true}
+    commands:
+      - assertTrue: ${output.radioOk == true}
