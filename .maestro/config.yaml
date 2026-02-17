@@ -1,5 +1,4 @@
 # Maestro workspace configuration
-# Stores Maestro debug output + artifacts (screenshots/logs/AI reports, etc.) inside this repo.
-# CLI flag --test-output-dir takes priority.
+# Studio/CLI default artifact location (used when no CLI override is provided).
 
-testOutputDir: artifacts/maestro
+testOutputDir: artifacts/maestro_studio

@@ -1,159 +1,102 @@
-# RadioRegression (Maestro) + ADB Truth (JS-first)
+# Radio Maestro Regression
 
+Maestro-first AAOS radio regression flows for BMW iDrive racks.
 
+## What this project does
+- Navigates to Radio reliably (Home -> Media DET -> Source check -> Radio).
+- Applies Radio preconditions from Settings.
+- Opens All stations and selects a random station safely.
+- Verifies backend playback truth from `http://127.0.0.1:4567/radio/check`.
 
-## JavaScript engine (Rhino vs GraalJS)
+## Core behavior (Leandro workflow)
+1. Tap Home.
+2. Tap Media DET.
+3. If already on Radio (`All stations` visible), continue.
+4. Else if on Source screen, select `Radio`.
+5. Else tap Media DET again and retry.
 
-This workspace opts into **GraalJS** for all flows (`jsEngine: graaljs`) to avoid Rhino’s limited JavaScript support and to keep inline scripts reliable in Maestro Studio and Maestro CLI.  
+Then from Radio:
+1. Open Settings.
+2. Ensure `Switch automatically to full screen mode` is OFF.
+3. Open `Radio settings`.
+4. Ensure sorting is `Alphabetically`.
+5. Ensure `Radio info` is OFF.
+6. Close Radio settings.
+7. Close Settings.
 
-- Ensure Maestro is running on **Java 17+** (GraalJS support requires it).
-- For CLI runs you can also force it globally via `MAESTRO_USE_GRAALJS=true` (optional if the flow already sets `jsEngine`).
+## Random station selection
+Random tapping is branch-safe (no invalid `tapOn: ${output.selectorObject}` pattern).
 
+- Script: `scripts/maestro/pick_random_station.js`
+- Flow: `flows/subflows/tap_random_all_stations_entry.yaml`
 
-## What this repo is
-A practical Maestro-based UI regression suite for BMW iDrive / AAOS **Radio**, with **ADB truth validation** to avoid “UI lies”.
+`MAESTRO_RAND_MAX_INDEX` controls max random absolute index.
+- Default: `5`.
+- Supported max: `29` (5 pages x 6 visible rows).
+- Flow pre-scrolls pages when needed, then taps visible row index `0..5`.
 
-**Default execution path (supported):**
-- Maestro YAML flows drive UI
-- Maestro **JavaScript** triggers host-side ADB operations via a tiny **Node control server**
-- ADB truth checks and dumps are written next to Maestro artifacts per run
+## Backend verification contract
+The backend check is strict when server is reachable:
+- `ok == true`
+- `media.playing == true`
+- `audio.audioFocus == true`
+- `media.package == com.bmwgroup.apinext.tunermediaservice`
 
-**Legacy (kept for reference / future):**
-- Python runners and validators remain under `scripts/` but are not used by the default runners anymore.
+If control server is unavailable, backend check is marked as skipped with reason.
 
----
+## Runners (simple)
+All runners call one script:
+- `scripts/maestro/run_with_artifacts.ps1`
 
-## Terminology (BMW-specific)
-- **CID**: Central Information Display (main center screen)
-- **PHUD**: secondary surface / passenger HUD (multi-display)
-- **SWAG**: steering wheel input path (MFL controls)
-- **BIM**: center console/button input path (non-touch hardware input)
-- **Superstack / mini player / fullscreen player**: UI surfaces you can typically tap (Maestro)
+It runs test + local video recording for each flow and stores artifacts in:
+- `artifacts/runs/<timestamp>/<flow_name>/debug`
+- `artifacts/runs/<timestamp>/<flow_name>/output`
+- `artifacts/runs/<timestamp>/<flow_name>/videos/<flow_name>.mp4`
+- `artifacts/runs/<timestamp>/<flow_name>/record_debug`
 
----
-
-## Requirements (rack host)
-- **Maestro CLI** (author with Studio, run via CLI)
-- **Node.js (LTS)** (for the host control server)
-- **ADB** (repo-local is preferred via `scripts\install_platform_tools.ps1`)
-- **Java**: use Android Studio embedded **JBR** at `C:\Android\jbr\bin` (runners prefer it)
-
----
-
-## How it works (professional, reliable path)
-
-### 1) Control server (host-side)
-`scripts\control_server\server.js` exposes HTTP endpoints that run ADB commands:
-- `/radio/check` → dumpsys audio + media_session + current user, parses, returns verdict
-- `/inject/swag` → SWAG injection (key press/release via car_service). Supports `target: media` to open Media, and `target: next|prev` (workaround: MEDIA + KEYCODE_MEDIA_NEXT/PREVIOUS).
-- `/inject/bim` → BIM injection. Supports `target: mute` (KEYCODE_MUTE), and `target: next|prev` (KEYCODE_MUTE + MEDIA + KEYCODE_MEDIA_NEXT/PREVIOUS workaround).
-- `/ehh/set` → CID/PHUD EHH toggles via setprop
-
-The runners start it automatically via:
-`scripts\control_server\ensure_server.bat`
-
-Logs: `artifacts\control_server.log`
-
-### 2) Maestro flows
-`flows\subflows\open_media.yaml` opens Media using SWAG injection (1014/1015) via the control server (`/inject/swag` with `target: media`), then best-effort selects **Radio**.
-
-All `flows\demo\*.yaml`:
-- set `output.testId`
-- perform UI actions
-- (HW tests) call SWAG/BIM injection subflows
-- call `flows\subflows\verify_radio_backend.yaml` to enforce ADB truth + dump evidence
-
-Random station coverage:
-- `flows\subflows\tune_any_station.yaml` selects a **random station row** (bounded by `MAESTRO_RAND_MAX_INDEX`, default `3`)
-
----
-
-## Running
-
-### A) Install repo-local platform-tools (recommended)
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\install_platform_tools.ps1
-scripts\adb.bat devices -l
-```
-
-### B) Run all 20 demo tests
-
-### B1) Run a single flow (fast iteration)
+### Single flow
 ```bat
 run_single_flow.bat <DEVICE_ID> <FLOW_PATH>
 ```
-
 Example:
 ```bat
 run_single_flow.bat 169.254.107.117:5555 flows\demo\IDCEVODEV-478199__all_stations_select.yaml
 ```
 
-Pass a device id (recommended) or rely on `ANDROID_SERIAL`.
-
+### Demo suite
 ```bat
 run_demo_suite.bat <DEVICE_ID>
 ```
 
-Example:
-```bat
-run_demo_suite.bat 169.254.20.77:5555
-```
-
-Outputs:
-- Maestro output: `artifacts\runs\<timestamp>\maestro_demo\...`
-- ADB truth dumps: `artifacts\runs\<timestamp>\backend\<testId>\...`
-  - `dumpsys_audio.txt`
-  - `dumpsys_media_session.txt`
-  - `current_user.txt`
-  - `backend_verdict.json`
-  - `action_<kind>_<timestamp>.json` (for HW injections)
-
-### C) Lightning subset (presentation order)
-```bat
-run_lightning_demo.bat <DEVICE_ID>
-```
-
-### D) Regression group flows
+### Regression suite
 ```bat
 run_suite.bat <DEVICE_ID>
 ```
 
----
+### Lightning set
+```bat
+run_lightning_demo.bat <DEVICE_ID>
+```
 
-## Config knobs (env vars)
-- `ANDROID_SERIAL` — device selection (preferred)
-- `MAESTRO_CMD` — optional explicit Maestro CLI path
-- `MAESTRO_RAND_MAX_INDEX` — max random station row index (default `3`)
-- `MAESTRO_CONTROL_PORT` — control server port (default `4567`)
-- `MAESTRO_BACKEND_URL` — override backend base URL used by flows (default `http://127.0.0.1:4567`)
-- `MAESTRO_NODE_EXE` — full path to `node.exe` if Node is not on PATH (Windows), e.g. `C:\Program Files\nodejs\node.exe`
+## Control server
+Auto-started by runners via:
+- `scripts/control_server/ensure_server.bat`
 
+Health endpoint:
+- `http://127.0.0.1:4567/health`
 
----
+## Maestro Studio notes
+Default workspace config is set to keep artifacts in repo:
+- `config.yaml`
+- `.maestro/config.yaml`
 
-## Known limits (what still needs rack confirmation)
-- **PHUD station list SWAG selection** is tagged `manual` until SWAG nav/center keycodes are confirmed for that surface.
-- Media metadata availability varies by build; if session does not expose “station title”, “station changed” checks may be limited to “radio still playing”.
+Both point to:
+- `artifacts/maestro_studio`
 
----
-
-## Legacy (kept)
-The previous Python-based workflow remains in `scripts\`:
-- `run_flow_with_actions.py`, `verify_radio_state.py`, etc.
-Not used by default runners, but kept as reference / fallback.
-
-
-## Maestro Studio quick test
-
-1. Connect the rack (USB or ADB-over-IP), then (recommended):
-   - `adb root`
-   - `adb -s <DEVICE> forward tcp:7001 tcp:7001`
-2. Start the control server:
-   - `scripts\control_server\ensure_server.bat`
-   - Verify in a browser: `http://127.0.0.1:4567/health`
-3. Launch Studio:
-   - `maestro studio`
-4. Run the smoke flow from Studio:
-   - `flows/smoke/_smoke_open_media_and_backend_check.yaml`
-
-If the smoke flow fails, open the generated `backend_verdict.json` (and the saved `dumpsys_*` files) under `artifacts\runs\...\backend\...` to see whether the failure is **UI/state** or **audio/session**.
+## Extra backend fields for station/song context
+`backend_verdict.json` now also includes media queue metadata when available:
+- `media.queueTitle`
+- `media.queueSize`
+- `media.metadataDescription`
+- `media.metadataTitle`
+- `media.metadataArtist`

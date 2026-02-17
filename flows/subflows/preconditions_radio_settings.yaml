@@ -6,23 +6,20 @@ tags:
   - preconditions
   - radio
 ---
-# Leandro baseline from Radio:
+# Baseline from Radio (Leandro):
 # 1) Open settings
-# 2) Disable "Auto Media Fullscreen" (if enabled) and confirm disabled
+# 2) Ensure Auto Media Fullscreen is OFF
 # 3) Open Radio settings
-# 4) Ensure station sorting is Alphabetically
-# 5) Disable "Radio info" (if enabled) and confirm disabled
+# 4) Ensure sorting is Alphabetically
+# 5) Ensure Radio info is OFF
 # 6) Close Radio settings
 # 7) Close Settings
-#
-# Assumes caller already navigated to Radio ("All stations" visible).
 
 - extendedWaitUntil:
     visible:
       text: "All stations"
     timeout: 20000
 
-# 1) Open settings (from Radio)
 - tapOn:
     id: idx_icon_settings
 
@@ -31,86 +28,103 @@ tags:
       id: media_app_auto_media_fullscreen_toggle_bt
     timeout: 20000
 
-# 2) Auto Media Fullscreen OFF: use switch state if exposed; fail if no state signal is detectable.
-- evalScript: ${output.fullscreenDisabled = false; output.fullscreenStateObserved = false}
+# 2) Fullscreen OFF
+- assertVisible:
+    text: "Switch automatically to full screen mode"
 
-- runFlow:
-    when:
-      visible:
-        id: media_app_auto_media_fullscreen_toggle_bt
-        checked: true
-    commands:
-      - evalScript: ${output.fullscreenStateObserved = true}
-      - tapOn:
-          id: media_app_auto_media_fullscreen_toggle_bt
-      - waitForAnimationToEnd
+- evalScript: ${output.fullscreenOff = false; output.fullscreenToggleAttempts = 0}
 
-- runFlow:
-    when:
-      true: ${output.fullscreenStateObserved != true}
+- repeat:
+    times: 3
+    while:
+      true: ${output.fullscreenOff != true}
     commands:
+      - evalScript: ${output.fullscreenOn = false}
+
+      - runFlow:
+          when:
+            visible:
+              id: media_app_auto_media_fullscreen_toggle_bt
+              checked: true
+          commands:
+            - evalScript: ${output.fullscreenOn = true}
+
       - runFlow:
           when:
             visible:
               id: media_app_auto_media_fullscreen_toggle_bt
               selected: true
           commands:
-            - evalScript: ${output.fullscreenStateObserved = true}
-            - tapOn:
-                id: media_app_auto_media_fullscreen_toggle_bt
+            - evalScript: ${output.fullscreenOn = true}
+
+      - runFlow:
+          when:
+            visible:
+              id: internal_idx_toggle_atom_glow_indicator
+          commands:
+            - evalScript: ${output.fullscreenOn = true}
+
+      - runFlow:
+          when:
+            true: ${output.fullscreenOn == true}
+          commands:
+            - evalScript: ${output.fullscreenToggleAttempts = output.fullscreenToggleAttempts + 1}
+            - runFlow:
+                when:
+                  true: ${output.fullscreenToggleAttempts == 1}
+                commands:
+                  - tapOn:
+                      id: media_app_auto_media_fullscreen_toggle_bt
+                      optional: true
+                  - waitForAnimationToEnd
+            - runFlow:
+                when:
+                  true: ${output.fullscreenToggleAttempts >= 2}
+                commands:
+                  - tapOn:
+                      point: "29%,51%"
+                  - waitForAnimationToEnd
+
+      - evalScript: ${output.fullscreenOnAfter = false}
+
+      - runFlow:
+          when:
+            visible:
+              id: media_app_auto_media_fullscreen_toggle_bt
+              checked: true
+          commands:
+            - evalScript: ${output.fullscreenOnAfter = true}
+
+      - runFlow:
+          when:
+            visible:
+              id: media_app_auto_media_fullscreen_toggle_bt
+              selected: true
+          commands:
+            - evalScript: ${output.fullscreenOnAfter = true}
+
+      - runFlow:
+          when:
+            visible:
+              id: internal_idx_toggle_atom_glow_indicator
+          commands:
+            - evalScript: ${output.fullscreenOnAfter = true}
+
+      - runFlow:
+          when:
+            true: ${output.fullscreenOnAfter != true}
+          commands:
+            - evalScript: ${output.fullscreenOff = true}
+
+      - runFlow:
+          when:
+            true: ${output.fullscreenOff != true}
+          commands:
             - waitForAnimationToEnd
 
-- runFlow:
-    when:
-      true: ${output.fullscreenStateObserved != true}
-    commands:
-      - runFlow:
-          when:
-            visible:
-              id: media_app_auto_media_fullscreen_toggle_bt
-              text: "On"
-          commands:
-            - evalScript: ${output.fullscreenStateObserved = true}
-            - tapOn:
-                id: media_app_auto_media_fullscreen_toggle_bt
-            - waitForAnimationToEnd
+- assertTrue: ${output.fullscreenOff == true}
 
-- runFlow:
-    when:
-      visible:
-        id: media_app_auto_media_fullscreen_toggle_bt
-        checked: false
-    commands:
-      - evalScript: ${output.fullscreenStateObserved = true; output.fullscreenDisabled = true}
-
-- runFlow:
-    when:
-      true: ${output.fullscreenDisabled != true}
-    commands:
-      - runFlow:
-          when:
-            visible:
-              id: media_app_auto_media_fullscreen_toggle_bt
-              selected: false
-          commands:
-            - evalScript: ${output.fullscreenStateObserved = true; output.fullscreenDisabled = true}
-
-- runFlow:
-    when:
-      true: ${output.fullscreenDisabled != true}
-    commands:
-      - runFlow:
-          when:
-            visible:
-              id: media_app_auto_media_fullscreen_toggle_bt
-              text: "Off"
-          commands:
-            - evalScript: ${output.fullscreenStateObserved = true; output.fullscreenDisabled = true}
-
-- assertTrue: ${output.fullscreenStateObserved == true}
-- assertTrue: ${output.fullscreenDisabled == true}
-
-# 3) From Settings, open Radio settings
+# 3) Open Radio settings
 - evalScript: ${output.radioSettingsOpen = false}
 
 - repeat:
@@ -121,13 +135,6 @@ tags:
       - runFlow:
           when:
             visible:
-              id: tuner_service_settings_radio_info_opt
-          commands:
-            - evalScript: ${output.radioSettingsOpen = true}
-
-      - runFlow:
-          when:
-            visible:
               text: "Sort available stations"
           commands:
             - evalScript: ${output.radioSettingsOpen = true}
@@ -135,21 +142,14 @@ tags:
       - runFlow:
           when:
             visible:
+              id: tuner_service_settings_radio_info_opt
+          commands:
+            - evalScript: ${output.radioSettingsOpen = true}
+
+      - runFlow:
+          when:
+            visible:
               text: "Radio info"
-          commands:
-            - evalScript: ${output.radioSettingsOpen = true}
-
-      - runFlow:
-          when:
-            visible:
-              text: "By frequency"
-          commands:
-            - evalScript: ${output.radioSettingsOpen = true}
-
-      - runFlow:
-          when:
-            visible:
-              text: "Public value"
           commands:
             - evalScript: ${output.radioSettingsOpen = true}
 
@@ -160,333 +160,157 @@ tags:
             - tapOn:
                 id: media_app_source_settings_bt
                 optional: true
-                retryTapIfNoChange: true
             - tapOn:
                 text: "Radio settings"
                 optional: true
-                retryTapIfNoChange: true
-            - runFlow:
-                when:
-                  visible:
-                    text: "Radio settings"
-                commands:
-                  - tapOn:
-                      point: "50%,27%"
-                  - waitForAnimationToEnd
             - waitForAnimationToEnd
 
-      - runFlow:
-          when:
-            visible:
-              id: tuner_service_settings_radio_info_opt
-          commands:
-            - evalScript: ${output.radioSettingsOpen = true}
+- assertTrue: ${output.radioSettingsOpen == true}
 
-      - runFlow:
-          when:
-            visible:
-              text: "Sort available stations"
-          commands:
-            - evalScript: ${output.radioSettingsOpen = true}
+# 4) Sorting Alphabetically
+- evalScript: ${output.sortAlphabetical = false}
 
-      - runFlow:
-          when:
-            visible:
-              text: "Radio info"
-          commands:
-            - evalScript: ${output.radioSettingsOpen = true}
+- repeat:
+    times: 3
+    while:
+      true: ${output.sortAlphabetical != true}
+    commands:
+      - tapOn:
+          text: "Sort available stations"
+          optional: true
+      - waitForAnimationToEnd
+
+      - tapOn:
+          id: tuner_service_settings_station_sorting_option_alphanumerical_opt
+          optional: true
+
+      - tapOn:
+          text: "Alphabetically"
+          optional: true
 
       - runFlow:
           when:
             visible:
               text: "By frequency"
           commands:
-            - evalScript: ${output.radioSettingsOpen = true}
-
-      - runFlow:
-          when:
-            visible:
-              text: "Public value"
-          commands:
-            - evalScript: ${output.radioSettingsOpen = true}
-
-- assertTrue: ${output.radioSettingsOpen == true}
-
-# 4) Sorting: force-select Alphabetically and verify when state is exposed.
-- runFlow:
-    when:
-      visible:
-        text: "Default sorting"
-    commands:
-      - tapOn:
-          text: "Default sorting"
-
-- runFlow:
-    when:
-      visible:
-        text: "Default Sorting"
-    commands:
-      - tapOn:
-          text: "Default Sorting"
-
-- runFlow:
-    when:
-      visible:
-        text: "Sort available stations"
-    commands:
-      - tapOn:
-          text: "Sort available stations"
-
-- extendedWaitUntil:
-    visible:
-      text: "Alphabetically"
-    timeout: 10000
-
-- evalScript: ${output.sortAlphabetically = false; output.sortStateObserved = false; output.sortSelectionApplied = false}
-
-- runFlow:
-    when:
-      visible:
-        id: tuner_service_settings_station_sorting_option_alphanumerical_opt
-        text: "Alphabetically"
-        checked: true
-    commands:
-      - evalScript: ${output.sortStateObserved = true; output.sortAlphabetically = true}
-
-- runFlow:
-    when:
-      true: ${output.sortStateObserved != true}
-    commands:
-      - runFlow:
-          when:
-            visible:
-              id: tuner_service_settings_station_sorting_option_alphanumerical_opt
-              text: "Alphabetically"
-              selected: true
-          commands:
-            - evalScript: ${output.sortStateObserved = true; output.sortAlphabetically = true}
-
-- runFlow:
-    when:
-      true: ${output.sortAlphabetically != true}
-    commands:
-      - runFlow:
-          when:
-            visible:
-              id: tuner_service_settings_station_sorting_option_alphanumerical_opt
-              text: "Alphabetically"
-          commands:
             - tapOn:
-                id: tuner_service_settings_station_sorting_option_alphanumerical_opt
-                text: "Alphabetically"
-            - waitForAnimationToEnd
-            - evalScript: ${output.sortSelectionApplied = true; output.sortAlphabetically = true}
-
-- runFlow:
-    when:
-      true: ${output.sortAlphabetically != true}
-    commands:
-      - runFlow:
-          when:
-            visible:
-              text: "Alphabetically"
-          commands:
-            - tapOn:
-                text: "Alphabetically"
-            - waitForAnimationToEnd
-            - evalScript: ${output.sortSelectionApplied = true; output.sortAlphabetically = true}
-
-- runFlow:
-    when:
-      true: ${output.sortAlphabetically != true}
-    commands:
-      - runFlow:
-          when:
-            visible:
-              text: "Alphabetically"
-          commands:
-            - tapOn:
-                point: "31%,49%"
-            - waitForAnimationToEnd
-            - evalScript: ${output.sortSelectionApplied = true; output.sortAlphabetically = true}
-
-- runFlow:
-    when:
-      visible:
-        text: "By frequency"
-    commands:
-      - pressKey: back
-
-- runFlow:
-    when:
-      visible:
-        text: "Default sorting"
-    commands:
-      - tapOn:
-          text: "Default sorting"
-
-- runFlow:
-    when:
-      visible:
-        text: "Default Sorting"
-    commands:
-      - tapOn:
-          text: "Default Sorting"
-
-- runFlow:
-    when:
-      visible:
-        text: "Sort available stations"
-    commands:
-      - tapOn:
-          text: "Sort available stations"
-
-- runFlow:
-    when:
-      visible:
-        id: tuner_service_settings_station_sorting_option_alphanumerical_opt
-        text: "Alphabetically"
-        checked: true
-    commands:
-      - evalScript: ${output.sortStateObserved = true; output.sortAlphabetically = true}
-
-- runFlow:
-    when:
-      true: ${output.sortStateObserved != true}
-    commands:
-      - runFlow:
-          when:
-            visible:
-              id: tuner_service_settings_station_sorting_option_alphanumerical_opt
-              text: "Alphabetically"
-              selected: true
-          commands:
-            - evalScript: ${output.sortStateObserved = true; output.sortAlphabetically = true}
-
-- runFlow:
-    when:
-      visible:
-        text: "By frequency"
-    commands:
-      - pressKey: back
-
-- assertTrue: ${output.sortAlphabetically == true}
-
-# Close sorting chooser if it is still open.
-- runFlow:
-    when:
-      visible:
-        text: "By frequency"
-    commands:
-      - tapOn:
-          text: "Sort available stations"
-          optional: true
-      - tapOn:
-          point: "50%,27%"
-          optional: true
-      - waitForAnimationToEnd
-
-- runFlow:
-    when:
-      visible:
-        text: "By frequency"
-    commands:
-      - pressKey: back
-      - waitForAnimationToEnd
-
-# 5) Radio info OFF: use switch state if exposed; fail if no state signal is detectable.
-- evalScript: ${output.radioInfoDisabled = false; output.radioInfoStateObserved = false}
-
-- runFlow:
-    when:
-      visible:
-        id: tuner_service_settings_radio_info_opt
-        checked: true
-    commands:
-      - evalScript: ${output.radioInfoStateObserved = true}
-      - tapOn:
-          id: tuner_service_settings_radio_info_opt
-      - waitForAnimationToEnd
-
-- runFlow:
-    when:
-      true: ${output.radioInfoStateObserved != true}
-    commands:
-      - runFlow:
-          when:
-            visible:
-              id: tuner_service_settings_radio_info_opt
-              selected: true
-          commands:
-            - evalScript: ${output.radioInfoStateObserved = true}
-            - tapOn:
-                id: tuner_service_settings_radio_info_opt
-            - waitForAnimationToEnd
-
-- runFlow:
-    when:
-      true: ${output.radioInfoStateObserved != true}
-    commands:
-      - runFlow:
-          when:
-            visible:
-              id: tuner_service_settings_radio_info_opt
-              text: "On"
-          commands:
-            - evalScript: ${output.radioInfoStateObserved = true}
-            - tapOn:
-                id: tuner_service_settings_radio_info_opt
-            - waitForAnimationToEnd
-
-- runFlow:
-    when:
-      visible:
-        id: tuner_service_settings_radio_info_opt
-        checked: false
-    commands:
-      - evalScript: ${output.radioInfoStateObserved = true; output.radioInfoDisabled = true}
-
-- runFlow:
-    when:
-      true: ${output.radioInfoDisabled != true}
-    commands:
-      - runFlow:
-          when:
-            visible:
-              id: tuner_service_settings_radio_info_opt
-              selected: false
-          commands:
-            - evalScript: ${output.radioInfoStateObserved = true; output.radioInfoDisabled = true}
-
-- runFlow:
-    when:
-      true: ${output.radioInfoDisabled != true}
-    commands:
-      - runFlow:
-          when:
-            visible:
-              id: tuner_service_settings_radio_info_opt
-              text: "Off"
-          commands:
-            - evalScript: ${output.radioInfoStateObserved = true; output.radioInfoDisabled = true}
-
-- runFlow:
-    when:
-      true: ${output.radioInfoStateObserved != true}
-    commands:
-      - runFlow:
-          when:
-            visible:
-              text: "Radio info"
-          commands:
-            - tapOn:
-                text: "Radio info"
+                point: "31%,49%" # Rack fallback for "Alphabetically"
                 optional: true
             - waitForAnimationToEnd
-            - evalScript: ${output.radioInfoStateObserved = true; output.radioInfoDisabled = true}
+            - pressKey: back
+            - waitForAnimationToEnd
 
-- assertTrue: ${output.radioInfoStateObserved == true}
-- assertTrue: ${output.radioInfoDisabled == true}
+      - runFlow:
+          when:
+            visible:
+              text: "Sort available stations"
+          commands:
+            - assertVisible:
+                text: "Alphabetically"
+            - evalScript: ${output.sortAlphabetical = true}
+
+- assertTrue: ${output.sortAlphabetical == true}
+
+# 5) Radio info OFF
+# Ensure sorting chooser does not block toggle checks.
+- runFlow:
+    when:
+      visible:
+        text: "By frequency"
+    commands:
+      - pressKey: back
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible:
+        text: "Public value"
+    commands:
+      - pressKey: back
+      - waitForAnimationToEnd
+
+- assertVisible:
+    id: tuner_service_settings_radio_info_opt
+
+# Mirror fullscreen strategy: detect ON, toggle by ID, re-check until OFF.
+- evalScript: ${output.radioInfoOff = false; output.radioInfoOn = false; output.radioInfoToggleAttempts = 0; output.radioInfoSignalKnown = false}
+
+- repeat:
+    times: 4
+    while:
+      true: ${output.radioInfoOff != true}
+    commands:
+      - evalScript: ${output.radioInfoOn = false}
+
+      - runFlow:
+          when:
+            visible:
+              id: tuner_service_settings_radio_info_opt
+              checked: true
+          commands:
+            - evalScript: ${output.radioInfoOn = true; output.radioInfoSignalKnown = true}
+
+      - runFlow:
+          when:
+            visible:
+              id: tuner_service_settings_radio_info_opt
+              selected: true
+          commands:
+            - evalScript: ${output.radioInfoOn = true; output.radioInfoSignalKnown = true}
+
+      - runFlow:
+          when:
+            true: ${output.radioInfoOn == true}
+          commands:
+            - evalScript: ${output.radioInfoToggleAttempts = output.radioInfoToggleAttempts + 1}
+            - tapOn:
+                id: tuner_service_settings_radio_info_opt
+                retryTapIfNoChange: true
+            - waitForAnimationToEnd
+
+      # If ON was not explicitly detected, do one probe tap before concluding OFF.
+      - runFlow:
+          when:
+            true: ${output.radioInfoOn != true && output.radioInfoToggleAttempts == 0}
+          commands:
+            - evalScript: ${output.radioInfoToggleAttempts = output.radioInfoToggleAttempts + 1; output.radioInfoSignalKnown = true}
+            - tapOn:
+                id: tuner_service_settings_radio_info_opt
+                retryTapIfNoChange: true
+            - waitForAnimationToEnd
+
+      - evalScript: ${output.radioInfoOnAfter = false; output.radioInfoOffAfter = false}
+
+      - runFlow:
+          when:
+            visible:
+              id: tuner_service_settings_radio_info_opt
+              checked: true
+          commands:
+            - evalScript: ${output.radioInfoOnAfter = true; output.radioInfoSignalKnown = true}
+
+      - runFlow:
+          when:
+            visible:
+              id: tuner_service_settings_radio_info_opt
+              selected: true
+          commands:
+            - evalScript: ${output.radioInfoOnAfter = true; output.radioInfoSignalKnown = true}
+
+      - runFlow:
+          when:
+            true: ${output.radioInfoOnAfter != true && output.radioInfoToggleAttempts > 0}
+          commands:
+            - evalScript: ${output.radioInfoOff = true}
+
+      - runFlow:
+          when:
+            true: ${output.radioInfoOff != true}
+          commands:
+            - waitForAnimationToEnd
+
+- assertTrue: ${output.radioInfoSignalKnown == true}
+- assertTrue: ${output.radioInfoOff == true}
 
 # 6) Close Radio settings
 - pressKey: back

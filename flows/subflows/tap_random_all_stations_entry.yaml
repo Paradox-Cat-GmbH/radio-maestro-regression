@@ -12,7 +12,19 @@ tags:
       index: 0
     timeout: 20000
 
-- evalScript: ${output.stationTapped = false}
+- evalScript: ${output.stationTapped = false; output._scrollCount = 0}
+
+- repeat:
+    times: 5
+    while:
+      true: ${output._scrollCount < (output.randStationScrolls || 0)}
+    commands:
+      - swipe:
+          start: "70%,78%"
+          end: "70%,32%"
+          duration: 450
+      - waitForAnimationToEnd
+      - evalScript: ${output._scrollCount = output._scrollCount + 1}
 
 - runFlow:
     when:
@@ -26,17 +38,6 @@ tags:
           commands:
             - tapOn:
                 id: "ListImageComponent ImageRightIcon"
-                index: 0
-                retryTapIfNoChange: true
-            - evalScript: ${output.stationTapped = true}
-      - runFlow:
-          when:
-            visible:
-              id: "ListlmageComponent ImageRightlcon"
-              index: 0
-          commands:
-            - tapOn:
-                id: "ListlmageComponent ImageRightlcon"
                 index: 0
                 retryTapIfNoChange: true
             - evalScript: ${output.stationTapped = true}
@@ -56,17 +57,6 @@ tags:
                 index: 1
                 retryTapIfNoChange: true
             - evalScript: ${output.stationTapped = true}
-      - runFlow:
-          when:
-            visible:
-              id: "ListlmageComponent ImageRightlcon"
-              index: 1
-          commands:
-            - tapOn:
-                id: "ListlmageComponent ImageRightlcon"
-                index: 1
-                retryTapIfNoChange: true
-            - evalScript: ${output.stationTapped = true}
 
 - runFlow:
     when:
@@ -80,17 +70,6 @@ tags:
           commands:
             - tapOn:
                 id: "ListImageComponent ImageRightIcon"
-                index: 2
-                retryTapIfNoChange: true
-            - evalScript: ${output.stationTapped = true}
-      - runFlow:
-          when:
-            visible:
-              id: "ListlmageComponent ImageRightlcon"
-              index: 2
-          commands:
-            - tapOn:
-                id: "ListlmageComponent ImageRightlcon"
                 index: 2
                 retryTapIfNoChange: true
             - evalScript: ${output.stationTapped = true}
@@ -110,17 +89,6 @@ tags:
                 index: 3
                 retryTapIfNoChange: true
             - evalScript: ${output.stationTapped = true}
-      - runFlow:
-          when:
-            visible:
-              id: "ListlmageComponent ImageRightlcon"
-              index: 3
-          commands:
-            - tapOn:
-                id: "ListlmageComponent ImageRightlcon"
-                index: 3
-                retryTapIfNoChange: true
-            - evalScript: ${output.stationTapped = true}
 
 - runFlow:
     when:
@@ -134,17 +102,6 @@ tags:
           commands:
             - tapOn:
                 id: "ListImageComponent ImageRightIcon"
-                index: 4
-                retryTapIfNoChange: true
-            - evalScript: ${output.stationTapped = true}
-      - runFlow:
-          when:
-            visible:
-              id: "ListlmageComponent ImageRightlcon"
-              index: 4
-          commands:
-            - tapOn:
-                id: "ListlmageComponent ImageRightlcon"
                 index: 4
                 retryTapIfNoChange: true
             - evalScript: ${output.stationTapped = true}
@@ -164,17 +121,6 @@ tags:
                 index: 5
                 retryTapIfNoChange: true
             - evalScript: ${output.stationTapped = true}
-      - runFlow:
-          when:
-            visible:
-              id: "ListlmageComponent ImageRightlcon"
-              index: 5
-          commands:
-            - tapOn:
-                id: "ListlmageComponent ImageRightlcon"
-                index: 5
-                retryTapIfNoChange: true
-            - evalScript: ${output.stationTapped = true}
 
 # Deterministic fallback if the chosen index is outside the visible viewport.
 - runFlow:
@@ -189,17 +135,6 @@ tags:
           commands:
             - tapOn:
                 id: "ListImageComponent ImageRightIcon"
-                index: 0
-                retryTapIfNoChange: true
-            - evalScript: ${output.stationTapped = true}
-      - runFlow:
-          when:
-            visible:
-              id: "ListlmageComponent ImageRightlcon"
-              index: 0
-          commands:
-            - tapOn:
-                id: "ListlmageComponent ImageRightlcon"
                 index: 0
                 retryTapIfNoChange: true
             - evalScript: ${output.stationTapped = true}
