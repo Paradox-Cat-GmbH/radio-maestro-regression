@@ -12,6 +12,7 @@
 // Writes:
 //   output.radioVerdict  (object)
 //   output.radioOk       (boolean)
+//   output.radioStrictOk (boolean)
 //   output.radioCheckSkipped (boolean)
 //   output.radioCheckReason  (string)
 (function () {
@@ -72,4 +73,13 @@
 
   output.radioVerdict = parsed;
   output.radioOk = !!(parsed && parsed.ok === true);
+  output.radioStrictOk = !!(
+    parsed &&
+    parsed.ok === true &&
+    parsed.media &&
+    parsed.media.playing === true &&
+    parsed.audio &&
+    parsed.audio.audioFocus === true &&
+    parsed.media.package === pkg
+  );
 })();

@@ -20,4 +20,7 @@ tags:
     when:
       true: ${output.radioCheckSkipped != true}
     commands:
-      - assertTrue: ${output.radioOk == true}
+      - assertTrue: ${output.radioStrictOk == true}
+      - assertTrue: ${output.radioVerdict.media.playing == true}
+      - assertTrue: ${output.radioVerdict.audio.audioFocus == true}
+      - assertTrue: ${output.radioVerdict.media.package == 'com.bmwgroup.apinext.tunermediaservice'}

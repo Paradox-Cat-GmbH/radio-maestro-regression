@@ -6,7 +6,7 @@ tags:
   - radio
 ---
 # Select a bounded random station from "All stations".
-# Override max bound via MAESTRO_RAND_MAX_INDEX (default 3).
+# Override max bound via MAESTRO_RAND_MAX_INDEX (default 5).
 
 - runFlow: ../subflows/ensure_radio_source.yaml
 - runFlow: ../subflows/open_all_stations.yaml
@@ -14,7 +14,7 @@ tags:
 - runScript:
     file: ../../scripts/maestro/pick_random_station.js
     env:
-      RAND_MAX: ${typeof MAESTRO_RAND_MAX_INDEX !== 'undefined' && MAESTRO_RAND_MAX_INDEX ? MAESTRO_RAND_MAX_INDEX : 3}
+      RAND_MAX: "${typeof MAESTRO_RAND_MAX_INDEX !== 'undefined' && MAESTRO_RAND_MAX_INDEX ? MAESTRO_RAND_MAX_INDEX : 5}"
 
 - runFlow: ../subflows/tap_random_all_stations_entry.yaml
 

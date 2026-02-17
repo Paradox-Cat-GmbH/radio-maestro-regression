@@ -32,7 +32,10 @@ const a=(raw.match(/active=(true|false)/m)||[])[1];const active=a==='true'?true:
 const n=(raw.match(/\bstate=(\d+)/m)||[])[1];const stateNum=n?parseInt(n,10):null;
 const brace=(raw.match(/\{state=([^\(\}]+)/m)||[])[1];const named=(raw.match(/\bstate=([A-Z_]+)/m)||[])[1];
 const state=(brace||named||(stateNum!=null?String(stateNum):null));const desc=Array.from(raw.matchAll(/description=(.+)/g)).map(m=>m[1].trim());
-const playing=(stateNum===3)||/STATE_PLAYING|\bPLAYING\b/i.test(raw)||/PLAYING/i.test(String(state||''));return{package:pkg,active,state,stateNum,playing,description:desc,raw};});
+const q=(raw.match(/queueTitle=([^,\n]+),\s*size=(\d+)/m)||[]);const queueTitle=q[1]?q[1].trim():null;const queueSize=q[2]?parseInt(q[2],10):null;
+const md=(raw.match(/metadata:\s*size=\d+,\s*description=(.+)/m)||[])[1]||null;const mdParts=md?md.split(',').map(s=>s.trim()):[];
+const metadataTitle=(mdParts[0]&&mdParts[0]!=='null')?mdParts[0]:null;const metadataArtist=(mdParts[1]&&mdParts[1]!=='null')?mdParts[1]:null;
+const playing=(stateNum===3)||/STATE_PLAYING|\bPLAYING\b/i.test(raw)||/PLAYING/i.test(String(state||''));return{package:pkg,active,state,stateNum,playing,description:desc,queueTitle,queueSize,metadataDescription:md,metadataTitle,metadataArtist,raw};});
 const pickSession=(sessions,pkgs)=>{pkgs=(pkgs||[]).filter(Boolean);for(const p of pkgs){const hit=sessions.find(s=>s.package===p);if(hit)return hit;}return sessions.find(s=>s&&s.active===true)||null;};
 
 // --- core actions ---
@@ -52,7 +55,10 @@ async function radioCheck(p){
   const mediaActive=!!(s&&s.active===true);const mediaPlaying=!!(s&&s.playing===true);
   const ok=!!(audioFocus&&mediaActive&&mediaPlaying);
   const verdict={ok,deviceId:dev,stamp:st,expectedPackage:exp,expectedPackages:pkgs,audio:{audioFocus,audioPackages:ap},userId:uid,
-    media:s?{package:s.package,active:s.active,state:s.state,stateNum:s.stateNum,playing:mediaPlaying,description:s.description}:{package:null,active:null,state:null,stateNum:null,playing:false,description:[]},outDir:dir};
+    media:s?{
+      package:s.package,active:s.active,state:s.state,stateNum:s.stateNum,playing:mediaPlaying,description:s.description,
+      queueTitle:s.queueTitle,queueSize:s.queueSize,metadataDescription:s.metadataDescription,metadataTitle:s.metadataTitle,metadataArtist:s.metadataArtist
+    }:{package:null,active:null,state:null,stateNum:null,playing:false,description:[],queueTitle:null,queueSize:null,metadataDescription:null,metadataTitle:null,metadataArtist:null},outDir:dir};
   write(dir,'backend_verdict.json',JSON.stringify(verdict,null,2));return verdict;
 }
 
