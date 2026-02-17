@@ -1,0 +1,207 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: Tap random station from All stations (index-branch safe)
+tags:
+  - subflow
+  - radio
+  - station_select
+---
+- extendedWaitUntil:
+    visible:
+      id: "ListImageComponent ImageRightIcon"
+      index: 0
+    timeout: 20000
+
+- evalScript: ${output.stationTapped = false}
+
+- runFlow:
+    when:
+      true: ${output.randStationIndex == 0}
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "ListImageComponent ImageRightIcon"
+              index: 0
+          commands:
+            - tapOn:
+                id: "ListImageComponent ImageRightIcon"
+                index: 0
+                retryTapIfNoChange: true
+            - evalScript: ${output.stationTapped = true}
+      - runFlow:
+          when:
+            visible:
+              id: "ListlmageComponent ImageRightlcon"
+              index: 0
+          commands:
+            - tapOn:
+                id: "ListlmageComponent ImageRightlcon"
+                index: 0
+                retryTapIfNoChange: true
+            - evalScript: ${output.stationTapped = true}
+
+- runFlow:
+    when:
+      true: ${output.randStationIndex == 1}
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "ListImageComponent ImageRightIcon"
+              index: 1
+          commands:
+            - tapOn:
+                id: "ListImageComponent ImageRightIcon"
+                index: 1
+                retryTapIfNoChange: true
+            - evalScript: ${output.stationTapped = true}
+      - runFlow:
+          when:
+            visible:
+              id: "ListlmageComponent ImageRightlcon"
+              index: 1
+          commands:
+            - tapOn:
+                id: "ListlmageComponent ImageRightlcon"
+                index: 1
+                retryTapIfNoChange: true
+            - evalScript: ${output.stationTapped = true}
+
+- runFlow:
+    when:
+      true: ${output.randStationIndex == 2}
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "ListImageComponent ImageRightIcon"
+              index: 2
+          commands:
+            - tapOn:
+                id: "ListImageComponent ImageRightIcon"
+                index: 2
+                retryTapIfNoChange: true
+            - evalScript: ${output.stationTapped = true}
+      - runFlow:
+          when:
+            visible:
+              id: "ListlmageComponent ImageRightlcon"
+              index: 2
+          commands:
+            - tapOn:
+                id: "ListlmageComponent ImageRightlcon"
+                index: 2
+                retryTapIfNoChange: true
+            - evalScript: ${output.stationTapped = true}
+
+- runFlow:
+    when:
+      true: ${output.randStationIndex == 3}
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "ListImageComponent ImageRightIcon"
+              index: 3
+          commands:
+            - tapOn:
+                id: "ListImageComponent ImageRightIcon"
+                index: 3
+                retryTapIfNoChange: true
+            - evalScript: ${output.stationTapped = true}
+      - runFlow:
+          when:
+            visible:
+              id: "ListlmageComponent ImageRightlcon"
+              index: 3
+          commands:
+            - tapOn:
+                id: "ListlmageComponent ImageRightlcon"
+                index: 3
+                retryTapIfNoChange: true
+            - evalScript: ${output.stationTapped = true}
+
+- runFlow:
+    when:
+      true: ${output.randStationIndex == 4}
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "ListImageComponent ImageRightIcon"
+              index: 4
+          commands:
+            - tapOn:
+                id: "ListImageComponent ImageRightIcon"
+                index: 4
+                retryTapIfNoChange: true
+            - evalScript: ${output.stationTapped = true}
+      - runFlow:
+          when:
+            visible:
+              id: "ListlmageComponent ImageRightlcon"
+              index: 4
+          commands:
+            - tapOn:
+                id: "ListlmageComponent ImageRightlcon"
+                index: 4
+                retryTapIfNoChange: true
+            - evalScript: ${output.stationTapped = true}
+
+- runFlow:
+    when:
+      true: ${output.randStationIndex == 5}
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "ListImageComponent ImageRightIcon"
+              index: 5
+          commands:
+            - tapOn:
+                id: "ListImageComponent ImageRightIcon"
+                index: 5
+                retryTapIfNoChange: true
+            - evalScript: ${output.stationTapped = true}
+      - runFlow:
+          when:
+            visible:
+              id: "ListlmageComponent ImageRightlcon"
+              index: 5
+          commands:
+            - tapOn:
+                id: "ListlmageComponent ImageRightlcon"
+                index: 5
+                retryTapIfNoChange: true
+            - evalScript: ${output.stationTapped = true}
+
+# Deterministic fallback if the chosen index is outside the visible viewport.
+- runFlow:
+    when:
+      true: ${output.stationTapped != true}
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "ListImageComponent ImageRightIcon"
+              index: 0
+          commands:
+            - tapOn:
+                id: "ListImageComponent ImageRightIcon"
+                index: 0
+                retryTapIfNoChange: true
+            - evalScript: ${output.stationTapped = true}
+      - runFlow:
+          when:
+            visible:
+              id: "ListlmageComponent ImageRightlcon"
+              index: 0
+          commands:
+            - tapOn:
+                id: "ListlmageComponent ImageRightlcon"
+                index: 0
+                retryTapIfNoChange: true
+            - evalScript: ${output.stationTapped = true}
+
+- assertTrue: ${output.stationTapped == true}

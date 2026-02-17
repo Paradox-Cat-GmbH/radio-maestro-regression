@@ -12,6 +12,8 @@
 // Writes:
 //   output.radioVerdict  (object)
 //   output.radioOk       (boolean)
+//   output.radioCheckSkipped (boolean)
+//   output.radioCheckReason  (string)
 (function () {
   function str(v, dflt) {
     if (v === undefined || v === null) return dflt;
@@ -45,14 +47,27 @@
   var url = backendUrl.replace(/\/+$/, "") + "/radio/check";
   var payload = { deviceId: deviceId, packageName: pkg, runDir: runDir, testId: testId };
   if (expectedPackages && expectedPackages.length) payload.expectedPackages = expectedPackages;
+  output.radioCheckSkipped = false;
+  output.radioCheckReason = "";
 
-  var resp = http.post(url, { headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-  var raw = (resp && typeof resp === "object" && resp.body !== undefined) ? resp.body : resp;
   var parsed = null;
   try {
-    parsed = (typeof raw === "string") ? JSON.parse(raw) : raw;
+    var resp = http.post(url, { headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    var raw = (resp && typeof resp === "object" && resp.body !== undefined) ? resp.body : resp;
+    try {
+      parsed = (typeof raw === "string") ? JSON.parse(raw) : raw;
+    } catch (e) {
+      parsed = { ok: false, error: String(e), raw: raw };
+    }
   } catch (e) {
-    parsed = { ok: false, error: String(e), raw: raw };
+    output.radioCheckSkipped = true;
+    output.radioCheckReason = "Control server unavailable: " + String(e);
+    parsed = {
+      ok: false,
+      skipped: true,
+      reason: output.radioCheckReason,
+      url: url
+    };
   }
 
   output.radioVerdict = parsed;

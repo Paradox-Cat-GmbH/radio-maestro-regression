@@ -5,9 +5,17 @@ tags:
   - subflow
   - radio
 ---
-- evalScript: ${output.onRadio = false; output._attempt = 0}
+# Leandro navigation shape:
+# 1) Home
+# 2) Media DET
+# 3) If not on Radio, resolve Source -> Radio; otherwise tap Media DET again.
+- evalScript: ${output.onRadio = false; output._attempt = 0; output.didAction = false}
 
-- runFlow: ../subflows/open_media.yaml
+- pressKey: home
+- tapOn:
+    id: IconicBar.Det.Home
+    optional: true
+- runFlow: ../subflows/tap_media_det.yaml
 
 - repeat:
     times: 6
@@ -16,6 +24,7 @@ tags:
     commands:
       - evalScript: ${output.didAction = false; output._attempt = (output._attempt || 0) + 1}
 
+      # 3.1 Already on Radio
       - runFlow:
           when:
             visible:
@@ -23,45 +32,64 @@ tags:
           commands:
             - evalScript: ${output.onRadio = true; output.didAction = true}
 
+      # 3.2 Source page (or source list) -> choose Radio
       - runFlow:
           when:
-            visible:
-              id: "SourceAvailableInList_DynamicString(text=Radio, testTag=null)"
-              text: "Radio"
+            true: ${output.onRadio != true && output.didAction != true}
           commands:
-            - tapOn:
-                id: "SourceAvailableInList_DynamicString(text=Radio, testTag=null)"
-                text: "Radio"
-            - evalScript: ${output.didAction = true}
+            - runFlow:
+                when:
+                  visible:
+                    id: "SourceAvailableInList_DynamicString(text=Radio, testTag=null)"
+                    text: "Radio"
+                commands:
+                  - tapOn:
+                      id: "SourceAvailableInList_DynamicString(text=Radio, testTag=null)"
+                      text: "Radio"
+                  - waitForAnimationToEnd
+                  - evalScript: ${output.didAction = true}
 
+            - runFlow:
+                when:
+                  true: ${output.didAction != true}
+                commands:
+                  - runFlow:
+                      when:
+                        visible:
+                          id: media_app_source_selector_lb
+                          text: "Source"
+                      commands:
+                        - runFlow: ../subflows/open_source_selector.yaml
+                        - waitForAnimationToEnd
+                        - evalScript: ${output.didAction = true}
+
+            - runFlow:
+                when:
+                  true: ${output.didAction != true}
+                commands:
+                  - runFlow:
+                      when:
+                        visible:
+                          id: media_app_name
+                          text: "Media"
+                      commands:
+                        - runFlow: ../subflows/open_source_selector.yaml
+                        - waitForAnimationToEnd
+                        - evalScript: ${output.didAction = true}
+
+      # 3.3 Not on Source and not on Radio -> tap Media DET again
       - runFlow:
           when:
-            visible:
-              id: media_app_source_selector_lb
-              text: "Source"
-          commands:
-            - runFlow: ../subflows/open_source_selector.yaml
-            - evalScript: ${output.didAction = true}
-
-      - runFlow:
-          when:
-            true: ${output.didAction != true}
+            true: ${output.onRadio != true && output.didAction != true}
           commands:
             - runFlow: ../subflows/tap_media_det.yaml
+            - waitForAnimationToEnd
             - runFlow:
                 when:
                   true: ${output._attempt >= 3}
                 commands:
                   - runFlow: ../subflows/double_tap_media_det.yaml
-
-
-# Run preconditions once per test run (stable settings baseline)
-- runFlow:
-    when:
-      true: ${output.preconditionsDone != true}
-    commands:
-      - runFlow: ../subflows/preconditions_radio_settings.yaml
-      - evalScript: ${output.preconditionsDone = true}
+                  - waitForAnimationToEnd
 
 - extendedWaitUntil:
     visible:
