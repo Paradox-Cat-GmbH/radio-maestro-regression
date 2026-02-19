@@ -142,13 +142,6 @@ tags:
       - runFlow:
           when:
             visible:
-              id: tuner_service_settings_radio_info_opt
-          commands:
-            - evalScript: ${output.radioSettingsOpen = true}
-
-      - runFlow:
-          when:
-            visible:
               text: "Radio info"
           commands:
             - evalScript: ${output.radioSettingsOpen = true}
@@ -230,120 +223,54 @@ tags:
       - waitForAnimationToEnd
 
 - assertVisible:
-    id: tuner_service_settings_radio_info_opt
+    text: "Radio info"
 
-# Mirror fullscreen strategy: detect ON, toggle by ID, re-check until OFF.
-- evalScript: ${output.radioInfoOff = false; output.radioInfoOn = false; output.radioInfoToggleAttempts = 0; output.radioInfoSignalKnown = false}
-
-- repeat:
-    times: 4
-    while:
-      true: ${output.radioInfoOff != true}
+# Radio info OFF (state from actual switch node in row)
+# NOTE: Maestro selectors support checked, not checkable.
+- retry:
+    maxRetries: 3
     commands:
-      - evalScript: ${output.radioInfoOn = false; output.radioInfoOffDetected = false; output.radioInfoStateKnown = false}
-
+      # If Radio info row contains checked=true, toggle it OFF
       - runFlow:
           when:
             visible:
-              id: tuner_service_settings_radio_info_opt
               checked: true
+              childOf:
+                id: UiLib:ListComponent
+                containsDescendants:
+                  - text: "Radio info"
           commands:
-            - evalScript: ${output.radioInfoOn = true; output.radioInfoStateKnown = true; output.radioInfoSignalKnown = true}
+            - tapOn:
+                checked: true
+                childOf:
+                  id: UiLib:ListComponent
+                  containsDescendants:
+                    - text: "Radio info"
+                optional: true
+            - waitForAnimationToEnd
 
+      # fallback tap on known switch area if still ON
       - runFlow:
           when:
             visible:
-              id: tuner_service_settings_radio_info_opt
-              checked: false
+              checked: true
+              childOf:
+                id: UiLib:ListComponent
+                containsDescendants:
+                  - text: "Radio info"
           commands:
-            - evalScript: ${output.radioInfoOffDetected = true; output.radioInfoStateKnown = true; output.radioInfoSignalKnown = true}
-
-      - runFlow:
-          when:
-            true: ${output.radioInfoStateKnown != true}
-          commands:
-            - runFlow:
-                when:
-                  visible:
-                    id: tuner_service_settings_radio_info_opt
-                    selected: true
-                commands:
-                  - evalScript: ${output.radioInfoOn = true; output.radioInfoStateKnown = true; output.radioInfoSignalKnown = true}
-            - runFlow:
-                when:
-                  visible:
-                    id: tuner_service_settings_radio_info_opt
-                    selected: false
-                commands:
-                  - evalScript: ${output.radioInfoOffDetected = true; output.radioInfoStateKnown = true; output.radioInfoSignalKnown = true}
-
-      - runFlow:
-          when:
-            true: ${output.radioInfoOffDetected == true}
-          commands:
-            - evalScript: ${output.radioInfoOff = true}
-
-      - runFlow:
-          when:
-            true: ${output.radioInfoOn == true}
-          commands:
-            - evalScript: ${output.radioInfoToggleAttempts = output.radioInfoToggleAttempts + 1}
             - tapOn:
-                id: tuner_service_settings_radio_info_opt
-                retryTapIfNoChange: true
+                point: "28%,39%"
+                optional: true
             - waitForAnimationToEnd
 
-            - evalScript: ${output.radioInfoOnAfter = false; output.radioInfoOffAfter = false; output.radioInfoStateKnownAfter = false}
-
-            - runFlow:
-                when:
-                  visible:
-                    id: tuner_service_settings_radio_info_opt
-                    checked: true
-                commands:
-                  - evalScript: ${output.radioInfoOnAfter = true; output.radioInfoStateKnownAfter = true; output.radioInfoSignalKnown = true}
-
-            - runFlow:
-                when:
-                  visible:
-                    id: tuner_service_settings_radio_info_opt
-                    checked: false
-                commands:
-                  - evalScript: ${output.radioInfoOffAfter = true; output.radioInfoStateKnownAfter = true; output.radioInfoSignalKnown = true}
-
-            - runFlow:
-                when:
-                  true: ${output.radioInfoStateKnownAfter != true}
-                commands:
-                  - runFlow:
-                      when:
-                        visible:
-                          id: tuner_service_settings_radio_info_opt
-                          selected: true
-                      commands:
-                        - evalScript: ${output.radioInfoOnAfter = true; output.radioInfoStateKnownAfter = true; output.radioInfoSignalKnown = true}
-                  - runFlow:
-                      when:
-                        visible:
-                          id: tuner_service_settings_radio_info_opt
-                          selected: false
-                      commands:
-                        - evalScript: ${output.radioInfoOffAfter = true; output.radioInfoStateKnownAfter = true; output.radioInfoSignalKnown = true}
-
-            - runFlow:
-                when:
-                  true: ${output.radioInfoOffAfter == true}
-                commands:
-                  - evalScript: ${output.radioInfoOff = true}
-
-      - runFlow:
-          when:
-            true: ${output.radioInfoOff != true}
-          commands:
-            - waitForAnimationToEnd
-
-- assertTrue: ${output.radioInfoSignalKnown == true}
-- assertTrue: ${output.radioInfoOff == true}
+      # must end with no checked=true in Radio info row
+      - assertNotVisible:
+          checked: true
+          childOf:
+            id: UiLib:ListComponent
+            containsDescendants:
+              - text: "Radio info"
 
 # 6) Close Radio settings
 - pressKey: back
