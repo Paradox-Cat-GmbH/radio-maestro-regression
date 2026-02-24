@@ -10,11 +10,27 @@ tags:
 - runScript:
     file: ../../scripts/maestro/radio_check.js
 
+# One retry helps with transient control-server races right after tune.
+- runFlow:
+    when:
+      true: ${output.radioCheckSkipped == true}
+    commands:
+      - waitForAnimationToEnd
+      - runScript:
+          file: ../../scripts/maestro/radio_check.js
+
+- evalScript: ${output.radioAllowSkip = (typeof MAESTRO_RADIO_ALLOW_SKIP !== 'undefined' && String(MAESTRO_RADIO_ALLOW_SKIP).toLowerCase() == 'true')}
+
 - runFlow:
     when:
       true: ${output.radioCheckSkipped == true}
     commands:
       - evalScript: "${output.radioBackendCheckResult = 'SKIPPED: ' + output.radioCheckReason}"
+      - runFlow:
+          when:
+            true: ${output.radioAllowSkip != true}
+          commands:
+            - assertTrue: ${output.radioCheckSkipped != true}
 
 - runFlow:
     when:

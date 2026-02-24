@@ -1,6 +1,6 @@
 appId: com.bmwgroup.idnext.launcher
 jsEngine: graaljs
-name: Tap random station from All stations (index-branch safe)
+name: Tap random station from All stations (label-primary, index-fallback)
 tags:
   - subflow
   - radio
@@ -12,12 +12,36 @@ tags:
       index: 0
     timeout: 20000
 
-- evalScript: ${output.stationTapped = false; output._scrollCount = 0}
+- evalScript: "${output.stationTapped = false; output._scrollCount = 0; output._labelScrollCount = 0; output.stationTarget = (typeof MAESTRO_STATION_TARGET !== 'undefined' ? String(MAESTRO_STATION_TARGET).trim() : '')}"
 
+# Primary path: if a station label/frequency is provided, scroll until visible and tap by text.
+- repeat:
+    times: 10
+    while:
+      true: ${output.stationTapped != true && output.stationTarget.length > 0 && output._labelScrollCount < 10}
+    commands:
+      - runFlow:
+          when:
+            visible: "${output.stationTarget}"
+          commands:
+            - tapOn: "${output.stationTarget}"
+            - evalScript: ${output.stationTapped = true}
+      - runFlow:
+          when:
+            true: ${output.stationTapped != true}
+          commands:
+            - swipe:
+                start: "70%,78%"
+                end: "70%,32%"
+                duration: 450
+            - waitForAnimationToEnd
+            - evalScript: ${output._labelScrollCount = output._labelScrollCount + 1}
+
+# Fallback path: deterministic index selection (safe for current 5-row viewport).
 - repeat:
     times: 5
     while:
-      true: ${output._scrollCount < (output.randStationScrolls || 0)}
+      true: ${output.stationTapped != true && output._scrollCount < (output.randStationScrolls || 0)}
     commands:
       - swipe:
           start: "70%,78%"
@@ -28,7 +52,7 @@ tags:
 
 - runFlow:
     when:
-      true: ${output.randStationIndex == 0}
+      true: ${output.stationTapped != true && output.randStationIndex == 0}
     commands:
       - runFlow:
           when:
@@ -44,7 +68,7 @@ tags:
 
 - runFlow:
     when:
-      true: ${output.randStationIndex == 1}
+      true: ${output.stationTapped != true && output.randStationIndex == 1}
     commands:
       - runFlow:
           when:
@@ -60,7 +84,7 @@ tags:
 
 - runFlow:
     when:
-      true: ${output.randStationIndex == 2}
+      true: ${output.stationTapped != true && output.randStationIndex == 2}
     commands:
       - runFlow:
           when:
@@ -76,7 +100,7 @@ tags:
 
 - runFlow:
     when:
-      true: ${output.randStationIndex == 3}
+      true: ${output.stationTapped != true && output.randStationIndex == 3}
     commands:
       - runFlow:
           when:
@@ -92,7 +116,7 @@ tags:
 
 - runFlow:
     when:
-      true: ${output.randStationIndex == 4}
+      true: ${output.stationTapped != true && output.randStationIndex == 4}
     commands:
       - runFlow:
           when:
@@ -106,23 +130,7 @@ tags:
                 retryTapIfNoChange: true
             - evalScript: ${output.stationTapped = true}
 
-- runFlow:
-    when:
-      true: ${output.randStationIndex == 5}
-    commands:
-      - runFlow:
-          when:
-            visible:
-              id: "ListImageComponent ImageRightIcon"
-              index: 5
-          commands:
-            - tapOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 5
-                retryTapIfNoChange: true
-            - evalScript: ${output.stationTapped = true}
-
-# Deterministic fallback if the chosen index is outside the visible viewport.
+# Last fallback to keep flow deterministic.
 - runFlow:
     when:
       true: ${output.stationTapped != true}
