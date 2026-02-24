@@ -3,9 +3,10 @@
 //
 // Expected JS variables:
 //   RAND_MAX (string/int) default 5
+//   FIXED_INDEX (string/int) optional exact absolute index to use (debug/repro)
 //
 // Writes:
-//   output.randStationIndex         (0..5 visible index after scrolling)
+//   output.randStationIndex         (0..4 visible index after scrolling)
 //   output.randStationScrolls       (how many page scrolls before tapping)
 //   output.randStationAbsoluteIndex (absolute random index before paging)
 //   output.randStationMax           (effective max bound)
@@ -15,16 +16,18 @@
     return isNaN(n) ? dflt : n;
   }
 
-  var pageSize = 6; // We tap among 6 visible rows (index 0..5)
-  var maxScrolls = 4; // Supports up to 30 stations (5 pages x 6)
+  var pageSize = 5; // We tap among 5 visible rows (index 0..4)
+  var maxScrolls = 4; // Supports up to 25 stations (5 pages x 5)
   var max = intVal(typeof RAND_MAX !== "undefined" ? RAND_MAX : 5, 5);
+  var fixedIndex = intVal(typeof FIXED_INDEX !== "undefined" ? FIXED_INDEX : -1, -1);
 
   if (max < 0) max = 0;
   if (max > (pageSize * (maxScrolls + 1) - 1)) {
     max = pageSize * (maxScrolls + 1) - 1;
   }
 
-  var absIdx = Math.floor(Math.random() * (max + 1));
+  var absIdx = (fixedIndex >= 0) ? fixedIndex : Math.floor(Math.random() * (max + 1));
+  if (absIdx > max) absIdx = max;
   var scrolls = Math.floor(absIdx / pageSize);
   if (scrolls > maxScrolls) scrolls = maxScrolls;
 
