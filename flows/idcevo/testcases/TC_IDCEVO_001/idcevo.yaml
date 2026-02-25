@@ -1,0 +1,8 @@
+appId: com.android.settings
+onFlowStart:
+  - runFlow: ../../subflows/common/start.yaml
+onFlowComplete:
+  - runFlow: ../../subflows/common/stop.yaml
+---
+- takeScreenshot: "IDCEVO_00_start"
+- takeScreenshot: "IDCEVO_99_end"

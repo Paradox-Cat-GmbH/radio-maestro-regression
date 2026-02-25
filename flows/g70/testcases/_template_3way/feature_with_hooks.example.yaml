@@ -1,0 +1,10 @@
+appId: com.android.settings
+onFlowStart:
+  - runFlow: ../../subflows/common/login.yaml
+onFlowComplete:
+  - runFlow: ../../subflows/common/cleanup.yaml
+---
+- takeScreenshot: "FEATURE_START"
+# - tapOn: "My Feature"
+# - assertVisible: "Success"
+- takeScreenshot: "FEATURE_END"

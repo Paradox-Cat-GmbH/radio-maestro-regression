@@ -1,0 +1,14 @@
+appId: com.android.settings
+jsEngine: graaljs
+---
+- runScript:
+    file: ../../../../scripts/maestro/dlt_start.js
+    env:
+      CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+      DLT_IP: ${DLT_IP}
+      DLT_PORT: ${DLT_PORT}
+      CASE_ID: ${CASE_ID}
+      RUN_TS: ${RUN_TS}
+      RUN_ROOT: ${RUN_ROOT}
+      DLT_OUTPUT: ${DLT_OUTPUT}
+      CAPTURE_ID: ${CAPTURE_ID}

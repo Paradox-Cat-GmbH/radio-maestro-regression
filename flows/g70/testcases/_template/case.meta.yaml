@@ -1,0 +1,10 @@
+caseId: "TC_TEMPLATE"
+title: "Describe scenario briefly"
+owner: ""
+priority: "P2"
+notes:
+  - "What should happen on Device A"
+  - "What should happen on Device B"
+acceptance:
+  - "Both flows pass"
+  - "Expected screenshots are produced"

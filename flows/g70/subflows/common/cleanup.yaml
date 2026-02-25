@@ -1,0 +1,5 @@
+appId: com.android.settings
+---
+# Placeholder cleanup subflow.
+# Replace with real teardown/reset steps when test case is defined.
+- takeScreenshot: "CLEANUP_PLACEHOLDER"

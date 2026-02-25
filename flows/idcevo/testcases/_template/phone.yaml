@@ -1,0 +1,9 @@
+appId: com.android.settings
+onFlowStart:
+  - runFlow: ../../subflows/common/login.yaml
+onFlowComplete:
+  - runFlow: ../../subflows/common/cleanup.yaml
+---
+# Phone-side flow
+- takeScreenshot: "PHONE_00_start"
+- takeScreenshot: "PHONE_99_end"
