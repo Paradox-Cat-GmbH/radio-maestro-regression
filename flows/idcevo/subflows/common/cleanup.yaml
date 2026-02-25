@@ -1,0 +1,3 @@
+appId: com.android.settings
+---
+- takeScreenshot: "CLEANUP_HOOK_PLACEHOLDER"

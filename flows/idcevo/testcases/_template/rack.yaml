@@ -1,0 +1,9 @@
+appId: com.android.settings
+onFlowStart:
+  - runFlow: ../../subflows/common/login.yaml
+onFlowComplete:
+  - runFlow: ../../subflows/common/cleanup.yaml
+---
+# IDCEvo rack-side flow
+- takeScreenshot: "RACK_00_start"
+- takeScreenshot: "RACK_99_end"

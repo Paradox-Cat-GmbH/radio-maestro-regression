@@ -1,0 +1,5 @@
+appId: com.android.settings
+---
+# Placeholder login/setup subflow.
+# Replace with real login/navigation steps when test case is defined.
+- takeScreenshot: "LOGIN_PLACEHOLDER"
