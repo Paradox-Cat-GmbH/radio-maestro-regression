@@ -1,0 +1,11 @@
+caseId: "TC_TEMPLATE"
+title: "IDCEvo E2E PoC"
+owner: ""
+priority: "P1"
+notes:
+  - "Validate same-time execution"
+  - "Validate DLT capture start/stop"
+  - "Validate onFlowStart/onFlowComplete hooks"
+acceptance:
+  - "Phone + rack flow pass"
+  - "DLT file produced"

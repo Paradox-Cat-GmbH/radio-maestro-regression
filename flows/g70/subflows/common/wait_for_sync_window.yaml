@@ -1,0 +1,5 @@
+appId: com.android.settings
+---
+# Small stabilization pause when needed by both sides
+- waitForAnimationToEnd
+- takeScreenshot: "SYNC_WINDOW"

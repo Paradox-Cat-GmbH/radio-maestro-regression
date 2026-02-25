@@ -1,0 +1,15 @@
+appId: com.android.settings
+---
+# Device A (phone)
+# Keep steps specific to phone side.
+
+- takeScreenshot: "A_00_start"
+
+# Example shared call:
+# - runFlow: ../../subflows/common/wait_for_sync_window.yaml
+
+# Example app-side action:
+# - launchApp
+# - tapOn: "Apps"
+
+- takeScreenshot: "A_99_end"

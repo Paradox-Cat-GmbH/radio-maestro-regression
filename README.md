@@ -114,6 +114,20 @@ run_suite.bat <DEVICE_ID>
 run_lightning_demo.bat <DEVICE_ID>
 ```
 
+## G70 multi-target orchestrator
+End-to-end PoC runner:
+- `scripts/g70_orchestrator.ps1`
+- config: `scripts/g70_orchestrator.targets.json`
+- docs: `docs/G70_MULTI_DEVICE_POC.md`
+
+Run:
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\g70_orchestrator.ps1
+```
+
+It generates per-run JSON/HTML/ZIP artifacts under:
+- `artifacts/g70_orchestrator/<runId>/`
+
 ## Maestro Studio notes
 Default workspace config keeps artifacts in repo:
 - `config.yaml`

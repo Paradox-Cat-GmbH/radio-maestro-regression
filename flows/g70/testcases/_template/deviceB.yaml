@@ -1,0 +1,14 @@
+appId: com.android.settings
+---
+# Device B (G70 rack)
+# Keep steps specific to headunit/rack side.
+
+- takeScreenshot: "B_00_start"
+
+# Example shared call:
+# - runFlow: ../../subflows/common/wait_for_sync_window.yaml
+
+# Example rack-side action:
+# - tapOn: "Settings"
+
+- takeScreenshot: "B_99_end"
