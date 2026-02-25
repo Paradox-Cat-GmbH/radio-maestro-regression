@@ -1,0 +1,19 @@
+{
+  "runName": "g70_multitarget_poc",
+  "continueOnFailure": true,
+  "connectRetries": 3,
+  "actionRetries": 2,
+  "connectTimeoutSec": 10,
+  "targets": [
+    { "name": "CDE", "ip": "169.254.166.167", "displayId": 0, "enabled": true },
+    { "name": "RSE", "ip": "169.254.166.152", "displayId": 0, "enabled": true },
+    { "name": "HU",  "ip": "169.254.166.99",  "displayId": 0, "enabled": true }
+  ],
+  "actions": {
+    "calendarPackage": "com.google.android.calendar",
+    "remoteDumpTemplate": "/sdcard/window_dump_{name}.xml",
+    "localDumpTemplate": "window_dump_{name}.xml",
+    "runMaestro": false,
+    "maestroFlow": "flows/demo/IDCEVODEV-478199__all_stations_select.yaml"
+  }
+}
