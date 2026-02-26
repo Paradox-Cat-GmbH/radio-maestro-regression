@@ -32,10 +32,10 @@ if ($connected.Count -lt 3) {
     throw "Need at least 3 connected devices in 'device' state. Found: $($connected.Count)"
 }
 
-# Auto-pick first 3 if not provided
-if (-not $CDE) { $CDE = $connected[0] }
-if (-not $RSE) { $RSE = $connected[1] }
-if (-not $HU)  { $HU  = $connected[2] }
+# Require explicit mapping to avoid accidental CDE/RSE swaps from adb list ordering
+if (-not $CDE -or -not $RSE -or -not $HU) {
+    throw "Explicit device mapping required. Provide -CDE, -RSE, -HU. Example: -CDE '169.254.166.167:5555' -RSE '169.254.166.152:5555' -HU '169.254.166.99:5555'"
+}
 
 if (-not ($connected -contains $CDE)) { throw "CDE not connected: $CDE" }
 if (-not ($connected -contains $RSE)) { throw "RSE not connected: $RSE" }
