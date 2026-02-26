@@ -4,7 +4,9 @@ param(
 
     [string]$CDE,
     [string]$RSE,
-    [string]$HU
+    [string]$HU,
+
+    [switch]$IgnoreHooks
 )
 
 $ErrorActionPreference = "Stop"
@@ -51,6 +53,35 @@ Write-Host "Using HU : $HU"
 
 $deviceList = "$CDE,$RSE,$HU"
 
+$runFlowCDE = $flowCDE
+$runFlowRSE = $flowRSE
+$runFlowHU  = $flowHU
+$hooklessTemp = @()
+
+if ($IgnoreHooks) {
+    Write-Host "IgnoreHooks enabled: generating hookless temporary flows for CLI execution..."
+
+    function New-HooklessFlow([string]$srcPath, [string]$suffix) {
+        $raw = Get-Content -Raw $srcPath
+        $parts = $raw -split "`r?`n---`r?`n", 2
+        if ($parts.Count -lt 2) { return $srcPath }
+
+        $header = $parts[0]
+        $body = $parts[1]
+        $appIdLine = ($header -split "`r?`n" | Where-Object { $_ -match '^\s*appId\s*:' } | Select-Object -First 1)
+        if (-not $appIdLine) { $appIdLine = 'appId: com.android.settings' }
+
+        $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("g70_hookless_{0}_{1}.yaml" -f $suffix, ([System.Guid]::NewGuid().ToString('N')))
+        ($appIdLine + "`r`n---`r`n" + $body) | Set-Content -Encoding UTF8 $tmp
+        $hooklessTemp += $tmp
+        return $tmp
+    }
+
+    $runFlowCDE = New-HooklessFlow $flowCDE "cde"
+    $runFlowRSE = New-HooklessFlow $flowRSE "rse"
+    $runFlowHU  = New-HooklessFlow $flowHU  "hu"
+}
+
 Write-Host "Running 3 flows simultaneously across CDE/RSE/HU..."
 
 $outFile = [System.IO.Path]::GetTempFileName()
@@ -58,7 +89,7 @@ $errFile = [System.IO.Path]::GetTempFileName()
 
 try {
     $p = Start-Process -FilePath "maestro" `
-        -ArgumentList @("test", "--no-ansi", "--device", $deviceList, "--shard-split", "3", $flowCDE, $flowRSE, $flowHU) `
+        -ArgumentList @("test", "--no-ansi", "--device", $deviceList, "--shard-split", "3", $runFlowCDE, $runFlowRSE, $runFlowHU) `
         -NoNewWindow -PassThru -Wait `
         -RedirectStandardOutput $outFile `
         -RedirectStandardError $errFile
@@ -81,6 +112,9 @@ try {
 }
 finally {
     Remove-Item -ErrorAction SilentlyContinue $outFile, $errFile
+    if ($hooklessTemp.Count -gt 0) {
+        Remove-Item -ErrorAction SilentlyContinue $hooklessTemp
+    }
 }
 
 Write-Host "All 3 device flows completed successfully."
