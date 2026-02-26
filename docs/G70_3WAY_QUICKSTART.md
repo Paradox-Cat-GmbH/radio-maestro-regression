@@ -39,3 +39,17 @@
 ```powershell
 .\scripts\run-g70-3way-with-dlt.ps1 -CaseId "TC_3WAY_001" -DltCDE "169.254.166.167" -DltRSE "169.254.166.152" -DltHU "169.254.166.99" -DltPort "3490"
 ```
+
+## 6) Studio-first parity mode (same lifecycle model as IDCEvo)
+Prepare case + env + control server:
+```powershell
+.\scripts\oneclick-g70-3way-studio.ps1 -CaseId "TC_3WAY_001"
+```
+
+Then use these case flows in Maestro Studio same-time run:
+- `flows/g70/testcases/TC_3WAY_001/cde.yaml`
+- `flows/g70/testcases/TC_3WAY_001/rse.yaml`
+- `flows/g70/testcases/TC_3WAY_001/hu.yaml`
+
+Detailed guide: `docs/G70_3WAY_STUDIO_PARITY_PACK.md`
+
