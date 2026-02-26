@@ -1,0 +1,9 @@
+appId: com.android.settings
+jsEngine: graaljs
+---
+- runScript:
+    file: ../../../../scripts/maestro/bundle_studio_evidence.js
+    env:
+      CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+      CASE_ID: ${CASE_ID}
+      CAPTURE_ID: ${CAPTURE_ID}
