@@ -6,7 +6,8 @@ param(
     [string]$RSE,
     [string]$HU,
 
-    [switch]$IgnoreHooks
+    [switch]$IgnoreHooks,
+    [switch]$AllowLargeRSEScreenshots
 )
 
 $ErrorActionPreference = "Stop"
@@ -73,12 +74,20 @@ if ($IgnoreHooks) {
         if (-not $appIdLine) { $appIdLine = 'appId: com.android.settings' }
 
         # RSE theatre screen can exceed Maestro gRPC screenshot payload limit (4MB).
-        # In hookless CLI mode, strip screenshot commands for RSE so run can proceed.
-        if ($suffix -eq 'rse') {
+        # Default in hookless CLI mode: strip RSE screenshots unless explicitly allowed.
+        if ($suffix -eq 'rse' -and -not $AllowLargeRSEScreenshots) {
             $bodyLines = $body -split "`r?`n"
             $filtered = $bodyLines | Where-Object { $_ -notmatch '^\s*-\s*takeScreenshot\s*:' }
+
+            # Maestro requires at least one command after '---'. If we removed all commands,
+            # keep a lightweight no-screenshot command.
+            $hasCommand = ($filtered | Where-Object { $_ -match '^\s*-\s*\S+' } | Measure-Object).Count -gt 0
+            if (-not $hasCommand) {
+                $filtered = @('- launchApp')
+            }
+
             $body = ($filtered -join "`r`n")
-            Write-Warning "RSE hookless flow: takeScreenshot commands removed (avoids gRPC 4MB screenshot limit)."
+            Write-Warning "RSE hookless flow: takeScreenshot commands removed (default). Use -AllowLargeRSEScreenshots to keep them."
         }
 
         # Keep hookless flow next to source flow so relative runFlow/js paths still resolve.

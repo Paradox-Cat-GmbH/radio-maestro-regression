@@ -9,7 +9,9 @@ param(
     [string]$DltCDE = "169.254.166.167",
     [string]$DltRSE = "169.254.166.152",
     [string]$DltHU  = "169.254.166.99",
-    [string]$DltPort = "3490"
+    [string]$DltPort = "3490",
+
+    [switch]$AllowLargeRSEScreenshots
 )
 
 $ErrorActionPreference = "Stop"
@@ -48,7 +50,7 @@ if ($LASTEXITCODE -ne 0) { throw "Failed to start HU DLT capture" }
 try {
     Write-Host "Running 3-way same-time Maestro case..."
     # Ignore flow hooks here to avoid duplicate/fragile hook path during CLI 3-way.
-    & $run3way -CaseId $CaseId -CDE $CDE -RSE $RSE -HU $HU -IgnoreHooks
+    & $run3way -CaseId $CaseId -CDE $CDE -RSE $RSE -HU $HU -IgnoreHooks -AllowLargeRSEScreenshots:$AllowLargeRSEScreenshots
     if ($LASTEXITCODE -ne 0) { throw "3-way runner failed with exit code $LASTEXITCODE" }
 }
 finally {
