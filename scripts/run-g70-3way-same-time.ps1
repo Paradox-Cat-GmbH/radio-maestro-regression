@@ -64,18 +64,14 @@ $maestroFailed = $false
 if ($IgnoreHooks) {
     Write-Host "IgnoreHooks enabled: generating hookless temporary flows for CLI execution..."
 
-    function Test-LaunchableApp([string]$device, [string]$appId) {
-        # Use cmd wrapper so adb stderr doesn't become PowerShell NativeCommandError
-        # under strict ErrorActionPreference settings.
-        $escaped = 'adb -s "{0}" shell monkey -p "{1}" -c android.intent.category.LAUNCHER 1 2>&1' -f $device, $appId
-        $out = cmd /c $escaped
-        $code = $LASTEXITCODE
-
-        $text = ($out | Out-String)
-        if ($code -eq 0 -and $text -match 'Events injected:\s*1') { return $true }
-        if ($text -match 'No activities found to run') { return $false }
-        if ($text -match 'monkey aborted') { return $false }
-        return $false
+    function Get-HomeAppId([string]$device) {
+        $out = adb -s $device shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME 2>$null
+        $text = ($out | Out-String).Trim()
+        # Usually returns line like: com.android.launcher3/.Launcher
+        foreach ($line in ($text -split "`r?`n")) {
+            if ($line -match '^([a-zA-Z0-9_\.]+)\/') { return $matches[1] }
+        }
+        return $null
     }
 
     function New-HooklessFlow([string]$srcPath, [string]$suffix) {
@@ -124,23 +120,12 @@ if ($IgnoreHooks) {
     }
 
     if (-not $AllowLargeRSEScreenshots) {
-        $candidates = @(
-            'com.android.settings',
-            'com.android.car.settings',
-            'com.android.launcher3',
-            'com.google.android.apps.nexuslauncher',
-            'com.android.chrome'
-        )
-
-        foreach ($pkg in $candidates) {
-            if (Test-LaunchableApp -device $RSE -appId $pkg) {
-                $script:RSEFallbackAppId = $pkg
-                break
-            }
-        }
+        $script:RSEFallbackAppId = Get-HomeAppId -device $RSE
 
         if (-not $script:RSEFallbackAppId) {
-            throw "Could not find a launchable fallback app on RSE ($RSE). Re-authorize/unlock RSE and retry, or run with -AllowLargeRSEScreenshots if you want original behavior."
+            # Conservative fallback when HOME resolver is unavailable
+            $script:RSEFallbackAppId = 'com.android.settings'
+            Write-Warning "Could not resolve RSE HOME app. Falling back to com.android.settings."
         }
 
         Write-Host "RSE fallback app resolved: $script:RSEFallbackAppId"
