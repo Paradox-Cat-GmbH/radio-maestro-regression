@@ -72,6 +72,15 @@ if ($IgnoreHooks) {
         $appIdLine = ($header -split "`r?`n" | Where-Object { $_ -match '^\s*appId\s*:' } | Select-Object -First 1)
         if (-not $appIdLine) { $appIdLine = 'appId: com.android.settings' }
 
+        # RSE theatre screen can exceed Maestro gRPC screenshot payload limit (4MB).
+        # In hookless CLI mode, strip screenshot commands for RSE so run can proceed.
+        if ($suffix -eq 'rse') {
+            $bodyLines = $body -split "`r?`n"
+            $filtered = $bodyLines | Where-Object { $_ -notmatch '^\s*-\s*takeScreenshot\s*:' }
+            $body = ($filtered -join "`r`n")
+            Write-Warning "RSE hookless flow: takeScreenshot commands removed (avoids gRPC 4MB screenshot limit)."
+        }
+
         # Keep hookless flow next to source flow so relative runFlow/js paths still resolve.
         $srcDir = Split-Path -Parent $srcPath
         $tmp = Join-Path $srcDir ("g70_hookless_{0}_{1}.yaml" -f $suffix, ([System.Guid]::NewGuid().ToString('N')))
