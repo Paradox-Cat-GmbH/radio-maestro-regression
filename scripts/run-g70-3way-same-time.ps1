@@ -89,53 +89,33 @@ if ($IgnoreHooks) {
     $runFlowHU  = New-HooklessFlow $flowHU  "hu"
 }
 
-Write-Host "Running 3 flows in parallel (separate Maestro processes) across CDE/RSE/HU..."
+Write-Host "Running 3 flows in one Maestro process (single shard suite) across CDE/RSE/HU..."
 
-$jobs = @(
-    @{ Name = 'CDE'; Device = $CDE; Flow = $runFlowCDE },
-    @{ Name = 'RSE'; Device = $RSE; Flow = $runFlowRSE },
-    @{ Name = 'HU';  Device = $HU;  Flow = $runFlowHU  }
-)
+$outFile = [System.IO.Path]::GetTempFileName()
+$errFile = [System.IO.Path]::GetTempFileName()
 
-$procs = @()
 try {
-    foreach ($j in $jobs) {
-        $outFile = [System.IO.Path]::GetTempFileName()
-        $errFile = [System.IO.Path]::GetTempFileName()
+    $p = Start-Process -FilePath "maestro" `
+        -ArgumentList @("test", "--no-ansi", "--device", $deviceList, "--shard-split", "3", $runFlowCDE, $runFlowRSE, $runFlowHU) `
+        -NoNewWindow -PassThru -Wait `
+        -RedirectStandardOutput $outFile `
+        -RedirectStandardError $errFile
 
-        Write-Host "[$($j.Name)] Starting: maestro test --no-ansi --device $($j.Device) $($j.Flow)"
-        $p = Start-Process -FilePath "maestro" `
-            -ArgumentList @("test", "--no-ansi", "--device", $j.Device, $j.Flow) `
-            -NoNewWindow -PassThru `
-            -RedirectStandardOutput $outFile `
-            -RedirectStandardError $errFile
+    $lines = @()
+    if (Test-Path $outFile) { $lines += Get-Content $outFile }
+    if (Test-Path $errFile) { $lines += Get-Content $errFile }
 
-        $procs += @{ Name = $j.Name; Device = $j.Device; Flow = $j.Flow; Proc = $p; Out = $outFile; Err = $errFile }
+    foreach ($line in $lines) {
+        Write-Host $line
     }
 
-    foreach ($item in $procs) {
-        $item.Proc.WaitForExit()
-        Write-Host "[$($item.Name)] ExitCode: $($item.Proc.ExitCode)"
-
-        $lines = @()
-        if (Test-Path $item.Out) { $lines += Get-Content $item.Out }
-        if (Test-Path $item.Err) { $lines += Get-Content $item.Err }
-
-        foreach ($line in $lines) {
-            Write-Host "[$($item.Name)] $line"
-        }
-
-        if ($item.Proc.ExitCode -ne 0) { $maestroFailed = $true }
-    }
-
-    if ($maestroFailed) {
-        throw "One or more Maestro flows failed in parallel run"
+    if ($p.ExitCode -ne 0) {
+        $maestroFailed = $true
+        throw "Maestro failed with exit code $($p.ExitCode)"
     }
 }
 finally {
-    foreach ($item in $procs) {
-        Remove-Item -ErrorAction SilentlyContinue $item.Out, $item.Err
-    }
+    Remove-Item -ErrorAction SilentlyContinue $outFile, $errFile
 
     if ($script:hooklessTemp.Count -gt 0) {
         if ($maestroFailed) {
