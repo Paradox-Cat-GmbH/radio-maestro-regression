@@ -89,52 +89,54 @@ if ($IgnoreHooks) {
     $runFlowHU  = New-HooklessFlow $flowHU  "hu"
 }
 
-Write-Host "Running 3 flows simultaneously across CDE/RSE/HU..."
+Write-Host "Running 3 flows in parallel (separate Maestro processes) across CDE/RSE/HU..."
 
-$outFile = [System.IO.Path]::GetTempFileName()
-$errFile = [System.IO.Path]::GetTempFileName()
+$jobs = @(
+    @{ Name = 'CDE'; Device = $CDE; Flow = $runFlowCDE },
+    @{ Name = 'RSE'; Device = $RSE; Flow = $runFlowRSE },
+    @{ Name = 'HU';  Device = $HU;  Flow = $runFlowHU  }
+)
 
+$procs = @()
 try {
-    $p = Start-Process -FilePath "maestro" `
-        -ArgumentList @("test", "--no-ansi", "--device", $deviceList, "--shard-split", "3", $runFlowCDE, $runFlowRSE, $runFlowHU) `
-        -NoNewWindow -PassThru -Wait `
-        -RedirectStandardOutput $outFile `
-        -RedirectStandardError $errFile
+    foreach ($j in $jobs) {
+        $outFile = [System.IO.Path]::GetTempFileName()
+        $errFile = [System.IO.Path]::GetTempFileName()
 
-    $lines = @()
-    if (Test-Path $outFile) { $lines += Get-Content $outFile }
-    if (Test-Path $errFile) { $lines += Get-Content $errFile }
+        Write-Host "[$($j.Name)] Starting: maestro test --no-ansi --device $($j.Device) $($j.Flow)"
+        $p = Start-Process -FilePath "maestro" `
+            -ArgumentList @("test", "--no-ansi", "--device", $j.Device, $j.Flow) `
+            -NoNewWindow -PassThru `
+            -RedirectStandardOutput $outFile `
+            -RedirectStandardError $errFile
 
-    foreach ($line in $lines) {
-        if ($line -match '^Will split .*shards') { continue }
-        if ($line -match '^\[shard\s+\d+\]\s+Waiting for flows to complete\.\.\.$') { continue }
-
-        $clean = $line -replace '^\[shard\s+\d+\]\s*', ''
-        Write-Host $clean
+        $procs += @{ Name = $j.Name; Device = $j.Device; Flow = $j.Flow; Proc = $p; Out = $outFile; Err = $errFile }
     }
 
-    if ($p.ExitCode -ne 0) {
-        $maestroFailed = $true
+    foreach ($item in $procs) {
+        $item.Proc.WaitForExit()
+        Write-Host "[$($item.Name)] ExitCode: $($item.Proc.ExitCode)"
 
-        Write-Warning "Parallel run failed. Running per-device diagnostics to expose root cause..."
+        $lines = @()
+        if (Test-Path $item.Out) { $lines += Get-Content $item.Out }
+        if (Test-Path $item.Err) { $lines += Get-Content $item.Err }
 
-        $diag = @(
-            @{ Name = 'CDE'; Device = $CDE; Flow = $runFlowCDE },
-            @{ Name = 'RSE'; Device = $RSE; Flow = $runFlowRSE },
-            @{ Name = 'HU';  Device = $HU;  Flow = $runFlowHU  }
-        )
-
-        foreach ($d in $diag) {
-            Write-Host "[Diag-$($d.Name)] maestro test --device $($d.Device) $($d.Flow)"
-            & maestro test --no-ansi --device $d.Device $d.Flow 2>&1 | Out-Host
-            Write-Host "[Diag-$($d.Name)] ExitCode: $LASTEXITCODE"
+        foreach ($line in $lines) {
+            Write-Host "[$($item.Name)] $line"
         }
 
-        throw "Maestro failed with exit code $($p.ExitCode)"
+        if ($item.Proc.ExitCode -ne 0) { $maestroFailed = $true }
+    }
+
+    if ($maestroFailed) {
+        throw "One or more Maestro flows failed in parallel run"
     }
 }
 finally {
-    Remove-Item -ErrorAction SilentlyContinue $outFile, $errFile
+    foreach ($item in $procs) {
+        Remove-Item -ErrorAction SilentlyContinue $item.Out, $item.Err
+    }
+
     if ($script:hooklessTemp.Count -gt 0) {
         if ($maestroFailed) {
             Write-Warning "Maestro failed. Keeping generated hookless flows for inspection:`n$($script:hooklessTemp -join "`n")"
