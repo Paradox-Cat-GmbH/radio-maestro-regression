@@ -94,7 +94,9 @@ if ($IgnoreHooks) {
         # Keep hookless flow next to source flow so relative runFlow/js paths still resolve.
         $srcDir = Split-Path -Parent $srcPath
         $tmp = Join-Path $srcDir ("g70_hookless_{0}_{1}.yaml" -f $suffix, ([System.Guid]::NewGuid().ToString('N')))
-        $content = if ([string]::IsNullOrWhiteSpace($appIdLine)) { "---`r`n" + $body } else { $appIdLine + "`r`n---`r`n" + $body }
+        # Maestro requires a config section before '---'.
+        # When appId is intentionally bypassed (RSE fallback), use empty config map.
+        $content = if ([string]::IsNullOrWhiteSpace($appIdLine)) { "{}`r`n---`r`n" + $body } else { $appIdLine + "`r`n---`r`n" + $body }
         $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
         [System.IO.File]::WriteAllText($tmp, $content, $utf8NoBom)
 
