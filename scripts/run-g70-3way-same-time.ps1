@@ -75,7 +75,10 @@ if ($IgnoreHooks) {
         # Keep hookless flow next to source flow so relative runFlow/js paths still resolve.
         $srcDir = Split-Path -Parent $srcPath
         $tmp = Join-Path $srcDir ("g70_hookless_{0}_{1}.yaml" -f $suffix, ([System.Guid]::NewGuid().ToString('N')))
-        ($appIdLine + "`r`n---`r`n" + $body) | Set-Content -Encoding UTF8 $tmp
+        $content = $appIdLine + "`r`n---`r`n" + $body
+        $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+        [System.IO.File]::WriteAllText($tmp, $content, $utf8NoBom)
+
         $script:hooklessTemp += $tmp
         Write-Host "Generated hookless flow: $tmp"
         return $tmp
@@ -112,6 +115,21 @@ try {
 
     if ($p.ExitCode -ne 0) {
         $maestroFailed = $true
+
+        Write-Warning "Parallel run failed. Running per-device diagnostics to expose root cause..."
+
+        $diag = @(
+            @{ Name = 'CDE'; Device = $CDE; Flow = $runFlowCDE },
+            @{ Name = 'RSE'; Device = $RSE; Flow = $runFlowRSE },
+            @{ Name = 'HU';  Device = $HU;  Flow = $runFlowHU  }
+        )
+
+        foreach ($d in $diag) {
+            Write-Host "[Diag-$($d.Name)] maestro test --device $($d.Device) $($d.Flow)"
+            & maestro test --no-ansi --device $d.Device $d.Flow 2>&1 | Out-Host
+            Write-Host "[Diag-$($d.Name)] ExitCode: $LASTEXITCODE"
+        }
+
         throw "Maestro failed with exit code $($p.ExitCode)"
     }
 }
