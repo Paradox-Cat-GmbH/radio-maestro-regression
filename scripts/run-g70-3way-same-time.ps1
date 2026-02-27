@@ -56,7 +56,7 @@ $deviceList = "$CDE,$RSE,$HU"
 $runFlowCDE = $flowCDE
 $runFlowRSE = $flowRSE
 $runFlowHU  = $flowHU
-$hooklessTemp = @()
+$script:hooklessTemp = @()
 $maestroFailed = $false
 
 if ($IgnoreHooks) {
@@ -76,7 +76,8 @@ if ($IgnoreHooks) {
         $srcDir = Split-Path -Parent $srcPath
         $tmp = Join-Path $srcDir ("g70_hookless_{0}_{1}.yaml" -f $suffix, ([System.Guid]::NewGuid().ToString('N')))
         ($appIdLine + "`r`n---`r`n" + $body) | Set-Content -Encoding UTF8 $tmp
-        $hooklessTemp += $tmp
+        $script:hooklessTemp += $tmp
+        Write-Host "Generated hookless flow: $tmp"
         return $tmp
     }
 
@@ -116,12 +117,12 @@ try {
 }
 finally {
     Remove-Item -ErrorAction SilentlyContinue $outFile, $errFile
-    if ($hooklessTemp.Count -gt 0) {
+    if ($script:hooklessTemp.Count -gt 0) {
         if ($maestroFailed) {
-            Write-Warning "Maestro failed. Keeping generated hookless flows for inspection:`n$($hooklessTemp -join "`n")"
+            Write-Warning "Maestro failed. Keeping generated hookless flows for inspection:`n$($script:hooklessTemp -join "`n")"
         }
         else {
-            Remove-Item -ErrorAction SilentlyContinue $hooklessTemp
+            Remove-Item -ErrorAction SilentlyContinue $script:hooklessTemp
         }
     }
 }
