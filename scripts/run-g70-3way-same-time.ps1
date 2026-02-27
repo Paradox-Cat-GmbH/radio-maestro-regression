@@ -65,15 +65,11 @@ if ($IgnoreHooks) {
     Write-Host "IgnoreHooks enabled: generating hookless temporary flows for CLI execution..."
 
     function Test-LaunchableApp([string]$device, [string]$appId) {
-        $oldNativePref = $PSNativeCommandUseErrorActionPreference
-        $PSNativeCommandUseErrorActionPreference = $false
-        try {
-            $out = & adb -s $device shell monkey -p $appId -c android.intent.category.LAUNCHER 1 2>&1
-            $code = $LASTEXITCODE
-        }
-        finally {
-            $PSNativeCommandUseErrorActionPreference = $oldNativePref
-        }
+        # Use cmd wrapper so adb stderr doesn't become PowerShell NativeCommandError
+        # under strict ErrorActionPreference settings.
+        $escaped = "adb -s \"$device\" shell monkey -p \"$appId\" -c android.intent.category.LAUNCHER 1 2>&1"
+        $out = cmd /c $escaped
+        $code = $LASTEXITCODE
 
         $text = ($out | Out-String)
         if ($code -eq 0 -and $text -match 'Events injected:\s*1') { return $true }
