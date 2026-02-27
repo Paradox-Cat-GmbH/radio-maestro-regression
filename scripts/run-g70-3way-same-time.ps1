@@ -65,9 +65,18 @@ if ($IgnoreHooks) {
     Write-Host "IgnoreHooks enabled: generating hookless temporary flows for CLI execution..."
 
     function Test-LaunchableApp([string]$device, [string]$appId) {
-        $out = adb -s $device shell monkey -p $appId -c android.intent.category.LAUNCHER 1 2>&1
+        $oldNativePref = $PSNativeCommandUseErrorActionPreference
+        $PSNativeCommandUseErrorActionPreference = $false
+        try {
+            $out = & adb -s $device shell monkey -p $appId -c android.intent.category.LAUNCHER 1 2>&1
+            $code = $LASTEXITCODE
+        }
+        finally {
+            $PSNativeCommandUseErrorActionPreference = $oldNativePref
+        }
+
         $text = ($out | Out-String)
-        if ($text -match 'Events injected:\s*1') { return $true }
+        if ($code -eq 0 -and $text -match 'Events injected:\s*1') { return $true }
         if ($text -match 'No activities found to run') { return $false }
         if ($text -match 'monkey aborted') { return $false }
         return $false
