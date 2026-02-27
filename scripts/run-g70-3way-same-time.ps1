@@ -79,21 +79,22 @@ if ($IgnoreHooks) {
             $bodyLines = $body -split "`r?`n"
             $filtered = $bodyLines | Where-Object { $_ -notmatch '^\s*-\s*takeScreenshot\s*:' }
 
-            # Maestro requires at least one command after '---'. If we removed all commands,
-            # keep a lightweight no-screenshot command.
+            # RSE can fail app launch for com.android.settings and screenshots exceed gRPC size.
+            # Use a device-level noop command that does not depend on launching an app.
+            $appIdLine = $null
             $hasCommand = ($filtered | Where-Object { $_ -match '^\s*-\s*\S+' } | Measure-Object).Count -gt 0
             if (-not $hasCommand) {
-                $filtered = @('- launchApp')
+                $filtered = @('- pressKey: HOME')
             }
 
             $body = ($filtered -join "`r`n")
-            Write-Warning "RSE hookless flow: takeScreenshot commands removed (default). Use -AllowLargeRSEScreenshots to keep them."
+            Write-Warning "RSE hookless flow: takeScreenshot removed and app launch bypassed (default). Use -AllowLargeRSEScreenshots to keep original behavior."
         }
 
         # Keep hookless flow next to source flow so relative runFlow/js paths still resolve.
         $srcDir = Split-Path -Parent $srcPath
         $tmp = Join-Path $srcDir ("g70_hookless_{0}_{1}.yaml" -f $suffix, ([System.Guid]::NewGuid().ToString('N')))
-        $content = $appIdLine + "`r`n---`r`n" + $body
+        $content = if ([string]::IsNullOrWhiteSpace($appIdLine)) { "---`r`n" + $body } else { $appIdLine + "`r`n---`r`n" + $body }
         $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
         [System.IO.File]::WriteAllText($tmp, $content, $utf8NoBom)
 
