@@ -30,6 +30,7 @@ if (-not $RSE) { $RSE = "$DltRSE`:5555" }
 if (-not $HU)  { $HU  = "$DltHU`:5555" }
 
 $ts = Get-Date -Format "yyyyMMdd_HHmmss"
+$runStart = Get-Date
 $outRoot = Join-Path $RepoRoot "artifacts\runs\g70\$CaseId\$ts"
 $dltDir = Join-Path $outRoot "dlt"
 $maestroDir = Join-Path $outRoot "maestro"
@@ -52,12 +53,18 @@ if (Test-Path $maestroTestsRoot) {
 Write-Host "Starting DLT captures (CDE/RSE/HU)..."
 & node $nodeScript start $DltCDE $DltPort $cdeOut "CDE" | Out-Host
 if ($LASTEXITCODE -ne 0) { throw "Failed to start CDE DLT capture" }
+$statusCDE = (& node $nodeScript status CDE | Out-String)
+if ($statusCDE -notmatch 'Status:\s*running') { throw "CDE DLT capture did not stay running. Check dlt-receive and routing." }
 
 & node $nodeScript start $DltRSE $DltPort $rseOut "RSE" | Out-Host
 if ($LASTEXITCODE -ne 0) { throw "Failed to start RSE DLT capture" }
+$statusRSE = (& node $nodeScript status RSE | Out-String)
+if ($statusRSE -notmatch 'Status:\s*running') { throw "RSE DLT capture did not stay running. Check dlt-receive and routing." }
 
 & node $nodeScript start $DltHU $DltPort $huOut "HU" | Out-Host
 if ($LASTEXITCODE -ne 0) { throw "Failed to start HU DLT capture" }
+$statusHU = (& node $nodeScript status HU | Out-String)
+if ($statusHU -notmatch 'Status:\s*running') { throw "HU DLT capture did not stay running. Check dlt-receive and routing." }
 
 try {
     Write-Host "Running 3-way same-time Maestro case..."
@@ -85,6 +92,24 @@ finally {
         if (Test-Path $srcVideos) {
             New-Item -ItemType Directory -Force -Path $videoDir | Out-Null
             Copy-Item -Path (Join-Path $srcVideos "*") -Destination $videoDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    # CLI screenshots are often written into repo root; collect run-time screenshots/videos into bundle.
+    $rootMedia = Get-ChildItem -Path $RepoRoot -File -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.LastWriteTime -ge $runStart -and (
+                $_.Extension -in @('.png', '.jpg', '.jpeg', '.webp', '.mp4', '.mov', '.mkv')
+            )
+        }
+
+    foreach ($m in $rootMedia) {
+        if ($m.Extension -in @('.mp4', '.mov', '.mkv')) {
+            New-Item -ItemType Directory -Force -Path $videoDir | Out-Null
+            Copy-Item -Path $m.FullName -Destination (Join-Path $videoDir $m.Name) -Force -ErrorAction SilentlyContinue
+        }
+        else {
+            Copy-Item -Path $m.FullName -Destination (Join-Path $maestroDir $m.Name) -Force -ErrorAction SilentlyContinue
         }
     }
 }
