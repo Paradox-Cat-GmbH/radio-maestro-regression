@@ -57,6 +57,7 @@ $runFlowCDE = $flowCDE
 $runFlowRSE = $flowRSE
 $runFlowHU  = $flowHU
 $hooklessTemp = @()
+$maestroFailed = $false
 
 if ($IgnoreHooks) {
     Write-Host "IgnoreHooks enabled: generating hookless temporary flows for CLI execution..."
@@ -71,7 +72,9 @@ if ($IgnoreHooks) {
         $appIdLine = ($header -split "`r?`n" | Where-Object { $_ -match '^\s*appId\s*:' } | Select-Object -First 1)
         if (-not $appIdLine) { $appIdLine = 'appId: com.android.settings' }
 
-        $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("g70_hookless_{0}_{1}.yaml" -f $suffix, ([System.Guid]::NewGuid().ToString('N')))
+        # Keep hookless flow next to source flow so relative runFlow/js paths still resolve.
+        $srcDir = Split-Path -Parent $srcPath
+        $tmp = Join-Path $srcDir ("g70_hookless_{0}_{1}.yaml" -f $suffix, ([System.Guid]::NewGuid().ToString('N')))
         ($appIdLine + "`r`n---`r`n" + $body) | Set-Content -Encoding UTF8 $tmp
         $hooklessTemp += $tmp
         return $tmp
@@ -107,13 +110,19 @@ try {
     }
 
     if ($p.ExitCode -ne 0) {
+        $maestroFailed = $true
         throw "Maestro failed with exit code $($p.ExitCode)"
     }
 }
 finally {
     Remove-Item -ErrorAction SilentlyContinue $outFile, $errFile
     if ($hooklessTemp.Count -gt 0) {
-        Remove-Item -ErrorAction SilentlyContinue $hooklessTemp
+        if ($maestroFailed) {
+            Write-Warning "Maestro failed. Keeping generated hookless flows for inspection:`n$($hooklessTemp -join "`n")"
+        }
+        else {
+            Remove-Item -ErrorAction SilentlyContinue $hooklessTemp
+        }
     }
 }
 
