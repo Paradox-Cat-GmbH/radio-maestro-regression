@@ -58,10 +58,20 @@ $runFlowCDE = $flowCDE
 $runFlowRSE = $flowRSE
 $runFlowHU  = $flowHU
 $script:hooklessTemp = @()
+$script:RSEFallbackAppId = $null
 $maestroFailed = $false
 
 if ($IgnoreHooks) {
     Write-Host "IgnoreHooks enabled: generating hookless temporary flows for CLI execution..."
+
+    function Test-LaunchableApp([string]$device, [string]$appId) {
+        $out = adb -s $device shell monkey -p $appId -c android.intent.category.LAUNCHER 1 2>&1
+        $text = ($out | Out-String)
+        if ($text -match 'Events injected:\s*1') { return $true }
+        if ($text -match 'No activities found to run') { return $false }
+        if ($text -match 'monkey aborted') { return $false }
+        return $false
+    }
 
     function New-HooklessFlow([string]$srcPath, [string]$suffix) {
         $raw = Get-Content -Raw $srcPath
@@ -79,16 +89,19 @@ if ($IgnoreHooks) {
             $bodyLines = $body -split "`r?`n"
             $filtered = $bodyLines | Where-Object { $_ -notmatch '^\s*-\s*takeScreenshot\s*:' }
 
-            # RSE can fail app launch for com.android.settings and screenshots exceed gRPC size.
-            # Use a device-level noop command that does not depend on launching an app.
-            $appIdLine = $null
+            # Keep config valid and use a launchable app on RSE.
+            if (-not $script:RSEFallbackAppId) {
+                throw "RSE fallback appId not resolved."
+            }
+            $appIdLine = "appId: $($script:RSEFallbackAppId)"
+
             $hasCommand = ($filtered | Where-Object { $_ -match '^\s*-\s*\S+' } | Measure-Object).Count -gt 0
             if (-not $hasCommand) {
                 $filtered = @('- pressKey: HOME')
             }
 
             $body = ($filtered -join "`r`n")
-            Write-Warning "RSE hookless flow: takeScreenshot removed and app launch bypassed (default). Use -AllowLargeRSEScreenshots to keep original behavior."
+            Write-Warning "RSE hookless flow: takeScreenshot removed (default) and appId set to $($script:RSEFallbackAppId). Use -AllowLargeRSEScreenshots to keep original behavior."
         }
 
         # Keep hookless flow next to source flow so relative runFlow/js paths still resolve.
@@ -103,6 +116,29 @@ if ($IgnoreHooks) {
         $script:hooklessTemp += $tmp
         Write-Host "Generated hookless flow: $tmp"
         return $tmp
+    }
+
+    if (-not $AllowLargeRSEScreenshots) {
+        $candidates = @(
+            'com.android.settings',
+            'com.android.car.settings',
+            'com.android.launcher3',
+            'com.google.android.apps.nexuslauncher',
+            'com.android.chrome'
+        )
+
+        foreach ($pkg in $candidates) {
+            if (Test-LaunchableApp -device $RSE -appId $pkg) {
+                $script:RSEFallbackAppId = $pkg
+                break
+            }
+        }
+
+        if (-not $script:RSEFallbackAppId) {
+            throw "Could not find a launchable fallback app on RSE ($RSE). Re-authorize/unlock RSE and retry, or run with -AllowLargeRSEScreenshots if you want original behavior."
+        }
+
+        Write-Host "RSE fallback app resolved: $script:RSEFallbackAppId"
     }
 
     $runFlowCDE = New-HooklessFlow $flowCDE "cde"
