@@ -67,7 +67,7 @@ if ($IgnoreHooks) {
     function Test-LaunchableApp([string]$device, [string]$appId) {
         # Use cmd wrapper so adb stderr doesn't become PowerShell NativeCommandError
         # under strict ErrorActionPreference settings.
-        $escaped = "adb -s \"$device\" shell monkey -p \"$appId\" -c android.intent.category.LAUNCHER 1 2>&1"
+        $escaped = 'adb -s "{0}" shell monkey -p "{1}" -c android.intent.category.LAUNCHER 1 2>&1' -f $device, $appId
         $out = cmd /c $escaped
         $code = $LASTEXITCODE
 
