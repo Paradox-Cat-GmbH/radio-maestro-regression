@@ -153,6 +153,15 @@ def run_bmw_action(tokens: List[str]) -> None:
                 "EDIABAS STR action failed. "
                 f"stdout={result.stdout.strip()} stderr={result.stderr.strip()}"
             )
+    elif cmd == "ediabas-str-js":
+        script = repo_root() / "scripts" / "ediabas_str_cycle.js"
+        cmdline = ["node", str(script)] + tokens[1:]
+        result = subprocess.run(cmdline, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(
+                "EDIABAS STR JS action failed. "
+                f"stdout={result.stdout.strip()} stderr={result.stderr.strip()}"
+            )
     else:
         raise ValueError(f"Unknown ACTION command: {cmd}")
 

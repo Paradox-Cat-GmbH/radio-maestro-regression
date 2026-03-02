@@ -128,6 +128,11 @@ Run directly:
 python scripts\ediabas_str_cycle.py --ediabas-bin "C:\EC-Apps\EDIABAS\BIN"
 ```
 
+Run directly (Node.js, same CLI flags):
+```bat
+node scripts\ediabas_str_cycle.js --ediabas-bin "C:\EC-Apps\EDIABAS\BIN"
+```
+
 Auto mode behavior:
 - `--mode auto` (default): tries `Tool64Cli` first, then falls back to `tool32` if available.
 - `--mode tool64cli`: force Tool64 user-action execution.
@@ -141,6 +146,11 @@ python scripts\ediabas_str_cycle.py --mode tool32 --ediabas-bin "C:\EC-Apps\EDIA
 Or via wrapper:
 ```bat
 scripts\run_action.bat ediabas-str --ediabas-bin "C:\EC-Apps\EDIABAS\BIN"
+```
+
+Or via wrapper (Node.js):
+```bat
+scripts\run_action.bat ediabas-str-js --ediabas-bin "C:\EC-Apps\EDIABAS\BIN"
 ```
 
 Customize timing:
@@ -170,6 +180,10 @@ Use this to confirm if failures are due to missing action names, runtime path/de
 Flow action marker support:
 - Add this in a Maestro YAML comment to run STR as host action:
   - `# ACTION: ediabas-str --ediabas-bin C:\EC-Apps\EDIABAS\BIN --str-seconds 180`
+  - `# ACTION: ediabas-str-js --ediabas-bin C:\EC-Apps\EDIABAS\BIN --str-seconds 180`
+
+Node/Python parity:
+- `scripts/ediabas_str_cycle.js` intentionally supports the same flags as `scripts/ediabas_str_cycle.py` for zero-friction migration.
 
 ## G70 multi-target orchestrator
 End-to-end PoC runner:
