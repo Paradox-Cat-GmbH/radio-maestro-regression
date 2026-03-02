@@ -45,3 +45,12 @@ scripts\run_action.bat ediabas-str-js-sidecar --str-seconds 180 --settle-seconds
 ```yaml
 # ACTION: ediabas-str-js-sidecar --str-seconds 180
 ```
+
+## Ready-made Maestro smoke test flow
+- Flow file: `flows/smoke/_smoke_ediabas_str_sidecar.yaml`
+- Runs a short STR cycle (`str-seconds=5`) via ACTION marker.
+
+Run with host-action wrapper:
+```bat
+python scripts\run_flow_with_actions.py flows\smoke\_smoke_ediabas_str_sidecar.yaml --no-validate
+```
