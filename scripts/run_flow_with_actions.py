@@ -150,7 +150,9 @@ def main() -> int:
                     # import locally to avoid top-level import side-effects
                     import scripts.helpers as helpers
                     # use the safe wrapper (timeout + retries + logging) to avoid hangs
-                    rc = helpers.run_bmw_action_safe(tokens, log_path=action_log, timeout_s=10, retries=1)
+                    action_timeout = 420 if tokens[0].lower() == "ediabas-str" else 10
+                    action_retries = 0 if tokens[0].lower() == "ediabas-str" else 1
+                    rc = helpers.run_bmw_action_safe(tokens, log_path=action_log, timeout_s=action_timeout, retries=action_retries)
                     if rc != 0:
                         return rc
             except Exception as e:
