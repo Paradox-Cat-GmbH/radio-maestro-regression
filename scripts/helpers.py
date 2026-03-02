@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import re
 import shutil
 import subprocess
@@ -143,6 +144,24 @@ def run_bmw_action(tokens: List[str]) -> None:
             else "persist.vendor.com.bmwgroup.disable_phud_ehh"
         )
         mod.setprop(prop, enabled)
+    elif cmd == "ediabas-str":
+        script = repo_root() / "scripts" / "ediabas_str_cycle.py"
+        cmdline = [sys.executable, str(script)] + tokens[1:]
+        result = subprocess.run(cmdline, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(
+                "EDIABAS STR action failed. "
+                f"stdout={result.stdout.strip()} stderr={result.stderr.strip()}"
+            )
+    elif cmd == "ediabas-str-js":
+        script = repo_root() / "scripts" / "ediabas_str_cycle.js"
+        cmdline = ["node", str(script)] + tokens[1:]
+        result = subprocess.run(cmdline, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(
+                "EDIABAS STR JS action failed. "
+                f"stdout={result.stdout.strip()} stderr={result.stderr.strip()}"
+            )
     else:
         raise ValueError(f"Unknown ACTION command: {cmd}")
 
