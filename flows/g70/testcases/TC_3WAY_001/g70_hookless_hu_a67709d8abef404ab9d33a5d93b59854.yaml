@@ -1,0 +1,5 @@
+appId: com.android.settings
+---
+# HU side flow
+- takeScreenshot: "HU_00_start"
+- takeScreenshot: "HU_99_end"

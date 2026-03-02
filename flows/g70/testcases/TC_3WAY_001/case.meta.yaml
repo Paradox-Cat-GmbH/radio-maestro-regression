@@ -1,0 +1,14 @@
+caseId: "TC_3WAY_001"
+title: "3-way G70 scenario"
+owner: ""
+priority: "P2"
+roles:
+  - "CDE"
+  - "RSE"
+  - "HU"
+notes:
+  - "Describe expected behavior per role"
+acceptance:
+  - "All 3 flows pass"
+  - "CDE/RSE/HU screenshots produced"
+

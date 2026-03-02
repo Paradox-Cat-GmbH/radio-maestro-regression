@@ -66,7 +66,7 @@ $envBlock | Set-Content -Encoding UTF8 $envFile
 try { Set-Clipboard -Value $envBlock } catch {}
 
 Write-Host ""
-Write-Host "READY ✅"
+Write-Host "READY"
 Write-Host "Studio flow: $caseStudioFlow"
 Write-Host "Run root : $runRoot"
 Write-Host "Env file : $envFile"
