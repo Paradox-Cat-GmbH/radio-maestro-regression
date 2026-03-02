@@ -17,6 +17,7 @@
   var timestamp = str(typeof RUN_TS !== 'undefined' ? RUN_TS : undefined, '');
   var runRoot = str(typeof RUN_ROOT !== 'undefined' ? RUN_ROOT : undefined, '');
   var outputFile = str(typeof DLT_OUTPUT !== 'undefined' ? DLT_OUTPUT : undefined, '');
+  var deviceId = str(typeof DEVICE_ID !== 'undefined' ? DEVICE_ID : undefined, '');
 
   var payload = {
     ip: ip,
@@ -25,7 +26,8 @@
     caseId: caseId,
     timestamp: timestamp,
     runRoot: runRoot,
-    outputFile: outputFile
+    outputFile: outputFile,
+    deviceId: deviceId
   };
 
   var resp = http.post(base.replace(/\/+$/, '') + '/dlt/start', {

@@ -1,0 +1,6 @@
+﻿appId: com.android.settings
+---
+# CDE side flow
+- takeScreenshot: "CDE_00_start"
+- takeScreenshot: "CDE_99_end"
+

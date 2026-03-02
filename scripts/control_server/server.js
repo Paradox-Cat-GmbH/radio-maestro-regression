@@ -212,8 +212,17 @@ http.createServer(async(req,res)=>{
       const captureId=b.captureId||'studio';
       const caseId=b.caseId||'STUDIO_CASE';
       const ts=b.timestamp||stamp();
-      const runRoot=b.runRoot||path.join(ARTIFACTS_DIR,'runs','idcevo',caseId,ts);
-      const output=b.outputFile||path.join(runRoot,'dlt','idcevo_capture.dlt');
+
+      const capNorm=String(captureId||'studio').toLowerCase();
+      const suite=(capNorm.startsWith('g70_')||capNorm==='cde'||capNorm==='rse'||capNorm==='hu')?'g70':'idcevo';
+      const role = capNorm.includes('cde') ? 'cde' : (capNorm.includes('rse') ? 'rse' : (capNorm.includes('hu') ? 'hu' : 'idcevo'));
+
+      const runRoot=b.runRoot||path.join(ARTIFACTS_DIR,'runs',suite,caseId,ts);
+      const output=b.outputFile||(
+        suite==='g70'
+          ? path.join(runRoot, role, 'dlt', `${role}_capture.dlt`)
+          : path.join(runRoot, 'dlt', 'idcevo_capture.dlt')
+      );
       mkdir(path.dirname(output));
 
       const maestroRootForCtx=path.join(process.env.USERPROFILE||'', '.maestro','tests');

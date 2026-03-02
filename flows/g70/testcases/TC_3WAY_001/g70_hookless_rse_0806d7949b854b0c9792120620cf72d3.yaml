@@ -1,0 +1,5 @@
+appId: com.android.settings
+---
+# RSE side flow
+- takeScreenshot: "RSE_00_start"
+- takeScreenshot: "RSE_99_end"

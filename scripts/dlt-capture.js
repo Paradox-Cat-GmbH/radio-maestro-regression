@@ -19,6 +19,7 @@ const captureId = String(captureIdArg).replace(/[^a-zA-Z0-9_-]/g, '_');
 const stateDir = path.join(__dirname, '.dlt');
 const pidFile = path.join(stateDir, `dlt_capture_${captureId}.pid`);
 const metaFile = path.join(stateDir, `dlt_capture_${captureId}.meta.json`);
+const logFile = path.join(stateDir, `dlt_capture_${captureId}.log`);
 
 function ensureStateDir() {
   if (!fs.existsSync(stateDir)) fs.mkdirSync(stateDir, { recursive: true });
@@ -60,10 +61,15 @@ function startCapture(ip, port, outFile) {
   console.log(`[${captureId}] Starting DLT capture from ${ip}:${port}`);
   console.log(`[${captureId}] Output: ${absOut}`);
 
+  const spawnCwd = path.isAbsolute(dltBin) ? path.dirname(dltBin) : process.cwd();
+  const logFd = fs.openSync(logFile, 'a');
+  fs.appendFileSync(logFile, `\n[${new Date().toISOString()}] START ${dltBin} -p ${port} -o ${absOut} ${ip}\n`);
+
   const dltProcess = spawn(dltBin, ['-p', String(port), '-o', absOut, ip], {
     detached: true,
-    stdio: 'ignore',
+    stdio: ['ignore', logFd, logFd],
     windowsHide: true,
+    cwd: spawnCwd,
   });
 
   if (!dltProcess.pid) {
@@ -78,10 +84,12 @@ function startCapture(ip, port, outFile) {
     ip,
     port,
     output: absOut,
+    log: logFile,
     startedAt: new Date().toISOString(),
   }, null, 2));
 
   dltProcess.unref();
+  try { fs.closeSync(logFd); } catch {}
   console.log(`[${captureId}] Capture started (PID: ${dltProcess.pid})`);
   return 0;
 }
@@ -118,6 +126,11 @@ function statusCapture() {
   const meta = fs.existsSync(metaFile) ? JSON.parse(fs.readFileSync(metaFile, 'utf8')) : null;
   if (!pid) {
     console.log(`[${captureId}] Status: stopped`);
+    if (fs.existsSync(logFile)) {
+      const lines = fs.readFileSync(logFile, 'utf8').split(/\r?\n/).filter(Boolean);
+      const tail = lines.slice(-8).join('\n');
+      if (tail) console.log(`[${captureId}] Last log:\n${tail}`);
+    }
     return 0;
   }
   console.log(`[${captureId}] Status: ${isRunning(pid) ? 'running' : 'stale'}`);
