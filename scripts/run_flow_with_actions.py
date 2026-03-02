@@ -150,7 +150,7 @@ def main() -> int:
                     # import locally to avoid top-level import side-effects
                     import scripts.helpers as helpers
                     # use the safe wrapper (timeout + retries + logging) to avoid hangs
-                    is_ediabas_str = tokens[0].lower() in {"ediabas-str", "ediabas-str-js"}
+                    is_ediabas_str = tokens[0].lower() in {"ediabas-str", "ediabas-str-js", "ediabas-str-js-api", "ediabas-str-js-sidecar"}
                     action_timeout = 420 if is_ediabas_str else 10
                     action_retries = 0 if is_ediabas_str else 1
                     rc = helpers.run_bmw_action_safe(tokens, log_path=action_log, timeout_s=action_timeout, retries=action_retries)

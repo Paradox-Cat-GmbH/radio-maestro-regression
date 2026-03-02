@@ -133,6 +133,32 @@ Run directly (Node.js, same CLI flags):
 node scripts\ediabas_str_cycle.js --ediabas-bin "C:\EC-Apps\EDIABAS\BIN"
 ```
 
+JS-first sidecar mode (direct EDIABAS API via pydiabas, no Tool64 actions):
+```bat
+node scripts\ediabas_str_cycle_sidecar.js --str-seconds 180 --settle-seconds 2
+```
+
+Sidecar dependency setup (recommended):
+1. Install 32-bit Python (required by EDIABAS `api32.dll`).
+2. Install sidecar dependency:
+  ```bat
+  C:\Path\To\Python32\python.exe -m pip install -r scripts\requirements-pydiabas-sidecar.txt
+  ```
+3. Point runner to 32-bit Python:
+  ```bat
+  set PYDIABAS_PYTHON32=C:\Path\To\Python32\python.exe
+  ```
+
+Sidecar diagnose/probe:
+```bat
+node scripts\ediabas_str_cycle_sidecar.js --diagnose --probe --probe-ecu TMODE --probe-job INFO
+```
+
+Start sidecar HTTP service explicitly (optional):
+```bat
+%PYDIABAS_PYTHON32% scripts\ediabas_pydiabas_sidecar.py serve --host 127.0.0.1 --port 8777
+```
+
 Auto mode behavior:
 - `--mode auto` (default): tries `Tool64Cli` first, then falls back to `tool32` if available.
 - `--mode tool64cli`: force Tool64 user-action execution.
@@ -152,6 +178,31 @@ Or via wrapper (Node.js):
 ```bat
 scripts\run_action.bat ediabas-str-js --ediabas-bin "C:\EC-Apps\EDIABAS\BIN"
 ```
+
+Or via wrapper (Node.js sidecar):
+```bat
+scripts\run_action.bat ediabas-str-js-sidecar --str-seconds 180 --settle-seconds 2
+```
+
+Direct API mode (experimental, no Tool64 user actions required):
+```bat
+node scripts\ediabas_str_cycle_api.js --ediabas-bin "C:\EC-Apps\EDIABAS\BIN" --str-seconds 180 --settle-seconds 2
+```
+
+Wrapper form:
+```bat
+scripts\run_action.bat ediabas-str-js-api --ediabas-bin "C:\EC-Apps\EDIABAS\BIN" --str-seconds 180 --settle-seconds 2
+```
+
+Direct API diagnose/probe:
+```bat
+node scripts\ediabas_str_cycle_api.js --ediabas-bin "C:\EC-Apps\EDIABAS\BIN" --diagnose --probe --probe-ecu TMODE --probe-job INFO
+```
+
+Notes for direct API mode:
+- Uses `scripts/ediabas_api32_job.ps1` bridge with calls to `api32.dll` (EDIABAS API).
+- Targets 32-bit API loading via x86 PowerShell path when available.
+- Keep Tool64 action mode as fallback if API bridge cannot be initialized on a rack.
 
 Customize timing:
 ```bat
@@ -181,9 +232,15 @@ Flow action marker support:
 - Add this in a Maestro YAML comment to run STR as host action:
   - `# ACTION: ediabas-str --ediabas-bin C:\EC-Apps\EDIABAS\BIN --str-seconds 180`
   - `# ACTION: ediabas-str-js --ediabas-bin C:\EC-Apps\EDIABAS\BIN --str-seconds 180`
+  - `# ACTION: ediabas-str-js-api --ediabas-bin C:\EC-Apps\EDIABAS\BIN --str-seconds 180`
+  - `# ACTION: ediabas-str-js-sidecar --str-seconds 180`
 
 Node/Python parity:
 - `scripts/ediabas_str_cycle.js` intentionally supports the same flags as `scripts/ediabas_str_cycle.py` for zero-friction migration.
+
+Dependency governance:
+- `pydiabas` is consumed as an external dependency for the sidecar and acknowledged in `THIRD_PARTY_NOTICES.md`.
+- Raw downloaded package folders are ignored via `.gitignore` to avoid accidental vendoring.
 
 ## G70 multi-target orchestrator
 End-to-end PoC runner:
