@@ -1,0 +1,13 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: SMOKE - EDIABAS STR via JS pydiabas sidecar
+tags:
+  - smoke
+  - ediabas
+  - str
+
+# ACTION: ediabas-str-js-sidecar --str-seconds 5 --settle-seconds 1 --timeout-seconds 90 --retries 1
+---
+- evalScript: "${output.testId = 'smoke_ediabas_str_sidecar'}"
+- pressKey: home
+- waitForAnimationToEnd
