@@ -114,6 +114,63 @@ run_suite.bat <DEVICE_ID>
 run_lightning_demo.bat <DEVICE_ID>
 ```
 
+## EDIABAS Tool64 STR automation
+This repo supports a host-side STR cycle via `Tool64Cli.exe` user actions:
+- Sequence: `PAD -> WOHNEN -> PARKING -> sleep(180s) -> WOHNEN -> PAD`
+- Default EDIABAS path: `C:\EC-Apps\EDIABAS\BIN`
+- Default action names expected in Tool64 GUI:
+  - `SET_PAD`
+  - `SET_WOHNEN`
+  - `SET_PARKING`
+
+Run directly:
+```bat
+python scripts\ediabas_str_cycle.py --ediabas-bin "C:\EC-Apps\EDIABAS\BIN"
+```
+
+Auto mode behavior:
+- `--mode auto` (default): tries `Tool64Cli` first, then falls back to `tool32` if available.
+- `--mode tool64cli`: force Tool64 user-action execution.
+- `--mode tool32`: force direct Tool32 job execution.
+
+Force Tool32 mode (legacy direct jobs):
+```bat
+python scripts\ediabas_str_cycle.py --mode tool32 --ediabas-bin "C:\EC-Apps\EDIABAS\BIN" --tool32-prg IPB_APP1.prg --tool32-job STEUERN_ROUTINE --tool32-arg-pad "ARG;ZUSTAND_FAHRZEUG;STR;0x07" --tool32-arg-wohnen "ARG;ZUSTAND_FAHRZEUG;STR;0x05" --tool32-arg-parking "ARG;ZUSTAND_FAHRZEUG;STR;0x01"
+```
+
+Or via wrapper:
+```bat
+scripts\run_action.bat ediabas-str --ediabas-bin "C:\EC-Apps\EDIABAS\BIN"
+```
+
+Customize timing:
+```bat
+python scripts\ediabas_str_cycle.py --ediabas-bin "C:\EC-Apps\EDIABAS\BIN" --str-seconds 180 --settle-seconds 2 --retries 1
+```
+
+Artifacts are written under:
+- `artifacts/ediabas/str_cycle_<timestamp>/`
+- Includes per-step Tool64 logs and `ediabas_str_audit.jsonl`
+
+If Tool64 CLI fails:
+- Re-run with `--mode tool32` on racks where `tool32.exe` is available.
+- Check `ediabas_str_audit.jsonl` to see which engine was used per step (`tool64cli` or `tool32`) and exact return codes.
+
+Tool64 troubleshooting (without Tool32):
+```bat
+python scripts\ediabas_str_cycle.py --mode tool64cli --ediabas-bin "C:\EC-Apps\EDIABAS\BIN" --diagnose --probe-action SET_PAD
+```
+
+This writes:
+- `diagnose_report.txt` with binary detection, `--help` result, and probe-action result.
+- `diagnose_probe_action.log` with probe action command output.
+
+Use this to confirm if failures are due to missing action names, runtime path/dependency issues, or rack-specific Tool64 CLI behavior.
+
+Flow action marker support:
+- Add this in a Maestro YAML comment to run STR as host action:
+  - `# ACTION: ediabas-str --ediabas-bin C:\EC-Apps\EDIABAS\BIN --str-seconds 180`
+
 ## G70 multi-target orchestrator
 End-to-end PoC runner:
 - `scripts/g70_orchestrator.ps1`
