@@ -11,6 +11,16 @@ tags:
 - pressKey: home
 # - waitForAnimationToEnd
 - runFlow:
+    file: ../subflows/ediabas_str_prep_backend.yaml
+    env:
+      TEST_ID: smoke_ediabas_str_sidecar_prep
+      PREP_ENABLED: "false"
+      PREP_REBOOT: "false"
+      PREP_TIMEOUT_SECONDS: "30"
+      PREP_POST_REBOOT_DELAY_SECONDS: "15"
+      PREP_BEFORE_SHELL: ""
+      PREP_AFTER_SHELL: ""
+- runFlow:
     file: ../subflows/ediabas_str_sidecar_backend.yaml
     env:
       TEST_ID: smoke_ediabas_str_sidecar

@@ -20,7 +20,9 @@ flowchart LR
 
 Main files:
 - `flows/smoke/_smoke_ediabas_str_sidecar.yaml`
+- `flows/subflows/ediabas_str_prep_backend.yaml`
 - `flows/subflows/ediabas_str_sidecar_backend.yaml`
+- `scripts/maestro/ediabas_str_prep_backend.js`
 - `scripts/maestro/ediabas_str_sidecar_backend.js`
 - `scripts/control_server/server.js`
 - `scripts/control_server/ensure_server.bat`
@@ -34,7 +36,9 @@ Main files:
    - This lets Studio trigger STR as a backend action.
 
 2. Studio flow path made native (not ACTION-comment dependent):
+   - Added optional prep subflow `flows/subflows/ediabas_str_prep_backend.yaml`.
    - Added subflow `flows/subflows/ediabas_str_sidecar_backend.yaml`.
+   - Added backend prep script `scripts/maestro/ediabas_str_prep_backend.js`.
    - Added backend script `scripts/maestro/ediabas_str_sidecar_backend.js`.
    - Smoke flow now calls backend subflow directly.
 
@@ -93,10 +97,36 @@ scripts\control_server\ensure_server.bat
 2. Run flow in Studio:
    - `flows/smoke/_smoke_ediabas_str_sidecar.yaml`
 
+Optional ADB prep + reboot stage before STR:
+- The smoke flow includes a prep subflow that is disabled by default (`PREP_ENABLED="false"`).
+- When enabled, it can execute ADB shell command lists before/after reboot.
+
+Prep controls available in flow env:
+- `PREP_ENABLED`: `"true"|"false"`
+- `PREP_REBOOT`: `"true"|"false"`
+- `PREP_TIMEOUT_SECONDS`: per-step timeout
+- `PREP_POST_REBOOT_DELAY_SECONDS`: extra delay after `wait-for-device`
+- `PREP_BEFORE_SHELL`: shell command list separated by `||` or new lines
+- `PREP_AFTER_SHELL`: shell command list separated by `||` or new lines
+
+Example:
+```yaml
+PREP_ENABLED: "true"
+PREP_REBOOT: "true"
+PREP_BEFORE_SHELL: "setprop persist.vendor.some.flag 1||settings put global some_key 0"
+PREP_AFTER_SHELL: "am broadcast -a com.bmwgroup.SOME_REFRESH"
+```
+
 ### B) Backend endpoint directly (HTTP)
 ```powershell
 $body=@{ testId='manual_http'; strSeconds=5; settleSeconds=1; timeoutSeconds=90; retries=1; ecu='IPB_APP1'; job='STEUERN_ROUTINE'; argPad='ARG;ZUSTAND_FAHRZEUG;STR;0x07'; argWohnen='ARG;ZUSTAND_FAHRZEUG;STR;0x05'; argParking='ARG;ZUSTAND_FAHRZEUG;STR;0x01' } | ConvertTo-Json -Compress
 Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:4567/ediabas/str-sidecar' -ContentType 'application/json' -Body $body
+```
+
+Prep endpoint directly (optional):
+```powershell
+$prep=@{ testId='manual_prep'; enabled=$true; reboot=$true; timeoutSeconds=30; postRebootDelaySeconds=15; beforeShell=@('setprop persist.vendor.some.flag 1'); afterShell=@('am broadcast -a com.bmwgroup.SOME_REFRESH') } | ConvertTo-Json -Compress
+Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:4567/ediabas/str-prep' -ContentType 'application/json' -Body $prep
 ```
 
 ### C) Node sidecar runner (CLI)
