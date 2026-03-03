@@ -1,0 +1,11 @@
+caseId: "TC_TEMPLATE"
+title: "IDC23 E2E PoC"
+owner: ""
+priority: "P1"
+notes:
+  - "Validate same-time execution"
+  - "Validate DLT capture start/stop"
+  - "Validate onFlowStart/onFlowComplete hooks"
+acceptance:
+  - "IDC23 flow pass"
+  - "DLT file produced"
