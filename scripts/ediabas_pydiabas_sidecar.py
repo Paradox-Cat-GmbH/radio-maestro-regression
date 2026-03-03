@@ -3,10 +3,32 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any
+
+
+DEFAULT_EDIABAS_BIN = r"C:\EC-Apps\EDIABAS\BIN"
+
+
+def _ensure_api32_env() -> None:
+    candidates = []
+    ediabas_bin = os.environ.get("EDIABAS_BIN", "").strip()
+    if ediabas_bin:
+        candidates.append(os.path.join(ediabas_bin, "api32.dll"))
+    candidates.append(os.path.join(DEFAULT_EDIABAS_BIN, "api32.dll"))
+
+    for dll_path in candidates:
+        if os.path.isfile(dll_path):
+            os.environ["EDIABAS_API32_DLL"] = dll_path
+            bin_dir = os.path.dirname(dll_path)
+            current_path = os.environ.get("PATH", "")
+            path_parts = current_path.split(os.pathsep) if current_path else []
+            if not any(part.lower() == bin_dir.lower() for part in path_parts if part):
+                os.environ["PATH"] = f"{bin_dir}{os.pathsep}{current_path}" if current_path else bin_dir
+            return
 
 
 def _split_config(config_str: str) -> dict[str, str]:
@@ -33,6 +55,7 @@ def _execute_job(
     timeout_seconds: int,
 ) -> dict[str, Any]:
     started_at = time.time()
+    _ensure_api32_env()
 
     try:
         from pydiabas import PyDIABAS  # type: ignore

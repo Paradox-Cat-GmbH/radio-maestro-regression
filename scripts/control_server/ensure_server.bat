@@ -1,5 +1,5 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
 
 set "HOST=%MAESTRO_CONTROL_HOST%"
 if not defined HOST set "HOST=127.0.0.1"
@@ -39,11 +39,11 @@ if "%STATUS%"=="200" (
 )
 
 echo [INFO] Starting control server (%HOST%:%PORT%)...
-start "" /b cmd /c "\"%NODE_EXE%\" \"%SERVER_JS%\" >> \"%LOG%\" 2>&1"
+start "" /b cmd /c ""%NODE_EXE%" "%SERVER_JS%" >> "%LOG%" 2>&1"
 
 for /l %%I in (1,1,15) do (
   call :health STATUS 2
-  if "%STATUS%"=="200" (
+  if "!STATUS!"=="200" (
     echo [OK] Control server started.
     exit /b 0
   )
@@ -55,5 +55,10 @@ exit /b 2
 
 :health
 set "%~1=0"
-for /f "usebackq delims=" %%S in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "try { (Invoke-WebRequest -UseBasicParsing -Uri 'http://%HOST%:%PORT%/health' -TimeoutSec %~2).StatusCode } catch { 0 }"`) do set "%~1=%%S"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ProgressPreference='SilentlyContinue'; try { $r=Invoke-RestMethod -Uri 'http://%HOST%:%PORT%/health' -TimeoutSec %~2; if ($r.ok -eq $true) { exit 0 } else { exit 1 } } catch { exit 1 }" >nul 2>nul
+if errorlevel 1 (
+  set "%~1=0"
+) else (
+  set "%~1=200"
+)
 exit /b 0

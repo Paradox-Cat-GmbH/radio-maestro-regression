@@ -75,6 +75,24 @@ const newestDir=(root)=>listDirsNewestFirst(root)[0]||null;
 const copyTree=(src,dst)=>{try{mkdir(dst);fs.cpSync(src,dst,{recursive:true,force:true});return true;}catch(_){return false;}};
 const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
 const listFilesRecursive=(root)=>{const out=[];const walk=(d)=>{for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);if(e.isDirectory())walk(p);else out.push(p);}};try{walk(root);}catch(_){}return out;};
+const resolveSidecarPython=(requested)=>{
+  const fromReq=String(requested||'').trim();
+  if(fromReq&&fs.existsSync(fromReq)) return fromReq;
+
+  const fromEnv=String(process.env.PYDIABAS_PYTHON32||'').trim();
+  if(fromEnv&&fs.existsSync(fromEnv)) return fromEnv;
+
+  const localAppData=process.env.LOCALAPPDATA||'';
+  if(localAppData){
+    const versions=['313','312','311','310','39'];
+    for(const v of versions){
+      const p=path.join(localAppData,'Programs','Python',`Python${v}-32`,'python.exe');
+      if(fs.existsSync(p)) return p;
+    }
+  }
+
+  return '';
+};
 const copyFilesSince=(srcRoot,dstRoot,startMs,filterFn)=>{let n=0;const files=listFilesRecursive(srcRoot);for(const src of files){try{const st=fs.statSync(src);if(startMs&&st.mtimeMs<startMs)continue;if(filterFn&&!filterFn(src))continue;const rel=path.relative(srcRoot,src);const dst=path.join(dstRoot,rel);mkdir(path.dirname(dst));fs.copyFileSync(src,dst);n++;}catch(_){}}return n;};
 const parseMaestroDirTs=(dirPath)=>{try{const name=path.basename(dirPath);const m=name.match(/^(\d{4})-(\d{2})-(\d{2})_(\d{2})(\d{2})(\d{2})$/);if(!m)return 0;const d=new Date(Number(m[1]),Number(m[2])-1,Number(m[3]),Number(m[4]),Number(m[5]),Number(m[6]));return d.getTime()||0;}catch(_){return 0;}};
 const parseMaestroVideoTs=(filePath)=>{try{const n=path.basename(filePath);const m=n.match(/maestro_flow_flow_(\d+)_\d+\.(mp4|mkv|webm)$/i);return m?Number(m[1]):0;}catch(_){return 0;}};
@@ -184,6 +202,38 @@ async function injectAction(p,kind){
   write(dir,file,JSON.stringify(res,null,2));auditPush({type:'inject_action',ok:ok===true,kind,deviceId:dev||'',testId:id||'',outDir:dir,artifactFile:file});return res;
 }
 
+async function ediabasStrSidecar(p){
+  const st=p.stamp||stamp();
+  const id=p.testId||'ediabas_str_sidecar';
+  const dir=outDir(p,st,id);
+  mkdir(dir);
+
+  const script=path.join(REPO,'scripts','ediabas_str_cycle_sidecar.js');
+  const args=[];
+  const add=(k,v)=>{if(v!==undefined&&v!==null&&String(v).trim()!==''){args.push(k,String(v));}};
+
+  add('--str-seconds',p.strSeconds!=null?p.strSeconds:180);
+  add('--settle-seconds',p.settleSeconds!=null?p.settleSeconds:2);
+  add('--timeout-seconds',p.timeoutSeconds!=null?p.timeoutSeconds:90);
+  add('--retries',p.retries!=null?p.retries:1);
+  add('--ecu',p.ecu||'IPB_APP1');
+  add('--job',p.job||'STEUERN_ROUTINE');
+  add('--arg-pad',p.argPad||'ARG;ZUSTAND_FAHRZEUG;STR;0x07');
+  add('--arg-wohnen',p.argWohnen||'ARG;ZUSTAND_FAHRZEUG;STR;0x05');
+  add('--arg-parking',p.argParking||'ARG;ZUSTAND_FAHRZEUG;STR;0x01');
+  add('--sidecar-mode',p.sidecarMode||'auto');
+  add('--sidecar-python',resolveSidecarPython(p.sidecarPython));
+  add('--output-dir',path.join(dir,'ediabas'));
+
+  const r=await runNodeScript(script,args);
+  const ok=(r.code??1)===0;
+  const artifactFile='ediabas_str_sidecar.json';
+  const result={ok,kind:'ediabas_str_sidecar',stamp:st,testId:id,outDir:dir,artifactFile,script,args,run:r,request:p};
+  write(dir,artifactFile,JSON.stringify(result,null,2));
+  auditPush({type:'ediabas_str_sidecar',ok:ok===true,testId:id||'',outDir:dir,artifactFile});
+  return result;
+}
+
 // --- http server ---
 http.createServer(async(req,res)=>{
   if(req.method==='OPTIONS')return jres(res,204,{ok:true});
@@ -193,7 +243,7 @@ http.createServer(async(req,res)=>{
       const html=`<!doctype html><html><head><meta charset="utf-8"/><title>Maestro Control Dashboard</title><style>body{font-family:Segoe UI,Arial,sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:16px}h1{margin:0 0 12px;font-size:20px}.grid{display:grid;grid-template-columns:repeat(2,minmax(320px,1fr));gap:12px}.card{background:#111827;border:1px solid #334155;border-radius:10px;padding:12px}.ok{color:#22c55e}.bad{color:#ef4444}.muted{color:#94a3b8}pre{white-space:pre-wrap;word-break:break-word;background:#020617;padding:10px;border-radius:8px;max-height:360px;overflow:auto}a{color:#38bdf8}</style></head><body><h1>Maestro Control Dashboard</h1><div class="muted">Auto-refresh: 1s · <a href="/">JSON root</a> · <a href="/audit/file/raw?limit=2000" download="control_server_audit.jsonl">Download persisted audit (JSONL)</a></div><div class="grid"><div class="card"><h3>Latest Verdict</h3><div id="verdict" class="muted">No data yet</div></div><div class="card"><h3>Track / Station</h3><div id="track" class="muted">No data yet</div></div><div class="card"><h3>Recent Audit</h3><pre id="audit">[]</pre></div><div class="card"><h3>Raw Last Verdict</h3><pre id="raw">null</pre></div></div><script>async function load(){try{const a=await fetch('/radio/last').then(r=>r.json());const b=await fetch('/audit?limit=30').then(r=>r.json());const l=a&&a.latest?a.latest:null;document.getElementById('verdict').innerHTML=l?('ok: <b class="'+(l.ok?'ok':'bad')+'">'+l.ok+'</b><br/>audioFocus: <b class="'+((l.audio&&l.audio.audioFocus)?'ok':'bad')+'">'+(l.audio&&l.audio.audioFocus)+'</b><br/>playing: <b class="'+((l.media&&l.media.playing)?'ok':'bad')+'">'+(l.media&&l.media.playing)+'</b><br/>package: '+((l.media&&l.media.package)||'-')+'<br/>state: '+((l.media&&l.media.state)||'-')+'<br/>device: '+(l.deviceId||'-')+'<br/>deviceDetails: '+(l.deviceDetails||'-')+'<br/>stamp: '+(l.stamp||'-')+'<br/>outDir: '+(l.outDir||'-')):'No data yet';const raw=a&&a.raw?a.raw:null;const m=raw&&raw.media?raw.media:{};document.getElementById('track').innerHTML='title: '+(m.metadataTitle||'-')+'<br/>artist: '+(m.metadataArtist||'-')+'<br/>station(UI): '+((raw&&raw.ui&&raw.ui.station)||'-')+'<br/>band(UI): '+((raw&&raw.ui&&raw.ui.band)||'-')+'<br/>station/list: '+(m.queueTitle||'-')+'<br/>description: '+((m.description&&m.description.join(' | '))||'-');const ev=((b&&b.events)||[]).slice(-12).reverse();document.getElementById('audit').textContent=JSON.stringify(ev,null,2);document.getElementById('raw').textContent=JSON.stringify(raw,null,2);}catch(e){document.getElementById('verdict').textContent='Dashboard fetch error: '+String(e);}}async function probe(){try{await fetch('/radio/probe');}catch(_){}}load();setInterval(load,1000);setInterval(probe,5000);</script></body></html>`;
       res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});return res.end(html);
     }
-    if(req.method==='GET'&&p==='/')return jres(res,200,{ok:true,service:'maestro_control_server',host:HOST,port:PORT,auditFile:AUDIT_FILE,endpoints:['GET /','GET /dashboard','GET /health','GET /audit?limit=20','GET /audit/file?limit=50','GET /audit/file/raw?limit=500','GET /radio/last','GET /radio/probe','POST /radio/check','POST /inject/swag','POST /inject/bim','POST /ehh/set','POST /dlt/start','POST /dlt/stop','POST /dlt/status','POST /evidence/bundle-studio'],latest:latestSummary()});
+    if(req.method==='GET'&&p==='/')return jres(res,200,{ok:true,service:'maestro_control_server',host:HOST,port:PORT,auditFile:AUDIT_FILE,endpoints:['GET /','GET /dashboard','GET /health','GET /audit?limit=20','GET /audit/file?limit=50','GET /audit/file/raw?limit=500','GET /radio/last','GET /radio/probe','POST /radio/check','POST /inject/swag','POST /inject/bim','POST /ehh/set','POST /ediabas/str-sidecar','POST /dlt/start','POST /dlt/stop','POST /dlt/status','POST /evidence/bundle-studio'],latest:latestSummary()});
     if(req.method==='GET'&&p==='/health')return jres(res,200,{ok:true,host:HOST,port:PORT,latest:latestSummary()});
     if(req.method==='GET'&&p==='/radio/last')return jres(res,200,{ok:true,latest:latestSummary(),raw:latestRadioVerdict});
     if(req.method==='GET'&&p==='/radio/probe')return jres(res,200,await radioCheck({testId:'dashboard_probe'}));
@@ -204,6 +254,7 @@ http.createServer(async(req,res)=>{
     if(req.method==='POST'&&p==='/inject/swag')return jres(res,200,await injectAction(await readJson(req),'swag'));
     if(req.method==='POST'&&p==='/inject/bim')return jres(res,200,await injectAction(await readJson(req),'bim'));
     if(req.method==='POST'&&p==='/ehh/set')return jres(res,200,await injectAction(await readJson(req),'ehh'));
+    if(req.method==='POST'&&p==='/ediabas/str-sidecar')return jres(res,200,await ediabasStrSidecar(await readJson(req)));
 
     if(req.method==='POST'&&p==='/dlt/start'){
       const b=await readJson(req);
