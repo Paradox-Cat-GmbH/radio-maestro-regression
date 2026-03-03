@@ -18,6 +18,7 @@
 //   WAIT_AFTER_PARKING_COMMAND_SECONDS  optional
 //   WAIT_AFTER_WOHNEN_RETURN_SECONDS    optional
 //   WAIT_AFTER_PAD_RETURN_SECONDS       optional
+//   SKIP_INITIAL_PAD                     optional (true/false)
 //   PRE1_ECU / PRE1_JOB / PRE1_ARG / PRE1_WAIT_SECONDS optional
 //   PRE2_ECU / PRE2_JOB / PRE2_ARG / PRE2_WAIT_SECONDS optional
 (function () {
@@ -31,6 +32,16 @@
   function intVal(v, dflt) {
     var n = parseInt(String(v == null ? '' : v), 10);
     return Number.isNaN(n) ? dflt : n;
+  }
+
+  function boolVal(v, dflt) {
+    if (v === undefined || v === null) return dflt;
+    if (typeof v === 'boolean') return v;
+    var s = String(v).trim().toLowerCase();
+    if (!s.length || s === 'undefined' || s === 'null') return dflt;
+    if (s === '1' || s === 'true' || s === 'yes' || s === 'on') return true;
+    if (s === '0' || s === 'false' || s === 'no' || s === 'off') return false;
+    return dflt;
   }
 
   var backendUrl = str(typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : undefined, 'http://127.0.0.1:4567');
@@ -52,6 +63,7 @@
     waitAfterParkingCommandSeconds: intVal(typeof WAIT_AFTER_PARKING_COMMAND_SECONDS !== 'undefined' ? WAIT_AFTER_PARKING_COMMAND_SECONDS : undefined, 0),
     waitAfterWohnenReturnSeconds: intVal(typeof WAIT_AFTER_WOHNEN_RETURN_SECONDS !== 'undefined' ? WAIT_AFTER_WOHNEN_RETURN_SECONDS : undefined, 2),
     waitAfterPadReturnSeconds: intVal(typeof WAIT_AFTER_PAD_RETURN_SECONDS !== 'undefined' ? WAIT_AFTER_PAD_RETURN_SECONDS : undefined, 2),
+    skipInitialPad: boolVal(typeof SKIP_INITIAL_PAD !== 'undefined' ? SKIP_INITIAL_PAD : undefined, false),
     pre1Ecu: str(typeof PRE1_ECU !== 'undefined' ? PRE1_ECU : undefined, ''),
     pre1Job: str(typeof PRE1_JOB !== 'undefined' ? PRE1_JOB : undefined, ''),
     pre1Arg: str(typeof PRE1_ARG !== 'undefined' ? PRE1_ARG : undefined, ''),
