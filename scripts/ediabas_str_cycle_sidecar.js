@@ -212,13 +212,61 @@ async function runStr(opts) {
   ensureDir(opts.outputDir);
   const auditJsonl = path.join(opts.outputDir, 'ediabas_str_audit.jsonl');
 
+  const preJobs = [];
+  if (opts.pre1Ecu && opts.pre1Job) {
+    preJobs.push({
+      name: 'PRE1',
+      ecu: opts.pre1Ecu,
+      job: opts.pre1Job,
+      parameters: opts.pre1Arg,
+      waitSeconds: opts.pre1WaitSeconds,
+    });
+  }
+  if (opts.pre2Ecu && opts.pre2Job) {
+    preJobs.push({
+      name: 'PRE2',
+      ecu: opts.pre2Ecu,
+      job: opts.pre2Job,
+      parameters: opts.pre2Arg,
+      waitSeconds: opts.pre2WaitSeconds,
+    });
+  }
+
+  for (const pre of preJobs) {
+    const row = await runActionWithRetries({
+      state: pre.name,
+      parameters: pre.parameters,
+      retries: opts.retries,
+      auditJsonl,
+      outputDir: opts.outputDir,
+      sidecarMode: opts.sidecarMode,
+      sidecarPython: opts.sidecarPython,
+      sidecarScript: opts.sidecarScript,
+      sidecarUrl: opts.sidecarUrl,
+      ecu: pre.ecu,
+      job: pre.job,
+      resultFilter: opts.resultFilter,
+      config: opts.config,
+      timeoutSeconds: opts.timeoutSeconds,
+    });
+
+    if (!row || row.returncode !== 0) {
+      console.error(`ERROR: Failed at state=${pre.name}. Log: ${row ? row.log_file : 'n/a'}`);
+      return 2;
+    }
+
+    if (pre.waitSeconds > 0) {
+      await sleep(pre.waitSeconds * 1000);
+    }
+  }
+
   const sequence = [
-    ['PAD', opts.argPad, opts.settleSeconds],
-    ['WOHNEN', opts.argWohnen, opts.settleSeconds],
-    ['PARKING', opts.argParking, opts.settleSeconds],
+    ['PAD', opts.argPad, opts.waitAfterPadInitialSeconds],
+    ['WOHNEN', opts.argWohnen, opts.waitAfterWohnenEnterSeconds],
+    ['PARKING', opts.argParking, opts.waitAfterParkingCommandSeconds],
     ['SLEEP', '', opts.strSeconds],
-    ['WOHNEN', opts.argWohnen, opts.settleSeconds],
-    ['PAD', opts.argPad, opts.settleSeconds],
+    ['WOHNEN', opts.argWohnen, opts.waitAfterWohnenReturnSeconds],
+    ['PAD', opts.argPad, opts.waitAfterPadReturnSeconds],
   ];
 
   for (const [state, parameters, waitSeconds] of sequence) {
@@ -274,6 +322,19 @@ function printHelp() {
     '  --str-seconds <int>',
     '  --timeout-seconds <int>',
     '  --retries <int>',
+    '  --wait-after-pad-initial-seconds <int>',
+    '  --wait-after-wohnen-enter-seconds <int>',
+    '  --wait-after-parking-command-seconds <int>',
+    '  --wait-after-wohnen-return-seconds <int>',
+    '  --wait-after-pad-return-seconds <int>',
+    '  --pre1-ecu <name>',
+    '  --pre1-job <name>',
+    '  --pre1-arg <arg>',
+    '  --pre1-wait-seconds <int>',
+    '  --pre2-ecu <name>',
+    '  --pre2-job <name>',
+    '  --pre2-arg <arg>',
+    '  --pre2-wait-seconds <int>',
     '  --output-dir <path>',
     '  --sidecar-mode <auto|cli|http>',
     '  --sidecar-python <path>              env fallback: PYDIABAS_PYTHON32',
@@ -302,6 +363,19 @@ function parseArgs(argv) {
     strSeconds: 180,
     timeoutSeconds: 60,
     retries: 1,
+    waitAfterPadInitialSeconds: 2,
+    waitAfterWohnenEnterSeconds: 2,
+    waitAfterParkingCommandSeconds: 0,
+    waitAfterWohnenReturnSeconds: 2,
+    waitAfterPadReturnSeconds: 2,
+    pre1Ecu: '',
+    pre1Job: '',
+    pre1Arg: '',
+    pre1WaitSeconds: 0,
+    pre2Ecu: '',
+    pre2Job: '',
+    pre2Arg: '',
+    pre2WaitSeconds: 0,
     outputDir: path.resolve(path.join('artifacts', 'ediabas', `pydiabas_str_cycle_${timestampCompact()}`)),
     sidecarMode: 'auto',
     sidecarPython: process.env.PYDIABAS_PYTHON32 || 'python',
@@ -327,6 +401,19 @@ function parseArgs(argv) {
     '--str-seconds': 'strSeconds',
     '--timeout-seconds': 'timeoutSeconds',
     '--retries': 'retries',
+    '--wait-after-pad-initial-seconds': 'waitAfterPadInitialSeconds',
+    '--wait-after-wohnen-enter-seconds': 'waitAfterWohnenEnterSeconds',
+    '--wait-after-parking-command-seconds': 'waitAfterParkingCommandSeconds',
+    '--wait-after-wohnen-return-seconds': 'waitAfterWohnenReturnSeconds',
+    '--wait-after-pad-return-seconds': 'waitAfterPadReturnSeconds',
+    '--pre1-ecu': 'pre1Ecu',
+    '--pre1-job': 'pre1Job',
+    '--pre1-arg': 'pre1Arg',
+    '--pre1-wait-seconds': 'pre1WaitSeconds',
+    '--pre2-ecu': 'pre2Ecu',
+    '--pre2-job': 'pre2Job',
+    '--pre2-arg': 'pre2Arg',
+    '--pre2-wait-seconds': 'pre2WaitSeconds',
     '--output-dir': 'outputDir',
     '--sidecar-mode': 'sidecarMode',
     '--sidecar-python': 'sidecarPython',
@@ -336,7 +423,19 @@ function parseArgs(argv) {
     '--probe-job': 'probeJob',
     '--probe-param': 'probeParam',
   };
-  const numeric = new Set(['settleSeconds', 'strSeconds', 'timeoutSeconds', 'retries']);
+  const numeric = new Set([
+    'settleSeconds',
+    'strSeconds',
+    'timeoutSeconds',
+    'retries',
+    'waitAfterPadInitialSeconds',
+    'waitAfterWohnenEnterSeconds',
+    'waitAfterParkingCommandSeconds',
+    'waitAfterWohnenReturnSeconds',
+    'waitAfterPadReturnSeconds',
+    'pre1WaitSeconds',
+    'pre2WaitSeconds',
+  ]);
 
   for (let i = 0; i < argv.length; i += 1) {
     const t = argv[i];
@@ -358,8 +457,35 @@ function parseArgs(argv) {
   out.outputDir = path.resolve(out.outputDir);
   out.sidecarScript = path.resolve(out.sidecarScript);
 
+  if (Number.isNaN(out.waitAfterPadInitialSeconds)) out.waitAfterPadInitialSeconds = out.settleSeconds;
+  if (Number.isNaN(out.waitAfterWohnenEnterSeconds)) out.waitAfterWohnenEnterSeconds = out.settleSeconds;
+  if (Number.isNaN(out.waitAfterParkingCommandSeconds)) out.waitAfterParkingCommandSeconds = 0;
+  if (Number.isNaN(out.waitAfterWohnenReturnSeconds)) out.waitAfterWohnenReturnSeconds = out.settleSeconds;
+  if (Number.isNaN(out.waitAfterPadReturnSeconds)) out.waitAfterPadReturnSeconds = out.settleSeconds;
+  if (Number.isNaN(out.pre1WaitSeconds)) out.pre1WaitSeconds = 0;
+  if (Number.isNaN(out.pre2WaitSeconds)) out.pre2WaitSeconds = 0;
+
+  if (out.settleSeconds >= 0) {
+    if (!('waitAfterPadInitialSeconds' in out) || out.waitAfterPadInitialSeconds == null) out.waitAfterPadInitialSeconds = out.settleSeconds;
+    if (!('waitAfterWohnenEnterSeconds' in out) || out.waitAfterWohnenEnterSeconds == null) out.waitAfterWohnenEnterSeconds = out.settleSeconds;
+    if (!('waitAfterWohnenReturnSeconds' in out) || out.waitAfterWohnenReturnSeconds == null) out.waitAfterWohnenReturnSeconds = out.settleSeconds;
+    if (!('waitAfterPadReturnSeconds' in out) || out.waitAfterPadReturnSeconds == null) out.waitAfterPadReturnSeconds = out.settleSeconds;
+  }
+
   if (!['auto', 'cli', 'http'].includes(out.sidecarMode)) throw new Error(`Invalid --sidecar-mode: ${out.sidecarMode}`);
-  if (out.settleSeconds < 0 || out.strSeconds < 0 || out.timeoutSeconds <= 0 || out.retries < 0) throw new Error('Invalid timing/retry values.');
+  if (
+    out.settleSeconds < 0 ||
+    out.strSeconds < 0 ||
+    out.timeoutSeconds <= 0 ||
+    out.retries < 0 ||
+    out.waitAfterPadInitialSeconds < 0 ||
+    out.waitAfterWohnenEnterSeconds < 0 ||
+    out.waitAfterParkingCommandSeconds < 0 ||
+    out.waitAfterWohnenReturnSeconds < 0 ||
+    out.waitAfterPadReturnSeconds < 0 ||
+    out.pre1WaitSeconds < 0 ||
+    out.pre2WaitSeconds < 0
+  ) throw new Error('Invalid timing/retry values.');
 
   return out;
 }
