@@ -1,0 +1,20 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: ediabas_str_prep_backend
+tags:
+  - helper
+  - subflow
+  - backend
+  - ediabas
+---
+- runScript:
+    file: ../../scripts/maestro/ediabas_str_prep_backend.js
+    env:
+      TEST_ID: ${TEST_ID}
+      DEVICE_ID: ${DEVICE_ID}
+      PREP_ENABLED: ${PREP_ENABLED}
+      PREP_REBOOT: ${PREP_REBOOT}
+      PREP_TIMEOUT_SECONDS: ${PREP_TIMEOUT_SECONDS}
+      PREP_POST_REBOOT_DELAY_SECONDS: ${PREP_POST_REBOOT_DELAY_SECONDS}
+      PREP_BEFORE_SHELL: ${PREP_BEFORE_SHELL}
+      PREP_AFTER_SHELL: ${PREP_AFTER_SHELL}
