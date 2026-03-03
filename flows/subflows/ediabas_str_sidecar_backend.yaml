@@ -1,0 +1,22 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: ediabas_str_sidecar_backend
+tags:
+  - helper
+  - subflow
+  - backend
+  - ediabas
+---
+- runScript:
+    file: ../../scripts/maestro/ediabas_str_sidecar_backend.js
+    env:
+      TEST_ID: ${TEST_ID}
+      STR_SECONDS: ${STR_SECONDS}
+      SETTLE_SECONDS: ${SETTLE_SECONDS}
+      TIMEOUT_SECONDS: ${TIMEOUT_SECONDS}
+      RETRIES: ${RETRIES}
+      ECU: ${ECU}
+      JOB: ${JOB}
+      ARGPAD: ${ARGPAD}
+      ARGWOHNEN: ${ARGWOHNEN}
+      ARGPARKING: ${ARGPARKING}

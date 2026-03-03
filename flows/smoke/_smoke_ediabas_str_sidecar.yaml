@@ -6,8 +6,20 @@ tags:
   - ediabas
   - str
 
-# ACTION: ediabas-str-js-sidecar --str-seconds 5 --settle-seconds 1 --timeout-seconds 90 --retries 1
 ---
 - evalScript: "${output.testId = 'smoke_ediabas_str_sidecar'}"
 - pressKey: home
-- waitForAnimationToEnd
+# - waitForAnimationToEnd
+- runFlow:
+    file: ../subflows/ediabas_str_sidecar_backend.yaml
+    env:
+      TEST_ID: smoke_ediabas_str_sidecar
+      STR_SECONDS: "5"
+      SETTLE_SECONDS: "1"
+      TIMEOUT_SECONDS: "90"
+      RETRIES: "1"
+      ECU: IPB_APP1
+      JOB: STEUERN_ROUTINE
+      ARGPAD: ARG;ZUSTAND_FAHRZEUG;STR;0x07
+      ARGWOHNEN: ARG;ZUSTAND_FAHRZEUG;STR;0x05
+      ARGPARKING: ARG;ZUSTAND_FAHRZEUG;STR;0x01
