@@ -260,14 +260,15 @@ async function runStr(opts) {
     }
   }
 
-  const sequence = [
-    ['PAD', opts.argPad, opts.waitAfterPadInitialSeconds],
-    ['WOHNEN', opts.argWohnen, opts.waitAfterWohnenEnterSeconds],
-    ['PARKING', opts.argParking, opts.waitAfterParkingCommandSeconds],
-    ['SLEEP', '', opts.strSeconds],
-    ['WOHNEN', opts.argWohnen, opts.waitAfterWohnenReturnSeconds],
-    ['PAD', opts.argPad, opts.waitAfterPadReturnSeconds],
-  ];
+  const sequence = [];
+  if (!opts.skipInitialPad) {
+    sequence.push(['PAD', opts.argPad, opts.waitAfterPadInitialSeconds]);
+  }
+  sequence.push(['WOHNEN', opts.argWohnen, opts.waitAfterWohnenEnterSeconds]);
+  sequence.push(['PARKING', opts.argParking, opts.waitAfterParkingCommandSeconds]);
+  sequence.push(['SLEEP', '', opts.strSeconds]);
+  sequence.push(['WOHNEN', opts.argWohnen, opts.waitAfterWohnenReturnSeconds]);
+  sequence.push(['PAD', opts.argPad, opts.waitAfterPadReturnSeconds]);
 
   for (const [state, parameters, waitSeconds] of sequence) {
     if (state === 'SLEEP') {
@@ -327,6 +328,7 @@ function printHelp() {
     '  --wait-after-parking-command-seconds <int>',
     '  --wait-after-wohnen-return-seconds <int>',
     '  --wait-after-pad-return-seconds <int>',
+    '  --skip-initial-pad',
     '  --pre1-ecu <name>',
     '  --pre1-job <name>',
     '  --pre1-arg <arg>',
@@ -368,6 +370,7 @@ function parseArgs(argv) {
     waitAfterParkingCommandSeconds: 0,
     waitAfterWohnenReturnSeconds: 2,
     waitAfterPadReturnSeconds: 2,
+    skipInitialPad: false,
     pre1Ecu: '',
     pre1Job: '',
     pre1Arg: '',
@@ -445,6 +448,7 @@ function parseArgs(argv) {
     }
     if (t === '--diagnose') { out.diagnose = true; continue; }
     if (t === '--probe') { out.probe = true; continue; }
+    if (t === '--skip-initial-pad') { out.skipInitialPad = true; continue; }
     if (!(t in map)) throw new Error(`Unknown argument: ${t}`);
     const key = map[t];
     const value = argv[i + 1];

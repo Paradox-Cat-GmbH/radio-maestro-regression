@@ -226,6 +226,7 @@ async function ediabasStrSidecar(p){
   add('--wait-after-parking-command-seconds',p.waitAfterParkingCommandSeconds);
   add('--wait-after-wohnen-return-seconds',p.waitAfterWohnenReturnSeconds);
   add('--wait-after-pad-return-seconds',p.waitAfterPadReturnSeconds);
+  if(asBool(p.skipInitialPad,false)) args.push('--skip-initial-pad');
   add('--pre1-ecu',p.pre1Ecu);
   add('--pre1-job',p.pre1Job);
   add('--pre1-arg',p.pre1Arg);
