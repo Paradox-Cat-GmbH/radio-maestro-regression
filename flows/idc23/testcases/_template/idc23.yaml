@@ -1,0 +1,9 @@
+appId: com.android.settings
+onFlowStart:
+  - runFlow: ../../subflows/common/start.yaml
+onFlowComplete:
+  - runFlow: ../../subflows/common/stop.yaml
+---
+# IDC23 single-device flow
+- takeScreenshot: "IDC23_00_start"
+- takeScreenshot: "IDC23_99_end"
