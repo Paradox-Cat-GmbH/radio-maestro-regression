@@ -213,3 +213,27 @@ For CI/CLI reproducibility:
 1. Pin and pass explicit Python32 path.
 2. Use Node sidecar CLI command with explicit `--sidecar-python`.
 
+## 10) Global preconditions before suites
+The suite wrappers now run global preconditions once before all flows:
+- `run_suite.bat`
+- `run_demo_suite.bat`
+- `run_lightning_demo.bat`
+
+Runner-level preconditions are executed by `scripts/maestro/run_with_artifacts.ps1` when enabled.
+
+Environment toggles:
+- `MAESTRO_GLOBAL_PRECONDITIONS_ENABLED=true|false` (default in runner: false)
+- `MAESTRO_PREP_REBOOT=true|false` (default when enabled: true)
+- `MAESTRO_PREP_TIMEOUT_SECONDS` (default: 30)
+- `MAESTRO_PREP_POST_REBOOT_DELAY_SECONDS` (default: 35)
+- `MAESTRO_PREP_BEFORE_SHELL` (default: CID + PHUD disable setprops)
+- `MAESTRO_PREP_AFTER_SHELL` (default: CID + PHUD getprop checks)
+
+Default command pair used when values are not provided:
+- before:
+   - `setprop persist.vendor.com.bmwgroup.disable_cid_ehh true`
+   - `setprop persist.vendor.com.bmwgroup.disable_phud_ehh true`
+- after:
+   - `getprop persist.vendor.com.bmwgroup.disable_cid_ehh`
+   - `getprop persist.vendor.com.bmwgroup.disable_phud_ehh`
+
