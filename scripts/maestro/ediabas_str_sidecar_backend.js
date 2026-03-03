@@ -13,6 +13,13 @@
 //   ARGPAD           optional
 //   ARGWOHNEN        optional
 //   ARGPARKING       optional
+//   WAIT_AFTER_PAD_INITIAL_SECONDS      optional
+//   WAIT_AFTER_WOHNEN_ENTER_SECONDS     optional
+//   WAIT_AFTER_PARKING_COMMAND_SECONDS  optional
+//   WAIT_AFTER_WOHNEN_RETURN_SECONDS    optional
+//   WAIT_AFTER_PAD_RETURN_SECONDS       optional
+//   PRE1_ECU / PRE1_JOB / PRE1_ARG / PRE1_WAIT_SECONDS optional
+//   PRE2_ECU / PRE2_JOB / PRE2_ARG / PRE2_WAIT_SECONDS optional
 (function () {
   function str(v, dflt) {
     if (v === undefined || v === null) return dflt;
@@ -39,7 +46,20 @@
     job: str(typeof JOB !== 'undefined' ? JOB : undefined, 'STEUERN_ROUTINE'),
     argPad: str(typeof ARGPAD !== 'undefined' ? ARGPAD : undefined, 'ARG;ZUSTAND_FAHRZEUG;STR;0x07'),
     argWohnen: str(typeof ARGWOHNEN !== 'undefined' ? ARGWOHNEN : undefined, 'ARG;ZUSTAND_FAHRZEUG;STR;0x05'),
-    argParking: str(typeof ARGPARKING !== 'undefined' ? ARGPARKING : undefined, 'ARG;ZUSTAND_FAHRZEUG;STR;0x01')
+    argParking: str(typeof ARGPARKING !== 'undefined' ? ARGPARKING : undefined, 'ARG;ZUSTAND_FAHRZEUG;STR;0x01'),
+    waitAfterPadInitialSeconds: intVal(typeof WAIT_AFTER_PAD_INITIAL_SECONDS !== 'undefined' ? WAIT_AFTER_PAD_INITIAL_SECONDS : undefined, 2),
+    waitAfterWohnenEnterSeconds: intVal(typeof WAIT_AFTER_WOHNEN_ENTER_SECONDS !== 'undefined' ? WAIT_AFTER_WOHNEN_ENTER_SECONDS : undefined, 2),
+    waitAfterParkingCommandSeconds: intVal(typeof WAIT_AFTER_PARKING_COMMAND_SECONDS !== 'undefined' ? WAIT_AFTER_PARKING_COMMAND_SECONDS : undefined, 0),
+    waitAfterWohnenReturnSeconds: intVal(typeof WAIT_AFTER_WOHNEN_RETURN_SECONDS !== 'undefined' ? WAIT_AFTER_WOHNEN_RETURN_SECONDS : undefined, 2),
+    waitAfterPadReturnSeconds: intVal(typeof WAIT_AFTER_PAD_RETURN_SECONDS !== 'undefined' ? WAIT_AFTER_PAD_RETURN_SECONDS : undefined, 2),
+    pre1Ecu: str(typeof PRE1_ECU !== 'undefined' ? PRE1_ECU : undefined, ''),
+    pre1Job: str(typeof PRE1_JOB !== 'undefined' ? PRE1_JOB : undefined, ''),
+    pre1Arg: str(typeof PRE1_ARG !== 'undefined' ? PRE1_ARG : undefined, ''),
+    pre1WaitSeconds: intVal(typeof PRE1_WAIT_SECONDS !== 'undefined' ? PRE1_WAIT_SECONDS : undefined, 0),
+    pre2Ecu: str(typeof PRE2_ECU !== 'undefined' ? PRE2_ECU : undefined, ''),
+    pre2Job: str(typeof PRE2_JOB !== 'undefined' ? PRE2_JOB : undefined, ''),
+    pre2Arg: str(typeof PRE2_ARG !== 'undefined' ? PRE2_ARG : undefined, ''),
+    pre2WaitSeconds: intVal(typeof PRE2_WAIT_SECONDS !== 'undefined' ? PRE2_WAIT_SECONDS : undefined, 0)
   };
 
   var url = backendUrl.replace(/\/+$/, '') + '/ediabas/str-sidecar';
