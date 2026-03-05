@@ -4,10 +4,33 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$DeviceId,
     [string]$DltIp = "localhost",
-    [string]$DltPort = "3490"
+    [string]$DltPort = "3490",
+    [switch]$PruneEvidenceOnPass
 )
 
 $ErrorActionPreference = "Stop"
+
+function Get-BoolEnv {
+    param([string]$Name, [bool]$Default)
+    $raw = [Environment]::GetEnvironmentVariable($Name)
+    if ([string]::IsNullOrWhiteSpace($raw)) { return $Default }
+    switch ($raw.Trim().ToLowerInvariant()) {
+        '1' { return $true }
+        'true' { return $true }
+        'yes' { return $true }
+        'on' { return $true }
+        '0' { return $false }
+        'false' { return $false }
+        'no' { return $false }
+        'off' { return $false }
+        default { return $Default }
+    }
+}
+
+$keepEvidenceOnPass = Get-BoolEnv -Name 'MAESTRO_KEEP_EVIDENCE_ON_PASS' -Default $true
+if ($PruneEvidenceOnPass) {
+    $keepEvidenceOnPass = $false
+}
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot = Split-Path -Parent $ScriptDir
@@ -94,6 +117,21 @@ $summary = [pscustomobject]@{
     videoCount = $videoCount
     maestroExitCode = $maestroExit
     success = ($maestroExit -eq 0 -and $dltExists -and $dltSize -gt 0)
+    keepEvidenceOnPass = $keepEvidenceOnPass
+    evidencePruned = $false
+}
+
+if ($summary.success -and -not $keepEvidenceOnPass) {
+    Write-Host "[INFO] Pruning pass evidence (MAESTRO_KEEP_EVIDENCE_ON_PASS=false)"
+    if (Test-Path $dltOut) {
+        Remove-Item -Path $dltOut -Force -ErrorAction SilentlyContinue
+    }
+    foreach ($dir in @($maestroOut, $videoDirOut)) {
+        if (Test-Path $dir) {
+            Remove-Item -Path $dir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+    $summary.evidencePruned = $true
 }
 
 $summaryPath = Join-Path $runRoot "run-summary.json"

@@ -1,0 +1,16 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+onFlowStart:
+  - runFlow: ../../subflows/common/start.yaml
+onFlowComplete:
+  - runFlow: ../../subflows/common/stop.yaml
+---
+- evalScript: "${output.testId = 'ABPI-669812'}"
+- runFlow: ../../subflows/common/radio_ready_and_verify.yaml
+- runFlow:
+    file: ../../../subflows/backend_inject.yaml
+    env:
+      KIND: swag
+      TARGET: center
+- waitForAnimationToEnd
+- runFlow: ../../../subflows/verify_radio_backend.yaml

@@ -1,0 +1,12 @@
+caseId: "ABPI-669786"
+title: "AM presets select station via touch and skip"
+owner: ""
+priority: "P2"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "semi-automated"
+notes:
+  - "AM equivalent of preset touch + skip behavior."
+  - "Wrap-around verification should be confirmed via station history in artifacts."
+acceptance:
+  - "Preset touch selection remains playable."
+  - "Skip left/right actions remain functional from preset context."

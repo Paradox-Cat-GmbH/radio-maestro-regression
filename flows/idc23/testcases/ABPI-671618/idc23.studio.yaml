@@ -1,0 +1,76 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+onFlowStart:
+  - runFlow:
+      file: ../../subflows/common/studio_start_dlt.yaml
+      env:
+        CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+        DLT_IP: ${DLT_IP}
+        DLT_PORT: ${DLT_PORT}
+        CASE_ID: ${CASE_ID}
+        RUN_TS: ${RUN_TS}
+        RUN_ROOT: ${RUN_ROOT}
+        DLT_OUTPUT: ${DLT_OUTPUT}
+        CAPTURE_ID: ${CAPTURE_ID}
+  - runFlow: ../../subflows/common/start.yaml
+onFlowComplete:
+  - runFlow: ../../subflows/common/stop.yaml
+  - waitForAnimationToEnd
+  - waitForAnimationToEnd
+  - waitForAnimationToEnd
+  - runFlow:
+      file: ../../subflows/common/studio_stop_dlt.yaml
+      env:
+        CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+        CAPTURE_ID: ${CAPTURE_ID}
+  - runFlow:
+      file: ../../subflows/common/studio_bundle_evidence.yaml
+      env:
+        CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+        CASE_ID: ${CASE_ID}
+        RUN_TS: ${RUN_TS}
+        RUN_ROOT: ${RUN_ROOT}
+        CAPTURE_ID: ${CAPTURE_ID}
+---
+- evalScript: "${output.testId = 'ABPI-671618'}"
+- runFlow: ../../subflows/common/radio_ready_and_verify.yaml
+- evalScript: "${output.strLoops = (typeof IDC23_STR_LOOPS !== 'undefined' ? parseInt(String(IDC23_STR_LOOPS), 10) : 5); if (isNaN(output.strLoops) || output.strLoops < 1) { output.strLoops = 5; } output.strIter = 0}"
+- repeat:
+    times: 5
+    while:
+      true: ${output.strIter < output.strLoops}
+    commands:
+      - runFlow:
+          file: ../../subflows/common/lifecycle_str_once.yaml
+          env:
+            TEST_ID: ABPI_671618_str
+      - runFlow:
+          file: ../../../subflows/ensure_user_profile_backend.yaml
+          env:
+            TEST_ID: ABPI_671618_user_recover_after_str
+            TARGET_USER_ID: ${IDC23_TARGET_USER_ID}
+            TARGET_USER_NAME: ${IDC23_TARGET_USER_NAME}
+            STRICT: "false"
+      - runFlow: ../../../subflows/ensure_radio_source.yaml
+      - runFlow: ../../../subflows/verify_radio_backend.yaml
+      - evalScript: ${output.strIter = output.strIter + 1}
+- evalScript: "${output.coldLoops = (typeof IDC23_COLD_BOOT_LOOPS !== 'undefined' ? parseInt(String(IDC23_COLD_BOOT_LOOPS), 10) : 5); if (isNaN(output.coldLoops) || output.coldLoops < 1) { output.coldLoops = 5; } output.coldIter = 0}"
+- repeat:
+    times: 5
+    while:
+      true: ${output.coldIter < output.coldLoops}
+    commands:
+      - runFlow:
+          file: ../../subflows/common/lifecycle_cold_boot_once.yaml
+          env:
+            TEST_ID: ABPI_671618_cold
+      - runFlow:
+          file: ../../../subflows/ensure_user_profile_backend.yaml
+          env:
+            TEST_ID: ABPI_671618_user_recover_after_cold
+            TARGET_USER_ID: ${IDC23_TARGET_USER_ID}
+            TARGET_USER_NAME: ${IDC23_TARGET_USER_NAME}
+            STRICT: "false"
+      - runFlow: ../../../subflows/ensure_radio_source.yaml
+      - runFlow: ../../../subflows/verify_radio_backend.yaml
+      - evalScript: ${output.coldIter = output.coldIter + 1}

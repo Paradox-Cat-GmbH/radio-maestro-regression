@@ -1,0 +1,12 @@
+caseId: "ABPI-684348"
+title: "Shortcut icons after STR mode"
+owner: ""
+priority: "P1"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "semi-automated"
+notes:
+  - "Create shortcuts, execute STR lifecycle, and validate shortcut recall afterwards."
+  - "Uses backend STR cycle and optional user-profile recovery after resume."
+acceptance:
+  - "Shortcuts remain present after STR return."
+  - "Radio playback/audio focus remains valid after recall."

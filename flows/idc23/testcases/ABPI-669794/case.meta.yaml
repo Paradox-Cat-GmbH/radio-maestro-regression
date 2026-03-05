@@ -1,0 +1,12 @@
+caseId: "ABPI-669794"
+title: "DAB stations list skip to other station"
+owner: ""
+priority: "P2"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "automated"
+notes:
+  - "Exercises repeated next/previous skip controls from station list context."
+  - "Backend checks run after each skip to catch regressions quickly."
+acceptance:
+  - "Next skips keep station changes healthy."
+  - "Previous skips keep station changes healthy."

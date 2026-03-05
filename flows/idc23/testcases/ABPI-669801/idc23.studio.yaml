@@ -1,0 +1,49 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+onFlowStart:
+  - runFlow:
+      file: ../../subflows/common/studio_start_dlt.yaml
+      env:
+        CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+        DLT_IP: ${DLT_IP}
+        DLT_PORT: ${DLT_PORT}
+        CASE_ID: ${CASE_ID}
+        RUN_TS: ${RUN_TS}
+        RUN_ROOT: ${RUN_ROOT}
+        DLT_OUTPUT: ${DLT_OUTPUT}
+        CAPTURE_ID: ${CAPTURE_ID}
+  - runFlow: ../../subflows/common/start.yaml
+onFlowComplete:
+  - runFlow: ../../subflows/common/stop.yaml
+  - waitForAnimationToEnd
+  - waitForAnimationToEnd
+  - waitForAnimationToEnd
+  - runFlow:
+      file: ../../subflows/common/studio_stop_dlt.yaml
+      env:
+        CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+        CAPTURE_ID: ${CAPTURE_ID}
+  - runFlow:
+      file: ../../subflows/common/studio_bundle_evidence.yaml
+      env:
+        CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+        CASE_ID: ${CASE_ID}
+        RUN_TS: ${RUN_TS}
+        RUN_ROOT: ${RUN_ROOT}
+        CAPTURE_ID: ${CAPTURE_ID}
+---
+- evalScript: "${output.testId = 'ABPI-669801'}"
+- runFlow: ../../subflows/common/radio_ready_and_verify.yaml
+- pressKey: home
+- waitForAnimationToEnd
+- runFlow: ../../../subflows/verify_radio_backend.yaml
+- runFlow: ../../../subflows/inject_swag_next.yaml
+- waitForAnimationToEnd
+- runFlow: ../../../subflows/verify_radio_backend.yaml
+- runFlow: ../../../subflows/inject_swag_prev.yaml
+- waitForAnimationToEnd
+- runFlow: ../../../subflows/verify_radio_backend.yaml
+- tapOn:
+    id: TEST_TAG_HEADER
+    optional: true
+- waitForAnimationToEnd

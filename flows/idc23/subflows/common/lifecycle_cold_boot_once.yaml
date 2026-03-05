@@ -1,0 +1,20 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23 - one cold boot cycle via backend
+tags:
+  - idc23
+  - subflow
+  - lifecycle
+  - cold_boot
+---
+- runFlow:
+    file: ../../../subflows/ediabas_str_prep_backend.yaml
+    env:
+      TEST_ID: ${TEST_ID}
+      DEVICE_ID: ${DEVICE_ID}
+      PREP_ENABLED: "true"
+      PREP_REBOOT: "true"
+      PREP_TIMEOUT_SECONDS: "120"
+      PREP_POST_REBOOT_DELAY_SECONDS: "35"
+      PREP_BEFORE_SHELL: ""
+      PREP_AFTER_SHELL: ""

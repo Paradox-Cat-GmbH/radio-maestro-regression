@@ -256,6 +256,22 @@ powershell -ExecutionPolicy Bypass -File scripts\g70_orchestrator.ps1
 It generates per-run JSON/HTML/ZIP artifacts under:
 - `artifacts/g70_orchestrator/<runId>/`
 
+## IDC23 PRT pack
+- Case list index: `flows/idc23/testcases/_INDEX.txt`
+- Case details: `flows/idc23/README.md`
+- Run one case (CLI):
+  ```powershell
+  .\scripts\run-idc23-e2e-poc.ps1 -CaseId "ABPI-671618" -DeviceId "<IDC23_SERIAL>"
+  ```
+- Studio prep helper:
+  ```powershell
+  .\scripts\oneclick-idc23-studio.ps1 -CaseId "ABPI-671618"
+  ```
+
+Storage optimization for pass runs:
+- Set `MAESTRO_KEEP_EVIDENCE_ON_PASS=false` (global runner)
+- Or use `-PruneEvidenceOnPass` in `run-idc23-e2e-poc.ps1`
+
 ## Maestro Studio notes
 Default workspace config keeps artifacts in repo:
 - `config.yaml`

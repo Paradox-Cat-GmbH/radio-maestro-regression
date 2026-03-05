@@ -1,0 +1,55 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+onFlowStart:
+  - runFlow:
+      file: ../../subflows/common/studio_start_dlt.yaml
+      env:
+        CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+        DLT_IP: ${DLT_IP}
+        DLT_PORT: ${DLT_PORT}
+        CASE_ID: ${CASE_ID}
+        RUN_TS: ${RUN_TS}
+        RUN_ROOT: ${RUN_ROOT}
+        DLT_OUTPUT: ${DLT_OUTPUT}
+        CAPTURE_ID: ${CAPTURE_ID}
+  - runFlow: ../../subflows/common/start.yaml
+onFlowComplete:
+  - runFlow: ../../subflows/common/stop.yaml
+  - waitForAnimationToEnd
+  - waitForAnimationToEnd
+  - waitForAnimationToEnd
+  - runFlow:
+      file: ../../subflows/common/studio_stop_dlt.yaml
+      env:
+        CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+        CAPTURE_ID: ${CAPTURE_ID}
+  - runFlow:
+      file: ../../subflows/common/studio_bundle_evidence.yaml
+      env:
+        CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+        CASE_ID: ${CASE_ID}
+        RUN_TS: ${RUN_TS}
+        RUN_ROOT: ${RUN_ROOT}
+        CAPTURE_ID: ${CAPTURE_ID}
+---
+- evalScript: "${output.testId = 'ABPI-669793'; output.stationTapped = false}"
+- runFlow: ../../../subflows/ensure_radio_source.yaml
+- runFlow: ../../../subflows/open_all_stations.yaml
+- runFlow:
+        when:
+            visible:
+                text: "HD"
+        commands:
+            - tapOn: "HD"
+            - evalScript: ${output.stationTapped = true}
+            - waitForAnimationToEnd
+- runFlow:
+        when:
+            true: ${output.stationTapped != true}
+        commands:
+            - tapOn:
+                    id: "ListImageComponent ImageRightIcon"
+                    index: 0
+            - evalScript: ${output.stationTapped = true}
+- waitForAnimationToEnd
+- runFlow: ../../../subflows/verify_radio_backend.yaml

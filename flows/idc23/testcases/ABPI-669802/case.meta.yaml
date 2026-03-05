@@ -1,0 +1,12 @@
+caseId: "ABPI-669802"
+title: "DAB All stations list coverage"
+owner: ""
+priority: "P2"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "semi-automated"
+notes:
+  - "Validates list availability and performs bounded scrolling capture."
+  - "Manual review can confirm expected bearer icons for DAB/FM/AM."
+acceptance:
+  - "All stations list is reachable and scrollable."
+  - "Artifacts include screenshots for icon/list review."

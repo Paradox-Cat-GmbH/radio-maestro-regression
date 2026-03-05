@@ -1,0 +1,17 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: ensure_user_profile_backend
+tags:
+  - helper
+  - subflow
+  - backend
+  - user
+---
+- runScript:
+    file: ../../scripts/maestro/ensure_user_profile.js
+    env:
+      TEST_ID: ${TEST_ID}
+      DEVICE_ID: ${DEVICE_ID}
+      TARGET_USER_ID: ${TARGET_USER_ID}
+      TARGET_USER_NAME: ${TARGET_USER_NAME}
+      STRICT: ${STRICT}

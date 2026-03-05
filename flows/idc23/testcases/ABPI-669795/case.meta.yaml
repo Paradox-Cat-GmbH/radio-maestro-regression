@@ -1,0 +1,12 @@
+caseId: "ABPI-669795"
+title: "DAB shortcuts save and delete"
+owner: ""
+priority: "P2"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "semi-automated"
+notes:
+  - "Validates add, duplicate-add, and delete flows for Toolbelt shortcut entries."
+  - "Duplicate-state messaging is captured via screenshots for review."
+acceptance:
+  - "Shortcut add path works and duplicate add is handled."
+  - "Saved shortcut can be removed and recreated."

@@ -1,0 +1,12 @@
+caseId: "ABPI-669816"
+title: "FM/DAB activate/deactivate Traffic/Radio info announcement"
+owner: ""
+priority: "P2"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "semi-automated"
+notes:
+  - "Opens radio settings and toggles Radio info ON/OFF path."
+  - "Popup arrival timing remains rack-signal dependent and should be observed manually."
+acceptance:
+  - "Radio info toggle is reachable and operable."
+  - "Radio path remains usable after settings changes."
