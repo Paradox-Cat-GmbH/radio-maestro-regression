@@ -1,0 +1,34 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+onFlowStart:
+  - runFlow: ../../subflows/common/start.yaml
+onFlowComplete:
+  - runFlow: ../../subflows/common/stop.yaml
+---
+- evalScript: "${output.testId = 'ABPI-669790'}"
+- runFlow: ../../../subflows/ensure_radio_source.yaml
+- runFlow: ../../../subflows/open_all_stations.yaml
+- longPressOn:
+    id: "ListImageComponent ImageRightIcon"
+    index: 0
+- waitForAnimationToEnd
+- tapOn:
+    text: Add to shortcuts
+    optional: true
+- longPressOn:
+    id: "ListImageComponent ImageRightIcon"
+    index: 0
+- waitForAnimationToEnd
+- takeScreenshot: "ABPI_669790_duplicate_prompt"
+- runFlow: ../../../subflows/open_shortcuts.yaml
+- longPressOn:
+    id: "ListImageComponent ImageRightIcon"
+    index: 0
+    optional: true
+- tapOn:
+    text: Delete
+    optional: true
+- tapOn:
+    text: Remove
+    optional: true
+- waitForAnimationToEnd

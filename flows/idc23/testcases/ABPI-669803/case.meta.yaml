@@ -1,0 +1,12 @@
+caseId: "ABPI-669803"
+title: "DAB All stations list select other station"
+owner: ""
+priority: "P2"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "automated"
+notes:
+  - "Selects one station and then a different one from all-stations list."
+  - "Backend check validates playback continuity after each selection."
+acceptance:
+  - "First station selection is playable."
+  - "Second station selection is playable and updates backend state."

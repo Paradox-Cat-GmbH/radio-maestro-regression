@@ -1,0 +1,13 @@
+caseId: "ABPI-671618"
+title: "Radio station reception after Lifecycle"
+owner: ""
+priority: "P1"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "automated"
+notes:
+  - "Runs STR and Cold Boot lifecycles in loop to detect instability/crashes."
+  - "Defaults to 5 iterations each (IDC23_STR_LOOPS / IDC23_COLD_BOOT_LOOPS override)."
+  - "Includes profile-recovery step after each lifecycle to mitigate known BMW ID fallback bug."
+acceptance:
+  - "Radio remains recoverable and backend-verified after each STR loop."
+  - "Radio remains recoverable and backend-verified after each Cold Boot loop."

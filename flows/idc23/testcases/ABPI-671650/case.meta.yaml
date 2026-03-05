@@ -1,0 +1,12 @@
+caseId: "ABPI-671650"
+title: "User Switch"
+owner: ""
+priority: "P1"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "semi-automated"
+notes:
+  - "Switches between two target profiles and validates playback continuity."
+  - "Target profile IDs/names are provided by env vars IDC23_USER_X_* and IDC23_USER_Y_*."
+acceptance:
+  - "User X -> Y -> X switching completes without backend radio failure."
+  - "Last played station remains audible after each switch."

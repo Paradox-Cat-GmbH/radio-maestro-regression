@@ -1,0 +1,33 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+onFlowStart:
+  - runFlow: ../../subflows/common/start.yaml
+onFlowComplete:
+  - runFlow: ../../subflows/common/stop.yaml
+---
+- evalScript: "${output.testId = 'ABPI-671650'}"
+- runFlow: ../../subflows/common/radio_ready_and_verify.yaml
+- runFlow:
+    file: ../../../subflows/ensure_user_profile_backend.yaml
+    env:
+      TEST_ID: ABPI_671650_switch_to_x
+      TARGET_USER_ID: ${IDC23_USER_X_ID}
+      TARGET_USER_NAME: ${IDC23_USER_X_NAME}
+      STRICT: "false"
+- runFlow: ../../../subflows/verify_radio_backend.yaml
+- runFlow:
+    file: ../../../subflows/ensure_user_profile_backend.yaml
+    env:
+      TEST_ID: ABPI_671650_switch_to_y
+      TARGET_USER_ID: ${IDC23_USER_Y_ID}
+      TARGET_USER_NAME: ${IDC23_USER_Y_NAME}
+      STRICT: "false"
+- runFlow: ../../../subflows/verify_radio_backend.yaml
+- runFlow:
+    file: ../../../subflows/ensure_user_profile_backend.yaml
+    env:
+      TEST_ID: ABPI_671650_switch_back_x
+      TARGET_USER_ID: ${IDC23_USER_X_ID}
+      TARGET_USER_NAME: ${IDC23_USER_X_NAME}
+      STRICT: "false"
+- runFlow: ../../../subflows/verify_radio_backend.yaml

@@ -1,0 +1,12 @@
+caseId: "ABPI-669798"
+title: "DAB shortcuts select"
+owner: ""
+priority: "P2"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "semi-automated"
+notes:
+  - "Creates DAB shortcut and recalls it from Toolbelt."
+  - "Includes source-switch override check back to radio shortcut."
+acceptance:
+  - "Shortcut can be selected from Toolbelt."
+  - "Selecting shortcut restores radio playback from another source."

@@ -99,6 +99,8 @@ const parseMaestroVideoTs=(filePath)=>{try{const n=path.basename(filePath);const
 const step=(name,r)=>({name,code:r.code??0,stdout:r.stdout||'',stderr:r.stderr||''});
 const outDir=(p,st,id)=>p.runDir?path.join(p.runDir,'backend',id):path.join(REPO,'artifacts','runs',st,'backend',id);
 const parseFirstDevice=(txt)=>{const lines=(txt||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean);for(const ln of lines){if(/^List of devices attached/i.test(ln))continue;const m=ln.match(/^(\S+)\s+device\s*(.*)$/);if(m){return{serial:m[1],details:m[2]||''};}}return null;};
+const parseCurrentUserId=(txt)=>{const m=String(txt||'').match(/(-?\d+)/);return m?parseInt(m[1],10):-1;};
+const parseUsersFromList=(txt)=>String(txt||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean).map(line=>{const m=line.match(/UserInfo\{(\d+):([^:}]+):/);return m?{id:parseInt(m[1],10),name:m[2]}:null;}).filter(Boolean);
 
 // --- parsing (minimal assumptions, Leandro-style) ---
 const audioPkgs=txt=>Array.from((txt||'').matchAll(/\bpack:\s*([^\s]+)/g)).map(m=>m[1]);
@@ -313,6 +315,81 @@ async function ediabasStrPrep(p){
   return result;
 }
 
+async function ensureDeviceUser(p){
+  const st=p.stamp||stamp();
+  const id=p.testId||'ensure_user_profile';
+  const dir=outDir(p,st,id);
+  mkdir(dir);
+
+  const dev=String(p.deviceId||'').trim();
+  const strict=asBool(p.strict,false);
+  const targetUserName=String(p.targetUserName||'').trim();
+  let targetUserId=parseInt(String(p.targetUserId==null?'':p.targetUserId),10);
+  if(Number.isNaN(targetUserId)) targetUserId=-1;
+
+  const steps=[];
+  const push=async(name,args,tm)=>{const r=await run(adbArgs(dev,args),tm||20000);steps.push(step(name,r));return r;};
+
+  const cur=await push('adb shell am get-current-user',['shell','am','get-current-user']);
+  const currentUserId=parseCurrentUserId((cur.stdout||'')+'\n'+(cur.stderr||''));
+
+  let users=[];
+  if(targetUserId<0 && targetUserName){
+    const listed=await push('adb shell pm list users',['shell','pm','list','users']);
+    users=parseUsersFromList((listed.stdout||'')+'\n'+(listed.stderr||''));
+    const lowered=targetUserName.toLowerCase();
+    const hit=users.find(u=>String(u.name||'').toLowerCase().includes(lowered));
+    if(hit) targetUserId=hit.id;
+  }
+
+  const targetSpecified=(targetUserId>=0)||!!targetUserName;
+  const targetResolved=targetUserId>=0;
+  let switched=false;
+
+  if(targetResolved && currentUserId>=0 && currentUserId!==targetUserId){
+    await push(`adb shell am switch-user ${targetUserId}`,['shell','am','switch-user',String(targetUserId)],30000);
+    await sleep(2000);
+  }
+
+  const verify=await push('adb shell am get-current-user (verify)',['shell','am','get-current-user']);
+  const effectiveUserId=parseCurrentUserId((verify.stdout||'')+'\n'+(verify.stderr||''));
+
+  if(targetResolved && currentUserId>=0 && currentUserId!==targetUserId && effectiveUserId===targetUserId){
+    switched=true;
+  }
+
+  const ok=targetSpecified?(targetResolved && effectiveUserId===targetUserId):true;
+  const artifactFile='ensure_user_profile.json';
+  const result={
+    ok,
+    kind:'ensure_user_profile',
+    stamp:st,
+    testId:id,
+    outDir:dir,
+    artifactFile,
+    strict,
+    deviceId:dev,
+    currentUserId,
+    effectiveUserId,
+    targetUserName,
+    targetUserId:targetResolved?targetUserId:null,
+    targetSpecified,
+    targetResolved,
+    switched,
+    users,
+    steps,
+    request:p
+  };
+
+  if(!ok && strict){
+    result.error='target_user_not_active';
+  }
+
+  write(dir,artifactFile,JSON.stringify(result,null,2));
+  auditPush({type:'ensure_user_profile',ok:ok===true,testId:id||'',outDir:dir,artifactFile,currentUserId,effectiveUserId,targetUserId:result.targetUserId,switched});
+  return result;
+}
+
 // --- http server ---
 http.createServer(async(req,res)=>{
   if(req.method==='OPTIONS')return jres(res,204,{ok:true});
@@ -322,7 +399,7 @@ http.createServer(async(req,res)=>{
       const html=`<!doctype html><html><head><meta charset="utf-8"/><title>Maestro Control Dashboard</title><style>body{font-family:Segoe UI,Arial,sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:16px}h1{margin:0 0 12px;font-size:20px}.grid{display:grid;grid-template-columns:repeat(2,minmax(320px,1fr));gap:12px}.card{background:#111827;border:1px solid #334155;border-radius:10px;padding:12px}.ok{color:#22c55e}.bad{color:#ef4444}.muted{color:#94a3b8}pre{white-space:pre-wrap;word-break:break-word;background:#020617;padding:10px;border-radius:8px;max-height:360px;overflow:auto}a{color:#38bdf8}</style></head><body><h1>Maestro Control Dashboard</h1><div class="muted">Auto-refresh: 1s · <a href="/">JSON root</a> · <a href="/audit/file/raw?limit=2000" download="control_server_audit.jsonl">Download persisted audit (JSONL)</a></div><div class="grid"><div class="card"><h3>Latest Verdict</h3><div id="verdict" class="muted">No data yet</div></div><div class="card"><h3>Track / Station</h3><div id="track" class="muted">No data yet</div></div><div class="card"><h3>Recent Audit</h3><pre id="audit">[]</pre></div><div class="card"><h3>Raw Last Verdict</h3><pre id="raw">null</pre></div></div><script>async function load(){try{const a=await fetch('/radio/last').then(r=>r.json());const b=await fetch('/audit?limit=30').then(r=>r.json());const l=a&&a.latest?a.latest:null;document.getElementById('verdict').innerHTML=l?('ok: <b class="'+(l.ok?'ok':'bad')+'">'+l.ok+'</b><br/>audioFocus: <b class="'+((l.audio&&l.audio.audioFocus)?'ok':'bad')+'">'+(l.audio&&l.audio.audioFocus)+'</b><br/>playing: <b class="'+((l.media&&l.media.playing)?'ok':'bad')+'">'+(l.media&&l.media.playing)+'</b><br/>package: '+((l.media&&l.media.package)||'-')+'<br/>state: '+((l.media&&l.media.state)||'-')+'<br/>device: '+(l.deviceId||'-')+'<br/>deviceDetails: '+(l.deviceDetails||'-')+'<br/>stamp: '+(l.stamp||'-')+'<br/>outDir: '+(l.outDir||'-')):'No data yet';const raw=a&&a.raw?a.raw:null;const m=raw&&raw.media?raw.media:{};document.getElementById('track').innerHTML='title: '+(m.metadataTitle||'-')+'<br/>artist: '+(m.metadataArtist||'-')+'<br/>station(UI): '+((raw&&raw.ui&&raw.ui.station)||'-')+'<br/>band(UI): '+((raw&&raw.ui&&raw.ui.band)||'-')+'<br/>station/list: '+(m.queueTitle||'-')+'<br/>description: '+((m.description&&m.description.join(' | '))||'-');const ev=((b&&b.events)||[]).slice(-12).reverse();document.getElementById('audit').textContent=JSON.stringify(ev,null,2);document.getElementById('raw').textContent=JSON.stringify(raw,null,2);}catch(e){document.getElementById('verdict').textContent='Dashboard fetch error: '+String(e);}}async function probe(){try{await fetch('/radio/probe');}catch(_){}}load();setInterval(load,1000);setInterval(probe,5000);</script></body></html>`;
       res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});return res.end(html);
     }
-    if(req.method==='GET'&&p==='/')return jres(res,200,{ok:true,service:'maestro_control_server',host:HOST,port:PORT,auditFile:AUDIT_FILE,endpoints:['GET /','GET /dashboard','GET /health','GET /audit?limit=20','GET /audit/file?limit=50','GET /audit/file/raw?limit=500','GET /radio/last','GET /radio/probe','POST /radio/check','POST /inject/swag','POST /inject/bim','POST /ehh/set','POST /ediabas/str-prep','POST /ediabas/str-sidecar','POST /dlt/start','POST /dlt/stop','POST /dlt/status','POST /evidence/bundle-studio'],latest:latestSummary()});
+    if(req.method==='GET'&&p==='/')return jres(res,200,{ok:true,service:'maestro_control_server',host:HOST,port:PORT,auditFile:AUDIT_FILE,endpoints:['GET /','GET /dashboard','GET /health','GET /audit?limit=20','GET /audit/file?limit=50','GET /audit/file/raw?limit=500','GET /radio/last','GET /radio/probe','POST /radio/check','POST /inject/swag','POST /inject/bim','POST /ehh/set','POST /ediabas/str-prep','POST /ediabas/str-sidecar','POST /device/user-ensure','POST /dlt/start','POST /dlt/stop','POST /dlt/status','POST /evidence/bundle-studio'],latest:latestSummary()});
     if(req.method==='GET'&&p==='/health')return jres(res,200,{ok:true,host:HOST,port:PORT,latest:latestSummary()});
     if(req.method==='GET'&&p==='/radio/last')return jres(res,200,{ok:true,latest:latestSummary(),raw:latestRadioVerdict});
     if(req.method==='GET'&&p==='/radio/probe')return jres(res,200,await radioCheck({testId:'dashboard_probe'}));
@@ -335,6 +412,7 @@ http.createServer(async(req,res)=>{
     if(req.method==='POST'&&p==='/ehh/set')return jres(res,200,await injectAction(await readJson(req),'ehh'));
     if(req.method==='POST'&&p==='/ediabas/str-prep')return jres(res,200,await ediabasStrPrep(await readJson(req)));
     if(req.method==='POST'&&p==='/ediabas/str-sidecar')return jres(res,200,await ediabasStrSidecar(await readJson(req)));
+    if(req.method==='POST'&&p==='/device/user-ensure')return jres(res,200,await ensureDeviceUser(await readJson(req)));
 
     if(req.method==='POST'&&p==='/dlt/start'){
       const b=await readJson(req);

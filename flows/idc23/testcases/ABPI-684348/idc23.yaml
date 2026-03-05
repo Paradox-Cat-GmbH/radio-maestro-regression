@@ -1,0 +1,44 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+onFlowStart:
+  - runFlow: ../../subflows/common/start.yaml
+onFlowComplete:
+  - runFlow: ../../subflows/common/stop.yaml
+---
+- evalScript: "${output.testId = 'ABPI-684348'}"
+- runFlow: ../../subflows/common/radio_ready_and_verify.yaml
+- longPressOn:
+    id: "ListImageComponent ImageRightIcon"
+    index: 0
+- waitForAnimationToEnd
+- tapOn:
+    text: Add to shortcuts
+    optional: true
+- longPressOn:
+    id: "ListImageComponent ImageRightIcon"
+    index: 1
+- waitForAnimationToEnd
+- tapOn:
+    text: Add to shortcuts
+    optional: true
+- runFlow: ../../../subflows/open_shortcuts.yaml
+- takeScreenshot: "ABPI_684348_before_str"
+- runFlow:
+    file: ../../subflows/common/lifecycle_str_once.yaml
+    env:
+      TEST_ID: ABPI_684348_str
+- runFlow:
+    file: ../../../subflows/ensure_user_profile_backend.yaml
+    env:
+      TEST_ID: ABPI_684348_user_recover
+      TARGET_USER_ID: ${IDC23_TARGET_USER_ID}
+      TARGET_USER_NAME: ${IDC23_TARGET_USER_NAME}
+      STRICT: "false"
+- runFlow: ../../../subflows/open_shortcuts.yaml
+- takeScreenshot: "ABPI_684348_after_str"
+- tapOn:
+    id: "ListImageComponent ImageRightIcon"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- runFlow: ../../../subflows/verify_radio_backend.yaml

@@ -1,0 +1,12 @@
+caseId: "ABPI-669787"
+title: "AM stations list skip to other station (variant B)"
+owner: ""
+priority: "P2"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "automated"
+notes:
+  - "AM skip responsiveness validation variant B (redundant split in source report)."
+  - "Kept as separate testcase for 1:1 Jira traceability."
+acceptance:
+  - "Station transitions continue to succeed under skip burst actions."
+  - "Backend checks remain strict-OK."

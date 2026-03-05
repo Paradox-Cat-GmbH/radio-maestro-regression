@@ -1,0 +1,12 @@
+caseId: "ABPI-669800"
+title: "DAB presets select via touch and skip"
+owner: ""
+priority: "P2"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "semi-automated"
+notes:
+  - "Creates favorites and validates skip navigation through preset context."
+  - "Wrap-around behavior should be reviewed in run artifacts."
+acceptance:
+  - "Preset/favorite selection remains playable."
+  - "Next/previous skip actions keep backend check green."

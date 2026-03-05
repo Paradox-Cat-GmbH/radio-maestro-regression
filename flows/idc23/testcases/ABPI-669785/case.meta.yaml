@@ -1,0 +1,12 @@
+caseId: "ABPI-669785"
+title: "AM presets delete the only saved station"
+owner: ""
+priority: "P2"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "semi-automated"
+notes:
+  - "Covers single-preset removal path while playback continuity is expected."
+  - "Favorite remove selector is optional due skin differences."
+acceptance:
+  - "Single preset can be removed without interrupting playback."
+  - "System falls back to all-stations path correctly."

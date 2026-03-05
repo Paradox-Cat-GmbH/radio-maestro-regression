@@ -1,0 +1,12 @@
+caseId: "ABPI-684288"
+title: "Radio station selecting from the Toolbelt"
+owner: ""
+priority: "P1"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "semi-automated"
+notes:
+  - "Creates multiple shortcuts and validates recall from Toolbelt."
+  - "Uses generic list-item selectors for rack portability."
+acceptance:
+  - "Shortcuts can be recalled from Toolbelt."
+  - "Radio backend verification remains strict-OK."

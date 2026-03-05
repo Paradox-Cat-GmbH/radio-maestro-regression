@@ -1,0 +1,12 @@
+caseId: "ABPI-669801"
+title: "DAB status bar update"
+owner: ""
+priority: "P2"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "semi-automated"
+notes:
+  - "Checks that audio persists after navigation and skip actions."
+  - "Status-bar text interaction is build-dependent and attempted as optional selector."
+acceptance:
+  - "Radio remains playing outside Radio screen."
+  - "Skip actions update active station while backend remains strict-OK."

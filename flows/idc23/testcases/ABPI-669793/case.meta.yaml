@@ -1,0 +1,12 @@
+caseId: "ABPI-669793"
+title: "HD Audio audible"
+owner: ""
+priority: "P2"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "semi-automated"
+notes:
+  - "Attempts HD-labelled station selection when visible, then falls back to list index."
+  - "If HD labels are not exposed on the current skin, fallback still validates audible playback."
+acceptance:
+  - "An HD-capable station can be selected when available."
+  - "Selected station remains audible with strict backend pass."

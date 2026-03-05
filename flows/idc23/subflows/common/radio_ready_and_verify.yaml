@@ -1,0 +1,16 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23 - radio ready and backend verified
+tags:
+  - idc23
+  - subflow
+  - radio
+---
+- runFlow: ../../../subflows/ensure_radio_source.yaml
+- runFlow: ../../../subflows/open_all_stations.yaml
+- runScript:
+    file: ../../../../scripts/maestro/pick_random_station.js
+    env:
+      RAND_MAX: "${typeof MAESTRO_RAND_MAX_INDEX !== 'undefined' && MAESTRO_RAND_MAX_INDEX ? MAESTRO_RAND_MAX_INDEX : 5}"
+- runFlow: ../../../subflows/tap_random_all_stations_entry.yaml
+- runFlow: ../../../subflows/verify_radio_backend.yaml

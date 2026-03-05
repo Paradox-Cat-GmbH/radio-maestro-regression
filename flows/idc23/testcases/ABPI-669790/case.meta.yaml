@@ -1,0 +1,12 @@
+caseId: "ABPI-669790"
+title: "AM shortcuts save and delete"
+owner: ""
+priority: "P2"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "semi-automated"
+notes:
+  - "AM equivalent of DAB shortcut save/delete validation."
+  - "Uses same Toolbelt interaction path and duplicate-save check."
+acceptance:
+  - "AM shortcut can be saved and removed."
+  - "Duplicate save path is observable and non-destructive."

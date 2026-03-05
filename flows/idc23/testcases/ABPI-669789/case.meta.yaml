@@ -1,0 +1,12 @@
+caseId: "ABPI-669789"
+title: "AM stations list skip to other station (variant A)"
+owner: ""
+priority: "P2"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "automated"
+notes:
+  - "AM skip responsiveness validation variant A."
+  - "Mirrors repeated hardkey/MFL skip behavior expectations."
+acceptance:
+  - "Repeated next skips keep audio/metadata healthy."
+  - "Repeated previous skips keep audio/metadata healthy."
