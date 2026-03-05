@@ -1,0 +1,12 @@
+caseId: "ABPI-669792"
+title: "AM status bar update"
+owner: ""
+priority: "P2"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "semi-automated"
+notes:
+  - "AM equivalent of DAB status bar update checks."
+  - "Band-specific station preparation may be required per rack profile."
+acceptance:
+  - "AM station remains audible through navigation and skip actions."
+  - "Backend strict checks remain green throughout."

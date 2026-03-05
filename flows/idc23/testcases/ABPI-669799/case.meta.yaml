@@ -1,0 +1,12 @@
+caseId: "ABPI-669799"
+title: "DAB presets save and delete"
+owner: ""
+priority: "P2"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "semi-automated"
+notes:
+  - "Adds and removes a station from favorites/presets path."
+  - "Deletion selector is optional to tolerate skin differences."
+acceptance:
+  - "Station can be saved to presets."
+  - "Station can be removed while playback continuity is preserved."

@@ -1,30 +1,45 @@
-# IDC23 E2E Validation Pack
+# IDC23 PRT Validation Pack
 
-Purpose: keep IDC23 regression work isolated in this repo while reusing the proven Maestro + DLT + Studio-first foundation.
+Purpose: execute IDC23 regression with the same Studio-first architecture used in IDCEvo/G70, while reusing shared backend helpers and hooks.
 
-## Workflow
+## Included cases
 
-1. Create testcase
+The PRT pack now includes 22 ABPI testcases generated from `TMS_PRT_TestScenarios.pdf`:
+- Case folders: `flows/idc23/testcases/ABPI-*/`
+- Case index: `flows/idc23/testcases/_INDEX.txt`
+
+Each testcase contains:
+- `case.meta.yaml` (traceability + acceptance)
+- `idc23.yaml` (CLI flow)
+- `idc23.studio.yaml` (Studio hooks + DLT/evidence bundling)
+
+## Run a testcase
+
+CLI:
 ```powershell
-.\scripts\new-idc23-testcase.ps1 -CaseId "TC_IDC23_001"
+.\scripts\run-idc23-e2e-poc.ps1 -CaseId "ABPI-671618" -DeviceId "<IDC23_SERIAL>" -DltIp "169.254.107.117" -DltPort "3490"
 ```
 
-2. Fill flow
-- `flows/idc23/testcases/TC_IDC23_001/idc23.yaml`
-
-3. Run E2E PoC (CLI)
+Studio prep:
 ```powershell
-.\scripts\run-idc23-e2e-poc.ps1 -CaseId "TC_IDC23_001" -DeviceId "<IDC23_SERIAL>" -DltIp "169.254.107.117" -DltPort "3490"
+.\scripts\oneclick-idc23-studio.ps1 -CaseId "ABPI-671618" -DltIp "169.254.107.117" -DltPort "3490"
 ```
 
-4. Studio-first orchestration (preferred)
-```powershell
-.\scripts\oneclick-idc23-studio.ps1 -CaseId "TC_IDC23_001" -DltIp "169.254.107.117" -DltPort "3490"
-```
-Open `flows/idc23/testcases/TC_IDC23_001/idc23.studio.yaml` in Studio, paste env vars, Run.
+Then open `flows/idc23/testcases/ABPI-671618/idc23.studio.yaml`, paste generated env vars, and run.
 
-5. Studio sidecar fallback
-```powershell
-.\scripts\run-idc23-studio-evidence.ps1 -CaseId "TC_IDC23_001" -DltIp "169.254.107.117" -DltPort "3490"
-```
-Run in Studio, then press ENTER in terminal to finalize bundle.
+## Lifecycle + profile recovery knobs
+
+For lifecycle-heavy case `ABPI-671618`:
+- `IDC23_STR_LOOPS` (default `5`)
+- `IDC23_COLD_BOOT_LOOPS` (default `5`)
+- `IDC23_TARGET_USER_ID` and/or `IDC23_TARGET_USER_NAME`
+
+Profile recovery uses backend endpoint `POST /device/user-ensure` through `flows/subflows/ensure_user_profile_backend.yaml`.
+
+## Evidence optimization (pass runs)
+
+To reduce storage when tests pass:
+- Set env `MAESTRO_KEEP_EVIDENCE_ON_PASS=false` for `run_with_artifacts.ps1`
+- Or call IDC23 runner with `-PruneEvidenceOnPass`
+
+When enabled, pass artifacts are pruned and only lightweight run summary remains.

@@ -1,0 +1,12 @@
+caseId: "ABPI-671641"
+title: "Audio Focus switch"
+owner: ""
+priority: "P1"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "semi-automated"
+notes:
+  - "Exercises source transitions and validates radio focus recovery."
+  - "Non-radio source labels are build-dependent and are tapped as optional selectors."
+acceptance:
+  - "Switch to non-radio source succeeds when available."
+  - "Switching back to Radio resumes strict backend pass."

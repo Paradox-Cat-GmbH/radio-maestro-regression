@@ -1,0 +1,27 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+onFlowStart:
+  - runFlow: ../../subflows/common/start.yaml
+onFlowComplete:
+  - runFlow: ../../subflows/common/stop.yaml
+---
+- evalScript: "${output.testId = 'ABPI-669816'}"
+- runFlow: ../../../subflows/ensure_radio_source.yaml
+- tapOn:
+    id: idx_icon_settings
+    optional: true
+- tapOn:
+    text: Radio settings
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: Radio info
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "ABPI_669816_radio_info_enabled"
+- tapOn:
+    text: Radio info
+    optional: true
+- waitForAnimationToEnd
+- pressKey: back
+- runFlow: ../../../subflows/verify_radio_backend.yaml

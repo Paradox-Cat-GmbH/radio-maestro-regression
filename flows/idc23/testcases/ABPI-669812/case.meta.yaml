@@ -1,0 +1,12 @@
+caseId: "ABPI-669812"
+title: "FM/DAB Traffic/Radio info popup abort via MFL"
+owner: ""
+priority: "P2"
+source: "TMS_PRT_TestScenarios.pdf"
+automationLevel: "semi-automated"
+notes:
+  - "Waits for popup manually, then sends MFL-like cancel interaction via backend inject."
+  - "Popup presence remains signal/time dependent."
+acceptance:
+  - "Abort action can be injected while radio is active."
+  - "Radio playback remains healthy after abort."

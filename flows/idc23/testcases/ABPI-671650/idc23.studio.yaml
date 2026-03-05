@@ -1,0 +1,60 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+onFlowStart:
+  - runFlow:
+      file: ../../subflows/common/studio_start_dlt.yaml
+      env:
+        CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+        DLT_IP: ${DLT_IP}
+        DLT_PORT: ${DLT_PORT}
+        CASE_ID: ${CASE_ID}
+        RUN_TS: ${RUN_TS}
+        RUN_ROOT: ${RUN_ROOT}
+        DLT_OUTPUT: ${DLT_OUTPUT}
+        CAPTURE_ID: ${CAPTURE_ID}
+  - runFlow: ../../subflows/common/start.yaml
+onFlowComplete:
+  - runFlow: ../../subflows/common/stop.yaml
+  - waitForAnimationToEnd
+  - waitForAnimationToEnd
+  - waitForAnimationToEnd
+  - runFlow:
+      file: ../../subflows/common/studio_stop_dlt.yaml
+      env:
+        CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+        CAPTURE_ID: ${CAPTURE_ID}
+  - runFlow:
+      file: ../../subflows/common/studio_bundle_evidence.yaml
+      env:
+        CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+        CASE_ID: ${CASE_ID}
+        RUN_TS: ${RUN_TS}
+        RUN_ROOT: ${RUN_ROOT}
+        CAPTURE_ID: ${CAPTURE_ID}
+---
+- evalScript: "${output.testId = 'ABPI-671650'}"
+- runFlow: ../../subflows/common/radio_ready_and_verify.yaml
+- runFlow:
+    file: ../../../subflows/ensure_user_profile_backend.yaml
+    env:
+      TEST_ID: ABPI_671650_switch_to_x
+      TARGET_USER_ID: ${IDC23_USER_X_ID}
+      TARGET_USER_NAME: ${IDC23_USER_X_NAME}
+      STRICT: "false"
+- runFlow: ../../../subflows/verify_radio_backend.yaml
+- runFlow:
+    file: ../../../subflows/ensure_user_profile_backend.yaml
+    env:
+      TEST_ID: ABPI_671650_switch_to_y
+      TARGET_USER_ID: ${IDC23_USER_Y_ID}
+      TARGET_USER_NAME: ${IDC23_USER_Y_NAME}
+      STRICT: "false"
+- runFlow: ../../../subflows/verify_radio_backend.yaml
+- runFlow:
+    file: ../../../subflows/ensure_user_profile_backend.yaml
+    env:
+      TEST_ID: ABPI_671650_switch_back_x
+      TARGET_USER_ID: ${IDC23_USER_X_ID}
+      TARGET_USER_NAME: ${IDC23_USER_X_NAME}
+      STRICT: "false"
+- runFlow: ../../../subflows/verify_radio_backend.yaml

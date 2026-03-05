@@ -1,0 +1,22 @@
+ABPI-684348 -> ABPI-684348/idc23.yaml :: Shortcut icons after STR mode
+ABPI-684288 -> ABPI-684288/idc23.yaml :: Radio station selecting from the Toolbelt
+ABPI-671650 -> ABPI-671650/idc23.yaml :: User Switch
+ABPI-671641 -> ABPI-671641/idc23.yaml :: Audio Focus switch
+ABPI-671618 -> ABPI-671618/idc23.yaml :: Radio station reception after Lifecycle
+ABPI-669816 -> ABPI-669816/idc23.yaml :: FM/DAB activate/deactivate Traffic/Radio info announcement
+ABPI-669812 -> ABPI-669812/idc23.yaml :: FM/DAB Traffic/Radio info popup abort via MFL
+ABPI-669803 -> ABPI-669803/idc23.yaml :: DAB All stations list select other station
+ABPI-669802 -> ABPI-669802/idc23.yaml :: DAB All stations list coverage
+ABPI-669801 -> ABPI-669801/idc23.yaml :: DAB status bar update
+ABPI-669800 -> ABPI-669800/idc23.yaml :: DAB presets select via touch and skip
+ABPI-669799 -> ABPI-669799/idc23.yaml :: DAB presets save and delete
+ABPI-669798 -> ABPI-669798/idc23.yaml :: DAB shortcuts select
+ABPI-669795 -> ABPI-669795/idc23.yaml :: DAB shortcuts save and delete
+ABPI-669794 -> ABPI-669794/idc23.yaml :: DAB stations list skip to other station
+ABPI-669793 -> ABPI-669793/idc23.yaml :: HD Audio audible
+ABPI-669792 -> ABPI-669792/idc23.yaml :: AM status bar update
+ABPI-669790 -> ABPI-669790/idc23.yaml :: AM shortcuts save and delete
+ABPI-669789 -> ABPI-669789/idc23.yaml :: AM stations list skip to other station (variant A)
+ABPI-669787 -> ABPI-669787/idc23.yaml :: AM stations list skip to other station (variant B)
+ABPI-669786 -> ABPI-669786/idc23.yaml :: AM presets select station via touch and skip
+ABPI-669785 -> ABPI-669785/idc23.yaml :: AM presets delete the only saved station

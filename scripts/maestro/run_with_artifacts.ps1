@@ -157,6 +157,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $globalPrepEnabled = Get-BoolEnv -Name 'MAESTRO_GLOBAL_PRECONDITIONS_ENABLED' -Default $false
+$keepEvidenceOnPass = Get-BoolEnv -Name 'MAESTRO_KEEP_EVIDENCE_ON_PASS' -Default $true
 if ($globalPrepEnabled) {
   $prepBase = $env:MAESTRO_BACKEND_URL
   if ([string]::IsNullOrWhiteSpace($prepBase)) { $prepBase = 'http://127.0.0.1:4567' }
@@ -196,6 +197,7 @@ Write-Host "[INFO] Device: $device"
 Write-Host "[INFO] Maestro: $maestro"
 Write-Host "[INFO] Run root: $runRoot"
 Write-Host "[INFO] Flow count: $($flows.Count)"
+Write-Host "[INFO] Keep evidence on pass: $keepEvidenceOnPass"
 
 foreach ($flow in $flows) {
   $flowName = [System.IO.Path]::GetFileNameWithoutExtension($flow)
@@ -227,6 +229,8 @@ foreach ($flow in $flows) {
     continue
   }
 
+  $flowPassed = $true
+
   if (-not $NoVideo) {
     $videoPath = Join-Path $videoDir ("{0}.mp4" -f $flowName)
     Write-Host "[RUN] record: $videoPath"
@@ -243,6 +247,17 @@ foreach ($flow in $flows) {
     if ($recordExit -ne 0) {
       Write-Host "[WARN] Video recording failed for $flow (exit $recordExit)"
     }
+  }
+
+  if ($flowPassed -and -not $keepEvidenceOnPass) {
+    Write-Host "[INFO] Pruning pass artifacts for $flowName (MAESTRO_KEEP_EVIDENCE_ON_PASS=false)"
+    foreach ($dir in @($debugDir, $outputDir, $videoDir, $recordDebugDir)) {
+      if (Test-Path $dir) {
+        Remove-Item -Path $dir -Recurse -Force -ErrorAction SilentlyContinue
+      }
+    }
+    $pruneMarker = Join-Path $flowRoot 'pass_pruned.txt'
+    "Pass artifacts pruned at $(Get-Date -Format o)" | Set-Content -Encoding UTF8 $pruneMarker
   }
 }
 
