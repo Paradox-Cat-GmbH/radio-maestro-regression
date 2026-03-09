@@ -1,0 +1,23 @@
+﻿IDC23DEMO-900001 -> IDC23DEMO-900001__prt_pdf_full_suite.yaml :: Run all IDC23 demo files sequentially
+ABPI-684348 -> IDC23DEV-684348__shortcut_icons_after_str_mode.yaml :: Shortcut icons after STR mode
+ABPI-684288 -> IDC23DEV-684288__radio_station_selecting_from_the_toolbelt.yaml :: Radio station selecting from the Toolbelt
+ABPI-671650 -> IDC23DEV-671650__user_switch.yaml :: User Switch
+ABPI-671641 -> IDC23DEV-671641__audio_focus_switch.yaml :: Audio Focus switch
+ABPI-671618 -> IDC23DEV-671618__radio_station_reception_after_lifecycle.yaml :: Radio station reception after Lifecycle
+ABPI-669816 -> IDC23DEV-669816__fm_dab_activate_deactivate_traffic_radio_i.yaml :: FM/DAB activate/deactivate Traffic/Radio info announcement
+ABPI-669812 -> IDC23DEV-669812__fm_dab_traffic_radio_info_popup_abort_via.yaml :: FM/DAB Traffic/Radio info popup abort via MFL
+ABPI-669803 -> IDC23DEV-669803__dab_all_stations_list_select_other_station.yaml :: DAB All stations list select other station
+ABPI-669802 -> IDC23DEV-669802__dab_all_stations_list_coverage.yaml :: DAB All stations list coverage
+ABPI-669801 -> IDC23DEV-669801__dab_status_bar_update.yaml :: DAB status bar update
+ABPI-669800 -> IDC23DEV-669800__dab_presets_select_via_touch_and_skip.yaml :: DAB presets select via touch and skip
+ABPI-669799 -> IDC23DEV-669799__dab_presets_save_and_delete.yaml :: DAB presets save and delete
+ABPI-669798 -> IDC23DEV-669798__dab_shortcuts_select.yaml :: DAB shortcuts select
+ABPI-669795 -> IDC23DEV-669795__dab_shortcuts_save_and_delete.yaml :: DAB shortcuts save and delete
+ABPI-669794 -> IDC23DEV-669794__dab_stations_list_skip_to_other_station.yaml :: DAB stations list skip to other station
+ABPI-669793 -> IDC23DEV-669793__hd_audio_audible.yaml :: HD Audio audible
+ABPI-669792 -> IDC23DEV-669792__am_status_bar_update.yaml :: AM status bar update
+ABPI-669790 -> IDC23DEV-669790__am_shortcuts_save_and_delete.yaml :: AM shortcuts save and delete
+ABPI-669789 -> IDC23DEV-669789__am_stations_list_skip_to_other_station_var.yaml :: AM stations list skip to other station (variant A)
+ABPI-669787 -> IDC23DEV-669787__am_stations_list_skip_to_other_station_var.yaml :: AM stations list skip to other station (variant B)
+ABPI-669786 -> IDC23DEV-669786__am_presets_select_station_via_touch_and_sk.yaml :: AM presets select station via touch and skip
+ABPI-669785 -> IDC23DEV-669785__am_presets_delete_the_only_saved_station.yaml :: AM presets delete the only saved station

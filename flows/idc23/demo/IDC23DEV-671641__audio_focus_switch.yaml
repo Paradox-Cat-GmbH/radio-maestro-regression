@@ -1,0 +1,10 @@
+﻿appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23DEV-671641 - Audio Focus switch
+tags:
+  - demo
+  - idc23
+  - prt
+---
+- evalScript: "${output.testId = 'IDC23DEV-671641'}"
+- runFlow: ../testcases/ABPI-671641/idc23.yaml

@@ -1,0 +1,10 @@
+﻿appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23DEV-669798 - DAB shortcuts select
+tags:
+  - demo
+  - idc23
+  - prt
+---
+- evalScript: "${output.testId = 'IDC23DEV-669798'}"
+- runFlow: ../testcases/ABPI-669798/idc23.yaml

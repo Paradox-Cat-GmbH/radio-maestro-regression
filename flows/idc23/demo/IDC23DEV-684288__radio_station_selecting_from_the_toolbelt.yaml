@@ -1,0 +1,10 @@
+﻿appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23DEV-684288 - Radio station selecting from the Toolbelt
+tags:
+  - demo
+  - idc23
+  - prt
+---
+- evalScript: "${output.testId = 'IDC23DEV-684288'}"
+- runFlow: ../testcases/ABPI-684288/idc23.yaml

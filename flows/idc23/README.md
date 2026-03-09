@@ -27,6 +27,22 @@ Studio prep:
 
 Then open `flows/idc23/testcases/ABPI-671618/idc23.studio.yaml`, paste generated env vars, and run.
 
+## Run all PDF cases (IDCEvo-style demo orchestration)
+
+Master demo flow:
+- `flows/idc23/demo/IDC23DEMO-900001__prt_pdf_full_suite.yaml`
+
+Per-case demo files (flat, same style as `flows/demo/`):
+- `flows/idc23/demo/IDC23DEV-*.yaml`
+- Demo index: `flows/idc23/demo/_INDEX.txt`
+
+CLI:
+```powershell
+run_idc23_demo_suite.bat <IDC23_SERIAL>
+```
+
+This executes one master flow, which then runs all 22 IDC23 demo files sequentially.
+
 ## Lifecycle + profile recovery knobs
 
 For lifecycle-heavy case `ABPI-671618`:

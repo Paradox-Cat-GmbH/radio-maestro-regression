@@ -259,9 +259,16 @@ It generates per-run JSON/HTML/ZIP artifacts under:
 ## IDC23 PRT pack
 - Case list index: `flows/idc23/testcases/_INDEX.txt`
 - Case details: `flows/idc23/README.md`
+- Per-case demo files (IDCEVODEV-style flat files): `flows/idc23/demo/IDC23DEV-*.yaml`
+- Demo index: `flows/idc23/demo/_INDEX.txt`
+- Master demo flow: `flows/idc23/demo/IDC23DEMO-900001__prt_pdf_full_suite.yaml`
 - Run one case (CLI):
   ```powershell
   .\scripts\run-idc23-e2e-poc.ps1 -CaseId "ABPI-671618" -DeviceId "<IDC23_SERIAL>"
+  ```
+- Run full IDC23 PDF demo orchestration (single entry flow):
+  ```bat
+  run_idc23_demo_suite.bat <IDC23_SERIAL>
   ```
 - Studio prep helper:
   ```powershell
