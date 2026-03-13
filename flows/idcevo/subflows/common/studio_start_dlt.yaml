@@ -12,3 +12,5 @@ jsEngine: graaljs
       RUN_ROOT: ${RUN_ROOT}
       DLT_OUTPUT: ${DLT_OUTPUT}
       CAPTURE_ID: ${CAPTURE_ID}
+      SUITE: idcevo
+      ROLE: idcevo

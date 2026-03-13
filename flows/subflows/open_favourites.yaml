@@ -5,6 +5,21 @@ tags:
   - subflow
   - radio
 ---
-# UI label is usually 'Favourites' (UK spelling). If your build uses a different label, replace this with the captured nav item id.
-- tapOn: 'Favourites'
+# IDC23 exposes this tab as uppercase FAVOURITES. Other builds may use mixed case.
+# Clear any lingering station context menu before switching tabs.
+- runFlow:
+    when:
+      visible:
+        text: '(?i)add to favourites'
+    commands:
+      - pressKey: BACK
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        text: '(?i)remove from favourites'
+    commands:
+      - pressKey: BACK
+      - waitForAnimationToEnd
+- tapOn: '(?i)favourites'
 - waitForAnimationToEnd

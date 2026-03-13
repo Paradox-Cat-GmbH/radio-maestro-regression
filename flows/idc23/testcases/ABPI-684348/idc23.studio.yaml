@@ -1,54 +1,69 @@
 appId: com.bmwgroup.idnext.launcher
-jsEngine: graaljs
 onFlowStart:
   - runFlow:
       file: ../../subflows/common/studio_start_dlt.yaml
       env:
         CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+        DEVICE_ID: ${DEVICE_ID}
         DLT_IP: ${DLT_IP}
         DLT_PORT: ${DLT_PORT}
         CASE_ID: ${CASE_ID}
-        RUN_TS: ${RUN_TS}
-        RUN_ROOT: ${RUN_ROOT}
-        DLT_OUTPUT: ${DLT_OUTPUT}
-        CAPTURE_ID: ${CAPTURE_ID}
   - runFlow: ../../subflows/common/start.yaml
 onFlowComplete:
   - runFlow: ../../subflows/common/stop.yaml
-  - waitForAnimationToEnd
-  - waitForAnimationToEnd
   - waitForAnimationToEnd
   - runFlow:
       file: ../../subflows/common/studio_stop_dlt.yaml
       env:
         CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
-        CAPTURE_ID: ${CAPTURE_ID}
+        CASE_ID: ${CASE_ID}
   - runFlow:
       file: ../../subflows/common/studio_bundle_evidence.yaml
       env:
         CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
         CASE_ID: ${CASE_ID}
-        RUN_TS: ${RUN_TS}
-        RUN_ROOT: ${RUN_ROOT}
-        CAPTURE_ID: ${CAPTURE_ID}
 ---
 - evalScript: "${output.testId = 'ABPI-684348'}"
+- runFlow:
+    file: ../../../subflows/ensure_user_profile_backend.yaml
+    env:
+      TEST_ID: ABPI_684348_switch_to_x_before_setup
+      TARGET_USER_ID: ${IDC23_USER_X_ID}
+      TARGET_USER_NAME: ${IDC23_USER_X_NAME}
+      STRICT: "false"
+- assertTrue: ${output.userProfileEnsureOk == true}
+- assertTrue: ${output.userProfileEnsure.targetSpecified == true}
+- assertTrue: ${output.userProfileEnsure.targetResolved == true}
+- takeScreenshot: "ABPI_684348_user_x_before_setup"
 - runFlow: ../../subflows/common/radio_ready_and_verify.yaml
-- longPressOn:
-    id: "ListImageComponent ImageRightIcon"
-    index: 0
-- waitForAnimationToEnd
-- tapOn:
-    text: Add to shortcuts
-    optional: true
-- longPressOn:
-    id: "ListImageComponent ImageRightIcon"
-    index: 1
-- waitForAnimationToEnd
-- tapOn:
-    text: Add to shortcuts
-    optional: true
+- runFlow:
+    file: ../../subflows/common/add_station_to_shortcuts_idc23.yaml
+    env:
+      STATION_INDEX: "0"
 - runFlow: ../../../subflows/open_shortcuts.yaml
+- takeScreenshot: "ABPI_684348_shortcut_0_added"
+- runFlow: ../../subflows/common/radio_ready_and_verify.yaml
+- runFlow:
+    file: ../../subflows/common/add_station_to_shortcuts_idc23.yaml
+    env:
+      STATION_INDEX: "1"
+- runFlow: ../../../subflows/open_shortcuts.yaml
+- takeScreenshot: "ABPI_684348_shortcut_1_added"
+- runFlow:
+    file: ../../../subflows/ensure_user_profile_backend.yaml
+    env:
+      TEST_ID: ABPI_684348_switch_to_y_before_str
+      TARGET_USER_ID: ${IDC23_USER_Y_ID}
+      TARGET_USER_NAME: ${IDC23_USER_Y_NAME}
+      STRICT: "false"
+- assertTrue: ${output.userProfileEnsureOk == true}
+- assertTrue: ${output.userProfileEnsure.targetSpecified == true}
+- assertTrue: ${output.userProfileEnsure.targetResolved == true}
+- runFlow:
+    file: ../../subflows/common/disable_alexa_packages_idc23.yaml
+    env:
+      TEST_ID: ABPI_684348_disable_alexa_after_switch_to_y
+- takeScreenshot: "ABPI_684348_user_y_before_str"
 - takeScreenshot: "ABPI_684348_before_str"
 - runFlow:
     file: ../../subflows/common/lifecycle_str_once.yaml
@@ -57,15 +72,29 @@ onFlowComplete:
 - runFlow:
     file: ../../../subflows/ensure_user_profile_backend.yaml
     env:
-      TEST_ID: ABPI_684348_user_recover
-      TARGET_USER_ID: ${IDC23_TARGET_USER_ID}
-      TARGET_USER_NAME: ${IDC23_TARGET_USER_NAME}
+      TEST_ID: ABPI_684348_switch_back_to_x_after_str
+      TARGET_USER_ID: ${IDC23_USER_X_ID}
+      TARGET_USER_NAME: ${IDC23_USER_X_NAME}
       STRICT: "false"
+- assertTrue: ${output.userProfileEnsureOk == true}
+- assertTrue: ${output.userProfileEnsure.targetSpecified == true}
+- assertTrue: ${output.userProfileEnsure.targetResolved == true}
+- runFlow:
+    file: ../../subflows/common/disable_alexa_packages_idc23.yaml
+    env:
+      TEST_ID: ABPI_684348_disable_alexa_after_switch_back_to_x
 - runFlow: ../../../subflows/open_shortcuts.yaml
 - takeScreenshot: "ABPI_684348_after_str"
-- tapOn:
-    id: "ListImageComponent ImageRightIcon"
-    index: 0
-    optional: true
+- runFlow:
+    file: ../../subflows/common/tap_toolbelt_shortcut_idc23.yaml
+    env:
+      SHORTCUT_INDEX: "0"
+- waitForAnimationToEnd
+- runFlow: ../../../subflows/verify_radio_backend.yaml
+- runFlow: ../../../subflows/open_shortcuts.yaml
+- runFlow:
+    file: ../../subflows/common/tap_toolbelt_shortcut_idc23.yaml
+    env:
+      SHORTCUT_INDEX: "1"
 - waitForAnimationToEnd
 - runFlow: ../../../subflows/verify_radio_backend.yaml

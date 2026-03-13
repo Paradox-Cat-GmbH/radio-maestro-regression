@@ -1,0 +1,19 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23 - Close Toolbelt if open
+tags:
+  - idc23
+  - subflow
+  - toolbelt
+---
+- runFlow: dismiss_media_popup_if_present_idc23.yaml
+- runFlow:
+    when:
+      visible:
+        id: "com.bmwgroup.idnext.toolbelt:id/tool_belt_panel_root"
+    commands:
+      - swipe:
+          start: "50%,86%"
+          end: "50%,2%"
+          duration: 300
+      - waitForAnimationToEnd

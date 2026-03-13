@@ -9,6 +9,29 @@ Maestro-first AAOS radio regression flows for BMW iDrive racks.
 - Verifies backend playback truth via local control server (`http://127.0.0.1:4567`).
 - Exposes a live local dashboard + persisted audit for run observability.
 
+## Platform flow model
+
+This repo does not infer platform from YAML `tags:`. The platform comes from the flow path you explicitly run.
+
+- IDC23
+  - testcase flow: `flows/idc23/testcases/<CASE_ID>/idc23.yaml`
+  - Studio flow: `flows/idc23/testcases/<CASE_ID>/idc23.studio.yaml`
+  - optional demo wrapper layer: `flows/idc23/demo/IDC23DEV-*.yaml`
+- IDCEVO
+  - testcase flow: `flows/idcevo/testcases/<CASE_ID>/idcevo.yaml`
+  - Studio flow: `flows/idcevo/testcases/<CASE_ID>/idcevo.studio.yaml`
+- G70
+  - does not use the same single-file `<platform>.studio.yaml` pattern
+  - it is structured as multi-device side flows under `flows/g70/`
+  - examples are `deviceA.yaml` / `deviceB.yaml` or role-based entrypoints such as `cde.yaml`, `rse.yaml`, `hu.yaml`
+
+Practical rule:
+- run an IDC23 file for IDC23
+- run an IDCEVO file for IDCEVO
+- run a G70 file for G70
+
+`tags:` are useful for organization, search, and demo labeling, but the runners route by the target file path, not by tags.
+
 ## Core behavior (Leandro workflow)
 From Radio:
 1. Open Settings.

@@ -1,0 +1,10 @@
+id: "IDC23_STR_RADIO_INFO_CAPTURE"
+title: "IDC23 radio STR INFO capture"
+owner: "Codex"
+status: "manual-support"
+purpose:
+  - "Produce one clean IDC23 STR cycle with radio active for QA log handoff."
+  - "Capture DLT, screenshots, and backend radio verification around a single suspend/resume cycle."
+notes:
+  - "Uses the known-good IDC23 lifecycle backend config: ECU=IPB_APP2, PRE1=NONE, PRE2=NONE."
+  - "Intended for focused STR evidence capture rather than PDF testcase coverage."

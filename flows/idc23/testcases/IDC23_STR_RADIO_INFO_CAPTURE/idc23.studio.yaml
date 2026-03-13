@@ -1,0 +1,38 @@
+appId: com.bmwgroup.idnext.launcher
+onFlowStart:
+  - runFlow:
+      file: ../../subflows/common/studio_start_dlt.yaml
+      env:
+        CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+        DEVICE_ID: ${DEVICE_ID}
+        DLT_IP: ${DLT_IP}
+        DLT_PORT: ${DLT_PORT}
+        CASE_ID: ${CASE_ID}
+  - runFlow: ../../subflows/common/start.yaml
+onFlowComplete:
+  - runFlow: ../../subflows/common/stop.yaml
+  - waitForAnimationToEnd
+  - runFlow:
+      file: ../../subflows/common/studio_stop_dlt.yaml
+      env:
+        CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+        CASE_ID: ${CASE_ID}
+  - runFlow:
+      file: ../../subflows/common/studio_bundle_evidence.yaml
+      env:
+        CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+        CASE_ID: ${CASE_ID}
+---
+- evalScript: "${output.testId = 'IDC23_STR_RADIO_INFO_CAPTURE'}"
+- runFlow: ../../subflows/common/radio_ready_and_verify.yaml
+- takeScreenshot: "IDC23_STR_before_suspend"
+- runFlow:
+    file: ../../subflows/common/lifecycle_str_once.yaml
+    env:
+      TEST_ID: IDC23_STR_RADIO_INFO_CAPTURE_str
+      LIFECYCLE_STR_SECONDS: "${typeof STR_SECONDS !== 'undefined' && STR_SECONDS ? STR_SECONDS : '180'}"
+      LIFECYCLE_ECU: IPB_APP2
+      LIFECYCLE_PRE1_ECU: NONE
+      LIFECYCLE_PRE2_ECU: NONE
+- takeScreenshot: "IDC23_STR_after_resume"
+- runFlow: ../../../subflows/verify_radio_backend.yaml

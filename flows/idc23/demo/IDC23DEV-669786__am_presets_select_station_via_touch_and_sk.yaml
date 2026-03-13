@@ -1,4 +1,4 @@
-﻿appId: com.bmwgroup.idnext.launcher
+appId: com.bmwgroup.idnext.launcher
 jsEngine: graaljs
 name: IDC23DEV-669786 - AM presets select station via touch and skip
 tags:

@@ -1,17 +1,13 @@
-appId: com.bmwgroup.idnext.launcher
-jsEngine: graaljs
+appId: com.android.settings
 onFlowStart:
   - runFlow:
       file: ../../subflows/common/studio_start_dlt.yaml
       env:
         CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+        DEVICE_ID: ${DEVICE_ID}
         DLT_IP: ${DLT_IP}
         DLT_PORT: ${DLT_PORT}
         CASE_ID: ${CASE_ID}
-        RUN_TS: ${RUN_TS}
-        RUN_ROOT: ${RUN_ROOT}
-        DLT_OUTPUT: ${DLT_OUTPUT}
-        CAPTURE_ID: ${CAPTURE_ID}
   - runFlow: ../../subflows/common/start.yaml
 onFlowComplete:
   - runFlow: ../../subflows/common/stop.yaml
@@ -22,15 +18,12 @@ onFlowComplete:
       file: ../../subflows/common/studio_stop_dlt.yaml
       env:
         CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
-        CAPTURE_ID: ${CAPTURE_ID}
+        CASE_ID: ${CASE_ID}
   - runFlow:
       file: ../../subflows/common/studio_bundle_evidence.yaml
       env:
         CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
         CASE_ID: ${CASE_ID}
-        RUN_TS: ${RUN_TS}
-        RUN_ROOT: ${RUN_ROOT}
-        CAPTURE_ID: ${CAPTURE_ID}
 ---
 - evalScript: "${output.testId = 'ABPI-669792'}"
 - runFlow: ../../subflows/common/radio_ready_and_verify.yaml

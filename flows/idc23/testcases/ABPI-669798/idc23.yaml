@@ -7,18 +7,16 @@ onFlowComplete:
 ---
 - evalScript: "${output.testId = 'ABPI-669798'}"
 - runFlow: ../../subflows/common/radio_ready_and_verify.yaml
-- longPressOn:
-    id: "ListImageComponent ImageRightIcon"
-    index: 0
-- waitForAnimationToEnd
-- tapOn:
-    text: Add to shortcuts
-    optional: true
+- runFlow:
+    file: ../../subflows/common/add_station_to_shortcuts_idc23.yaml
+    env:
+      STATION_INDEX: "0"
 - runFlow: ../../../subflows/open_shortcuts.yaml
-- tapOn:
-    id: "ListImageComponent ImageRightIcon"
-    index: 0
-    optional: true
+- runFlow:
+    file: ../../subflows/common/tap_toolbelt_shortcut_idc23.yaml
+    env:
+      SHORTCUT_INDEX: "0"
+      SHORTCUT_OPTIONAL: "true"
 - waitForAnimationToEnd
 - runFlow: ../../../subflows/open_source_selector.yaml
 - tapOn:
@@ -29,9 +27,10 @@ onFlowComplete:
     optional: true
 - waitForAnimationToEnd
 - runFlow: ../../../subflows/open_shortcuts.yaml
-- tapOn:
-    id: "ListImageComponent ImageRightIcon"
-    index: 0
-    optional: true
+- runFlow:
+    file: ../../subflows/common/tap_toolbelt_shortcut_idc23.yaml
+    env:
+      SHORTCUT_INDEX: "0"
+      SHORTCUT_OPTIONAL: "true"
 - waitForAnimationToEnd
 - runFlow: ../../../subflows/verify_radio_backend.yaml

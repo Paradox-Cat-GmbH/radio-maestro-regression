@@ -1,8 +1,10 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$CaseId,
-    [string]$DltIp = "169.254.107.117",
-    [string]$DltPort = "3490"
+    [string]$DeviceId = "169.254.8.177:5555",
+    [string]$DltIp = "",
+    [string]$DltPort = "3490",
+    [string]$CaptureId = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -13,6 +15,14 @@ $dltJs = Join-Path $ScriptDir "dlt-capture.js"
 if (-not (Test-Path $dltJs)) { throw "Missing DLT helper: $dltJs" }
 
 $ts = Get-Date -Format "yyyyMMdd_HHmmss"
+$resolvedCaptureId = if ([string]::IsNullOrWhiteSpace($CaptureId)) { "IDC23_STUDIO_${CaseId}_$ts" } else { $CaptureId }
+$resolvedDltIp = if (-not [string]::IsNullOrWhiteSpace($DltIp)) {
+    $DltIp
+} elseif ($DeviceId -match '^([^:]+)') {
+    $Matches[1]
+} else {
+    "169.254.8.177"
+}
 $runRoot = Join-Path $RepoRoot "artifacts\runs\idc23\$CaseId\$ts"
 $dltOut = Join-Path $runRoot "dlt\idc23_capture.dlt"
 $studioOut = Join-Path $runRoot "studio"
@@ -28,8 +38,8 @@ if (Test-Path $maestroTestsRoot) {
         Select-Object -First 1
 }
 
-Write-Host "Starting DLT capture (${DltIp}:${DltPort})..."
-& node $dltJs start $DltIp $DltPort $dltOut "IDC23_STUDIO"
+Write-Host "Starting DLT capture (${resolvedDltIp}:${DltPort})..."
+& node $dltJs start $resolvedDltIp $DltPort $dltOut $resolvedCaptureId
 if ($LASTEXITCODE -ne 0) { throw "Failed to start DLT capture" }
 
 Write-Host ""
@@ -48,16 +58,18 @@ try {
     if ($latestRun -and (-not $baseline -or $latestRun.FullName -ne $baseline.FullName)) {
         Copy-Item -Path (Join-Path $latestRun.FullName "*") -Destination $studioOut -Recurse -Force -ErrorAction SilentlyContinue
 
-        $srcVideos = Join-Path $latestRun.FullName "videos"
-        if (Test-Path $srcVideos) {
+        $srcVideos = Get-ChildItem -Path $latestRun.FullName -Recurse -File -Include *.mp4,*.mkv,*.webm -ErrorAction SilentlyContinue
+        if ($srcVideos) {
             New-Item -ItemType Directory -Force -Path $videoOut | Out-Null
-            Copy-Item -Path (Join-Path $srcVideos "*") -Destination $videoOut -Recurse -Force -ErrorAction SilentlyContinue
+            foreach ($video in $srcVideos) {
+                Copy-Item -Path $video.FullName -Destination (Join-Path $videoOut $video.Name) -Force -ErrorAction SilentlyContinue
+            }
         }
     }
 }
 finally {
     Write-Host "Stopping DLT capture..."
-    & node $dltJs stop "0" "0" "0" "IDC23_STUDIO" | Out-Host
+    & node $dltJs stop "0" "0" "0" $resolvedCaptureId | Out-Host
 }
 
 $dltBytes = if (Test-Path $dltOut) { (Get-Item $dltOut).Length } else { 0 }

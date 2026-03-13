@@ -1,17 +1,13 @@
-appId: com.bmwgroup.idnext.launcher
-jsEngine: graaljs
+appId: com.android.settings
 onFlowStart:
   - runFlow:
       file: ../../subflows/common/studio_start_dlt.yaml
       env:
         CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+        DEVICE_ID: ${DEVICE_ID}
         DLT_IP: ${DLT_IP}
         DLT_PORT: ${DLT_PORT}
         CASE_ID: ${CASE_ID}
-        RUN_TS: ${RUN_TS}
-        RUN_ROOT: ${RUN_ROOT}
-        DLT_OUTPUT: ${DLT_OUTPUT}
-        CAPTURE_ID: ${CAPTURE_ID}
   - runFlow: ../../subflows/common/start.yaml
 onFlowComplete:
   - runFlow: ../../subflows/common/stop.yaml
@@ -22,15 +18,12 @@ onFlowComplete:
       file: ../../subflows/common/studio_stop_dlt.yaml
       env:
         CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
-        CAPTURE_ID: ${CAPTURE_ID}
+        CASE_ID: ${CASE_ID}
   - runFlow:
       file: ../../subflows/common/studio_bundle_evidence.yaml
       env:
         CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
         CASE_ID: ${CASE_ID}
-        RUN_TS: ${RUN_TS}
-        RUN_ROOT: ${RUN_ROOT}
-        CAPTURE_ID: ${CAPTURE_ID}
 ---
 - evalScript: "${output.testId = 'ABPI-671618'}"
 - runFlow: ../../subflows/common/radio_ready_and_verify.yaml
@@ -44,6 +37,9 @@ onFlowComplete:
           file: ../../subflows/common/lifecycle_str_once.yaml
           env:
             TEST_ID: ABPI_671618_str
+            LIFECYCLE_ECU: "IPB_APP2"
+            LIFECYCLE_PRE1_ECU: "NONE"
+            LIFECYCLE_PRE2_ECU: "NONE"
       - runFlow:
           file: ../../../subflows/ensure_user_profile_backend.yaml
           env:
@@ -64,6 +60,7 @@ onFlowComplete:
           file: ../../subflows/common/lifecycle_cold_boot_once.yaml
           env:
             TEST_ID: ABPI_671618_cold
+            LIFECYCLE_COLD_POST_REBOOT_DELAY_SECONDS: "60"
       - runFlow:
           file: ../../../subflows/ensure_user_profile_backend.yaml
           env:

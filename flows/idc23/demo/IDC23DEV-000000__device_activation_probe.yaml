@@ -1,0 +1,6 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23 device activation probe
+---
+- evalScript: "${output.probe = 'ok'}"
+- waitForAnimationToEnd

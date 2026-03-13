@@ -1,4 +1,4 @@
-﻿appId: com.bmwgroup.idnext.launcher
+appId: com.bmwgroup.idnext.launcher
 jsEngine: graaljs
 name: IDC23DEV-669787 - AM stations list skip to other station (variant B)
 tags:

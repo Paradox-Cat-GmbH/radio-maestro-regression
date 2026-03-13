@@ -48,10 +48,12 @@ try {
     if ($latestRun -and (-not $baseline -or $latestRun.FullName -ne $baseline.FullName)) {
         Copy-Item -Path (Join-Path $latestRun.FullName "*") -Destination $studioOut -Recurse -Force -ErrorAction SilentlyContinue
 
-        $srcVideos = Join-Path $latestRun.FullName "videos"
-        if (Test-Path $srcVideos) {
+        $srcVideos = Get-ChildItem -Path $latestRun.FullName -Recurse -File -Include *.mp4,*.mkv,*.webm -ErrorAction SilentlyContinue
+        if ($srcVideos) {
             New-Item -ItemType Directory -Force -Path $videoOut | Out-Null
-            Copy-Item -Path (Join-Path $srcVideos "*") -Destination $videoOut -Recurse -Force -ErrorAction SilentlyContinue
+            foreach ($video in $srcVideos) {
+                Copy-Item -Path $video.FullName -Destination (Join-Path $videoOut $video.Name) -Force -ErrorAction SilentlyContinue
+            }
         }
     }
 }

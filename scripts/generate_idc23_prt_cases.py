@@ -69,32 +69,52 @@ CASES = [
         "priority": "P1",
         "automation": "semi-automated",
         "notes": [
-            "Create shortcuts, execute STR lifecycle, and validate shortcut recall afterwards.",
-            "Uses backend STR cycle and optional user-profile recovery after resume.",
+            "Creates two shortcuts under user X, switches to user Y for STR, then switches back to user X.",
+            "Uses backend STR cycle plus explicit profile switching through the control-server user helper.",
         ],
         "acceptance": [
-            "Shortcuts remain present after STR return.",
-            "Radio playback/audio focus remains valid after recall.",
+            "Shortcut icons remain present after STR return to user X.",
+            "Both saved shortcuts can be recalled from Toolbelt after STR with radio backend remaining strict-OK.",
         ],
         "flow": scenario(
             """
             - evalScript: "${output.testId = 'ABPI-684348'}"
+            - runFlow:
+                file: ../../../subflows/ensure_user_profile_backend.yaml
+                env:
+                  TEST_ID: ABPI_684348_switch_to_x_before_setup
+                  TARGET_USER_ID: ${IDC23_USER_X_ID}
+                  TARGET_USER_NAME: ${IDC23_USER_X_NAME}
+                  STRICT: "false"
+            - assertTrue: ${output.userProfileEnsureOk == true}
+            - assertTrue: ${output.userProfileEnsure.targetSpecified == true}
+            - assertTrue: ${output.userProfileEnsure.targetResolved == true}
+            - takeScreenshot: "ABPI_684348_user_x_before_setup"
             - runFlow: ../../subflows/common/radio_ready_and_verify.yaml
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 0
-            - waitForAnimationToEnd
-            - tapOn:
-                text: Add to shortcuts
-                optional: true
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 1
-            - waitForAnimationToEnd
-            - tapOn:
-                text: Add to shortcuts
-                optional: true
+            - runFlow:
+                file: ../../subflows/common/add_station_to_shortcuts_idc23.yaml
+                env:
+                  STATION_INDEX: "0"
             - runFlow: ../../../subflows/open_shortcuts.yaml
+            - takeScreenshot: "ABPI_684348_shortcut_0_added"
+            - runFlow: ../../subflows/common/radio_ready_and_verify.yaml
+            - runFlow:
+                file: ../../subflows/common/add_station_to_shortcuts_idc23.yaml
+                env:
+                  STATION_INDEX: "1"
+            - runFlow: ../../../subflows/open_shortcuts.yaml
+            - takeScreenshot: "ABPI_684348_shortcut_1_added"
+            - runFlow:
+                file: ../../../subflows/ensure_user_profile_backend.yaml
+                env:
+                  TEST_ID: ABPI_684348_switch_to_y_before_str
+                  TARGET_USER_ID: ${IDC23_USER_Y_ID}
+                  TARGET_USER_NAME: ${IDC23_USER_Y_NAME}
+                  STRICT: "false"
+            - assertTrue: ${output.userProfileEnsureOk == true}
+            - assertTrue: ${output.userProfileEnsure.targetSpecified == true}
+            - assertTrue: ${output.userProfileEnsure.targetResolved == true}
+            - takeScreenshot: "ABPI_684348_user_y_before_str"
             - takeScreenshot: "ABPI_684348_before_str"
             - runFlow:
                 file: ../../subflows/common/lifecycle_str_once.yaml
@@ -103,16 +123,26 @@ CASES = [
             - runFlow:
                 file: ../../../subflows/ensure_user_profile_backend.yaml
                 env:
-                  TEST_ID: ABPI_684348_user_recover
-                  TARGET_USER_ID: ${IDC23_TARGET_USER_ID}
-                  TARGET_USER_NAME: ${IDC23_TARGET_USER_NAME}
+                  TEST_ID: ABPI_684348_switch_back_to_x_after_str
+                  TARGET_USER_ID: ${IDC23_USER_X_ID}
+                  TARGET_USER_NAME: ${IDC23_USER_X_NAME}
                   STRICT: "false"
+            - assertTrue: ${output.userProfileEnsureOk == true}
+            - assertTrue: ${output.userProfileEnsure.targetSpecified == true}
+            - assertTrue: ${output.userProfileEnsure.targetResolved == true}
             - runFlow: ../../../subflows/open_shortcuts.yaml
             - takeScreenshot: "ABPI_684348_after_str"
-            - tapOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 0
-                optional: true
+            - runFlow:
+                file: ../../subflows/common/tap_toolbelt_shortcut_idc23.yaml
+                env:
+                  SHORTCUT_INDEX: "0"
+            - waitForAnimationToEnd
+            - runFlow: ../../../subflows/verify_radio_backend.yaml
+            - runFlow: ../../../subflows/open_shortcuts.yaml
+            - runFlow:
+                file: ../../subflows/common/tap_toolbelt_shortcut_idc23.yaml
+                env:
+                  SHORTCUT_INDEX: "1"
             - waitForAnimationToEnd
             - runFlow: ../../../subflows/verify_radio_backend.yaml
             """
@@ -135,20 +165,14 @@ CASES = [
             """
             - evalScript: "${output.testId = 'ABPI-684288'}"
             - runFlow: ../../subflows/common/radio_ready_and_verify.yaml
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 0
-            - waitForAnimationToEnd
-            - tapOn:
-                text: Add to shortcuts
-                optional: true
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 2
-            - waitForAnimationToEnd
-            - tapOn:
-                text: Add to shortcuts
-                optional: true
+            - runFlow:
+                file: ../../subflows/common/add_station_to_shortcuts_idc23.yaml
+                env:
+                  STATION_INDEX: "0"
+            - runFlow:
+                file: ../../subflows/common/add_station_to_shortcuts_idc23.yaml
+                env:
+                  STATION_INDEX: "2"
             - runFlow: ../../../subflows/open_shortcuts.yaml
             - tapOn:
                 id: "ListImageComponent ImageRightIcon"
@@ -569,13 +593,10 @@ CASES = [
             """
             - evalScript: "${output.testId = 'ABPI-669798'}"
             - runFlow: ../../subflows/common/radio_ready_and_verify.yaml
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 0
-            - waitForAnimationToEnd
-            - tapOn:
-                text: Add to shortcuts
-                optional: true
+            - runFlow:
+                file: ../../subflows/common/add_station_to_shortcuts_idc23.yaml
+                env:
+                  STATION_INDEX: "0"
             - runFlow: ../../../subflows/open_shortcuts.yaml
             - tapOn:
                 id: "ListImageComponent ImageRightIcon"
@@ -618,16 +639,14 @@ CASES = [
             - evalScript: "${output.testId = 'ABPI-669795'}"
             - runFlow: ../../../subflows/ensure_radio_source.yaml
             - runFlow: ../../../subflows/open_all_stations.yaml
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 0
-            - waitForAnimationToEnd
-            - tapOn:
-                text: Add to shortcuts
-                optional: true
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 0
+            - runFlow:
+                file: ../../subflows/common/add_station_to_shortcuts_idc23.yaml
+                env:
+                  STATION_INDEX: "0"
+            - runFlow:
+                file: ../../subflows/common/long_press_station_entry_idc23.yaml
+                env:
+                  STATION_INDEX: "${output.idc23ShortcutChosenIndex}"
             - waitForAnimationToEnd
             - takeScreenshot: "ABPI_669795_duplicate_shortcut_prompt"
             - runFlow: ../../../subflows/open_shortcuts.yaml
@@ -643,13 +662,11 @@ CASES = [
                 optional: true
             - waitForAnimationToEnd
             - runFlow: ../../../subflows/open_all_stations.yaml
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 1
-                optional: true
-            - tapOn:
-                text: Add to shortcuts
-                optional: true
+            - runFlow:
+                file: ../../subflows/common/add_station_to_shortcuts_idc23.yaml
+                env:
+                  STATION_INDEX: "1"
+                  STATION_OPTIONAL: "true"
             - runFlow: ../../../subflows/open_shortcuts.yaml
             """
         ),
@@ -775,16 +792,14 @@ CASES = [
             - evalScript: "${output.testId = 'ABPI-669790'}"
             - runFlow: ../../../subflows/ensure_radio_source.yaml
             - runFlow: ../../../subflows/open_all_stations.yaml
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 0
-            - waitForAnimationToEnd
-            - tapOn:
-                text: Add to shortcuts
-                optional: true
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 0
+            - runFlow:
+                file: ../../subflows/common/add_station_to_shortcuts_idc23.yaml
+                env:
+                  STATION_INDEX: "0"
+            - runFlow:
+                file: ../../subflows/common/long_press_station_entry_idc23.yaml
+                env:
+                  STATION_INDEX: "${output.idc23ShortcutChosenIndex}"
             - waitForAnimationToEnd
             - takeScreenshot: "ABPI_669790_duplicate_prompt"
             - runFlow: ../../../subflows/open_shortcuts.yaml

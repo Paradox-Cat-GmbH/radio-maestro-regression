@@ -1,57 +1,44 @@
 appId: com.bmwgroup.idnext.launcher
-jsEngine: graaljs
 onFlowStart:
   - runFlow:
       file: ../../subflows/common/studio_start_dlt.yaml
       env:
         CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+        DEVICE_ID: ${DEVICE_ID}
         DLT_IP: ${DLT_IP}
         DLT_PORT: ${DLT_PORT}
         CASE_ID: ${CASE_ID}
-        RUN_TS: ${RUN_TS}
-        RUN_ROOT: ${RUN_ROOT}
-        DLT_OUTPUT: ${DLT_OUTPUT}
-        CAPTURE_ID: ${CAPTURE_ID}
   - runFlow: ../../subflows/common/start.yaml
 onFlowComplete:
   - runFlow: ../../subflows/common/stop.yaml
   - waitForAnimationToEnd
-  - waitForAnimationToEnd
-  - waitForAnimationToEnd
+
   - runFlow:
       file: ../../subflows/common/studio_stop_dlt.yaml
       env:
         CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
-        CAPTURE_ID: ${CAPTURE_ID}
+        CASE_ID: ${CASE_ID}
   - runFlow:
       file: ../../subflows/common/studio_bundle_evidence.yaml
       env:
         CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
         CASE_ID: ${CASE_ID}
-        RUN_TS: ${RUN_TS}
-        RUN_ROOT: ${RUN_ROOT}
-        CAPTURE_ID: ${CAPTURE_ID}
 ---
 - evalScript: "${output.testId = 'ABPI-684288'}"
 - runFlow: ../../subflows/common/radio_ready_and_verify.yaml
-- longPressOn:
-    id: "ListImageComponent ImageRightIcon"
-    index: 0
-- waitForAnimationToEnd
-- tapOn:
-    text: Add to shortcuts
-    optional: true
-- longPressOn:
-    id: "ListImageComponent ImageRightIcon"
-    index: 2
-- waitForAnimationToEnd
-- tapOn:
-    text: Add to shortcuts
-    optional: true
+- runFlow:
+    file: ../../subflows/common/add_station_to_shortcuts_idc23.yaml
+    env:
+      STATION_INDEX: "0"
+- runFlow:
+    file: ../../subflows/common/add_station_to_shortcuts_idc23.yaml
+    env:
+      STATION_INDEX: "2"
 - runFlow: ../../../subflows/open_shortcuts.yaml
-- tapOn:
-    id: "ListImageComponent ImageRightIcon"
-    index: 0
-    optional: true
+- runFlow:
+    file: ../../subflows/common/tap_toolbelt_shortcut_idc23.yaml
+    env:
+      SHORTCUT_INDEX: "0"
+      SHORTCUT_OPTIONAL: "true"
 - waitForAnimationToEnd
 - runFlow: ../../../subflows/verify_radio_backend.yaml

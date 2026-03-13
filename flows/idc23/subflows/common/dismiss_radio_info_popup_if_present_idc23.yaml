@@ -1,0 +1,25 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23 - Dismiss radio info popup if present
+tags:
+  - idc23
+  - subflow
+  - radio
+  - popup
+---
+- runFlow:
+    when:
+      visible:
+        text: '(?i)cancel radio info'
+    commands:
+      - tapOn:
+          text: '(?i)cancel radio info'
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible:
+        text: '(?i)radio info'
+    commands:
+      - pressKey: BACK
+      - waitForAnimationToEnd

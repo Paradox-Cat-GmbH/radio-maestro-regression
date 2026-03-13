@@ -7,19 +7,19 @@ onFlowComplete:
 ---
 - evalScript: "${output.testId = 'ABPI-669802'}"
 - runFlow: ../../../subflows/ensure_radio_source.yaml
+- runFlow: ../../../subflows/verify_radio_backend.yaml
 - runFlow: ../../../subflows/open_all_stations.yaml
 - takeScreenshot: "ABPI_669802_list_top"
 - swipe:
-    start: "70%,78%"
-    end: "70%,32%"
+    start: "30%,78%"
+    end: "30%,32%"
     duration: 450
 - waitForAnimationToEnd
 - swipe:
-    start: "70%,78%"
-    end: "70%,32%"
+    start: "30%,78%"
+    end: "30%,32%"
     duration: 450
 - waitForAnimationToEnd
+- runFlow: ../../../subflows/verify_radio_backend.yaml
 - takeScreenshot: "ABPI_669802_list_scrolled"
-- assertVisible:
-    id: "ListImageComponent ImageRightIcon"
-    index: 0
+- runFlow: ../../subflows/common/assert_station_entry_visible_idc23.yaml

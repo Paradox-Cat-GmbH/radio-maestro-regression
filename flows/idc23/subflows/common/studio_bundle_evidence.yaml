@@ -6,6 +6,5 @@ jsEngine: graaljs
     env:
       CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
       CASE_ID: ${CASE_ID}
-      RUN_TS: ${RUN_TS}
-      RUN_ROOT: ${RUN_ROOT}
-      CAPTURE_ID: ${CAPTURE_ID}
+      SUITE: idc23
+      ROLE: idc23

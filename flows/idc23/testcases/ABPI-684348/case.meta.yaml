@@ -5,8 +5,8 @@ priority: "P1"
 source: "TMS_PRT_TestScenarios.pdf"
 automationLevel: "semi-automated"
 notes:
-  - "Create shortcuts, execute STR lifecycle, and validate shortcut recall afterwards."
-  - "Uses backend STR cycle and optional user-profile recovery after resume."
+  - "Creates two shortcuts under user X, switches to user Y for STR, then switches back to user X."
+  - "Uses backend STR cycle plus explicit profile switching through the control-server user helper."
 acceptance:
-  - "Shortcuts remain present after STR return."
-  - "Radio playback/audio focus remains valid after recall."
+  - "Shortcut icons remain present after STR return to user X."
+  - "Both saved shortcuts can be recalled from Toolbelt after STR with radio backend remaining strict-OK."
