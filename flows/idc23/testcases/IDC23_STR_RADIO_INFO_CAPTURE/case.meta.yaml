@@ -1,6 +1,6 @@
 id: "IDC23_STR_RADIO_INFO_CAPTURE"
 title: "IDC23 radio STR INFO capture"
-owner: "Codex"
+owner: "David Erik García Arenas"
 status: "manual-support"
 purpose:
   - "Produce one clean IDC23 STR cycle with radio active for QA log handoff."

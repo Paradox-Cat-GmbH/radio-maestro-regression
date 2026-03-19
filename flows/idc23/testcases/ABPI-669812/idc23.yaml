@@ -7,10 +7,29 @@ onFlowComplete:
 ---
 - evalScript: "${output.testId = 'ABPI-669812'}"
 - runFlow: ../../subflows/common/radio_ready_and_verify.yaml
+- runFlow: ../../../subflows/preconditions_radio_settings.yaml
+- runFlow: ../../subflows/common/select_radio_info_station_idc23.yaml
+- runFlow: ../../subflows/common/open_radio_settings_idc23.yaml
+- runFlow:
+    file: ../../subflows/common/set_radio_info_toggle_idc23.yaml
+    env:
+      RADIO_INFO_ENABLED: "true"
+      RADIO_INFO_STATE_ASSERT: "false"
+- pressKey: back
+- waitForAnimationToEnd
+- runFlow: ../../../subflows/ensure_radio_source.yaml
+- runFlow:
+    file: ../../subflows/common/wait_for_radio_info_popup_idc23.yaml
+    env:
+      POPUP_WAIT_SECONDS: "${RADIO_INFO_POPUP_WAIT_SECONDS}"
+      POPUP_REQUIRED: "true"
+- takeScreenshot: "ABPI_669812_radio_info_popup_observed"
 - runFlow:
     file: ../../../subflows/backend_inject.yaml
     env:
       KIND: swag
       TARGET: center
 - waitForAnimationToEnd
+- assertNotVisible:
+    text: '(?i)(cancel radio info|stop playing radio infos)'
 - runFlow: ../../../subflows/verify_radio_backend.yaml

@@ -1,0 +1,77 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23 - Select likely radio-info-capable station
+tags:
+  - idc23
+  - subflow
+  - radio
+  - station_select
+---
+- runFlow: dismiss_media_popup_if_present_idc23.yaml
+
+- extendedWaitUntil:
+    visible:
+      text: "(?i)all stations"
+    timeout: 20000
+
+- evalScript: "${output.idc23RadioInfoStationSelected = false;}"
+
+- runFlow:
+    when:
+      visible:
+        text: "(?i)BAYERN ?3"
+    commands:
+      - tapOn:
+          text: "(?i)BAYERN ?3"
+      - waitForAnimationToEnd
+      - evalScript: ${output.idc23RadioInfoStationSelected = true}
+
+- runFlow:
+    when:
+      true: ${output.idc23RadioInfoStationSelected != true}
+    commands:
+      - runFlow:
+          when:
+            visible:
+              text: "(?i)RADIO BOB!"
+          commands:
+            - tapOn:
+                text: "(?i)RADIO BOB!"
+            - waitForAnimationToEnd
+            - evalScript: ${output.idc23RadioInfoStationSelected = true}
+
+- runFlow:
+    when:
+      true: ${output.idc23RadioInfoStationSelected != true}
+    commands:
+      - runFlow:
+          when:
+            visible:
+              text: "(?i)radio horeb"
+          commands:
+            - tapOn:
+                text: "(?i)radio horeb"
+            - waitForAnimationToEnd
+            - evalScript: ${output.idc23RadioInfoStationSelected = true}
+
+- runFlow:
+    when:
+      true: ${output.idc23RadioInfoStationSelected != true}
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: com.bmwgroup.apinext.mediaapp:id/icon_public_value
+              index: 0
+          commands:
+            - tapOn:
+                id: com.bmwgroup.apinext.mediaapp:id/cl_one_line_list
+                index: 1
+                optional: true
+            - tapOn:
+                point: "30%,38%"
+                optional: true
+            - waitForAnimationToEnd
+            - evalScript: ${output.idc23RadioInfoStationSelected = true}
+
+- assertTrue: ${output.idc23RadioInfoStationSelected == true}

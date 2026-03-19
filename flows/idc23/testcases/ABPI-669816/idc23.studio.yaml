@@ -27,21 +27,43 @@ onFlowComplete:
 ---
 - evalScript: "${output.testId = 'ABPI-669816'}"
 - runFlow: ../../../subflows/ensure_radio_source.yaml
-- tapOn:
-    id: idx_icon_settings
-    optional: true
-- tapOn:
-    text: Radio settings
-    optional: true
-- waitForAnimationToEnd
-- tapOn:
-    text: Radio info
-    optional: true
-- waitForAnimationToEnd
+- runFlow: ../../../subflows/preconditions_radio_settings.yaml
+- runFlow: ../../subflows/common/select_radio_info_station_idc23.yaml
+- runFlow: ../../subflows/common/open_radio_settings_idc23.yaml
+- runFlow:
+    file: ../../subflows/common/set_radio_info_toggle_idc23.yaml
+    env:
+      RADIO_INFO_ENABLED: "true"
+      RADIO_INFO_STATE_ASSERT: "false"
 - takeScreenshot: "ABPI_669816_radio_info_enabled"
-- tapOn:
-    text: Radio info
-    optional: true
-- waitForAnimationToEnd
 - pressKey: back
+- waitForAnimationToEnd
+- runFlow: ../../../subflows/ensure_radio_source.yaml
+- runFlow:
+    file: ../../subflows/common/wait_for_radio_info_popup_idc23.yaml
+    env:
+      POPUP_WAIT_SECONDS: "${RADIO_INFO_POPUP_WAIT_SECONDS}"
+      POPUP_REQUIRED: "${RADIO_INFO_REQUIRE_POPUP}"
+      DISMISS_POPUP: "true"
+- runFlow:
+    when:
+      true: ${output.idc23RadioInfoPopupObserved == true}
+    commands:
+      - takeScreenshot: "ABPI_669816_radio_info_popup_observed"
+- runFlow: ../../subflows/common/open_radio_settings_idc23.yaml
+- runFlow:
+    file: ../../subflows/common/set_radio_info_toggle_idc23.yaml
+    env:
+      RADIO_INFO_ENABLED: "false"
+      RADIO_INFO_STATE_ASSERT: "false"
+- takeScreenshot: "ABPI_669816_radio_info_disabled"
+- pressKey: back
+- waitForAnimationToEnd
+- runFlow: ../../../subflows/ensure_radio_source.yaml
+- runFlow:
+    file: ../../subflows/common/wait_for_radio_info_popup_idc23.yaml
+    env:
+      POPUP_WAIT_SECONDS: "10"
+      POPUP_REQUIRED: "false"
+- assertTrue: ${output.idc23RadioInfoPopupObserved != true}
 - runFlow: ../../../subflows/verify_radio_backend.yaml

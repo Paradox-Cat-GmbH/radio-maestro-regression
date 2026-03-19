@@ -5,8 +5,9 @@ priority: "P2"
 source: "TMS_PRT_TestScenarios.pdf"
 automationLevel: "semi-automated"
 notes:
-  - "Checks that audio persists after navigation and skip actions."
-  - "Status-bar text interaction is build-dependent and attempted as optional selector."
+  - "Uses backend UI snapshots plus Maestro hierarchy fallback to inspect current IDC23 status-bar and launcher widget text."
+  - "Status-bar return path uses current top-bar selector first and launcher widget as the last fallback."
 acceptance:
-  - "Radio remains playing outside Radio screen."
-  - "Skip actions update active station while backend remains strict-OK."
+  - "Radio remains playing outside Radio screen while home/widget status text stays populated."
+  - "Skip next/prev updates the extracted station text while backend remains strict-OK."
+  - "Tapping the current top-bar entry returns to the active Radio list."

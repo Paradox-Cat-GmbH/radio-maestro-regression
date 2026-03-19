@@ -8,26 +8,33 @@ onFlowComplete:
 - evalScript: "${output.testId = 'ABPI-669799'}"
 - runFlow: ../../../subflows/ensure_radio_source.yaml
 - runFlow: ../../../subflows/open_all_stations.yaml
+- runFlow: ../../subflows/common/clear_favourites_idc23.yaml
+- runFlow: ../../../subflows/open_all_stations.yaml
 - runFlow:
-    file: ../../subflows/common/long_press_station_entry_idc23.yaml
+    file: ../../subflows/common/tap_station_entry_idc23.yaml
     env:
-      STATION_INDEX: "0"
+      STATION_INDEX: "2"
 - waitForAnimationToEnd
-- tapOn:
-    text: Add to favourites
-    optional: true
+- runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+- evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23PresetSavedStation = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station) : ''); output.idc23PresetSavedKey = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+- assertTrue: ${output.idc23PresetSavedStation != '' || output.idc23PresetSavedKey != ''}
+- runFlow: ../../subflows/common/tap_particle_action_idc23.yaml
 - runFlow: ../../../subflows/open_favourites.yaml
 - takeScreenshot: "ABPI_669799_saved_station"
 - runFlow:
-    file: ../../subflows/common/long_press_station_entry_idc23.yaml
+    file: ../../subflows/common/tap_station_entry_idc23.yaml
     env:
       STATION_INDEX: "0"
       STATION_OPTIONAL: "true"
-- tapOn:
-    text: Remove from favourites
-    optional: true
 - waitForAnimationToEnd
-- runFlow: ../../../subflows/verify_radio_backend.yaml
+- runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+- evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23PresetSavedStationFromFavourites = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station) : ''); output.idc23PresetSavedKeyFromFavourites = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+- assertTrue: ${(output.idc23PresetSavedKey != '' && output.idc23PresetSavedKeyFromFavourites == output.idc23PresetSavedKey) || (output.idc23PresetSavedStation != '' && output.idc23PresetSavedStationFromFavourites == output.idc23PresetSavedStation)}
+- runFlow: ../../subflows/common/tap_particle_action_idc23.yaml
+- runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+- evalScript: "${function norm(v){return (v===undefined||v===null)?'':String(v).toLowerCase().replace(/\\s+/g,'');} output.idc23PresetQueueTitleNormalized = norm(output.radioVerdict && output.radioVerdict.media ? output.radioVerdict.media.queueTitle : ''); output.idc23PresetRemovedStation = (output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station || '') : ''); output.idc23PresetRemovedKey = (output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey || '') : '');}"
+- assertTrue: ${output.idc23PresetQueueTitleNormalized == 'allstations'}
+- assertTrue: ${(output.idc23PresetSavedKey != '' && output.idc23PresetRemovedKey == output.idc23PresetSavedKey) || (output.idc23PresetSavedStation != '' && output.idc23PresetRemovedStation == output.idc23PresetSavedStation)}
 
 
 

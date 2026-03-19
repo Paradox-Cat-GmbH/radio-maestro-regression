@@ -1,0 +1,75 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23 - Open radio settings
+tags:
+  - idc23
+  - subflow
+  - radio
+  - settings
+---
+- extendedWaitUntil:
+    visible:
+      text: "(?i)all stations"
+    timeout: 20000
+
+- evalScript: "${output.idc23RadioSettingsOpen = false; output.idc23RadioSettingsAttempt = 0;}"
+
+- repeat:
+    times: 4
+    while:
+      true: ${output.idc23RadioSettingsOpen != true}
+    commands:
+      - runFlow:
+          when:
+            visible:
+              text: "(?i)all stations"
+          commands:
+            - tapOn:
+                id: com.bmwgroup.apinext.mediaapp:id/button_settings
+                optional: true
+            - tapOn:
+                point: "95%,16%"
+                optional: true
+            - waitForAnimationToEnd
+
+      - runFlow:
+          when:
+            visible:
+              text: "Sort available stations"
+          commands:
+            - evalScript: ${output.idc23RadioSettingsOpen = true}
+
+      - runFlow:
+          when:
+            visible:
+              text: "Radio info"
+          commands:
+            - evalScript: ${output.idc23RadioSettingsOpen = true}
+
+      - runFlow:
+          when:
+            true: ${output.idc23RadioSettingsOpen != true}
+          commands:
+            - tapOn:
+                id: com.bmwgroup.apinext.mediaapp:id/source_settings
+                optional: true
+            - tapOn:
+                id: media_app_source_settings_bt
+                optional: true
+            - tapOn:
+                id: com.bmwgroup.apinext.mediaapp:id/button_settings
+                optional: true
+            - tapOn:
+                text: "Radio settings"
+                optional: true
+            - runFlow:
+                when:
+                  true: ${output.idc23RadioSettingsAttempt >= 1}
+                commands:
+                  - tapOn:
+                      point: "91%,10%"
+                      optional: true
+            - waitForAnimationToEnd
+            - evalScript: ${output.idc23RadioSettingsAttempt = output.idc23RadioSettingsAttempt + 1}
+
+- assertTrue: ${output.idc23RadioSettingsOpen == true}

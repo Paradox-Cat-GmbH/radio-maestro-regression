@@ -5,8 +5,8 @@ priority: "P2"
 source: "TMS_PRT_TestScenarios.pdf"
 automationLevel: "semi-automated"
 notes:
-  - "Adds and removes a station from favorites/presets path."
-  - "Deletion selector is optional to tolerate skin differences."
+  - "Uses the live IDC23 particle action path instead of long-press context menus."
+  - "Starts from a cleared favourites state so add/remove is deterministic."
 acceptance:
-  - "Station can be saved to presets."
-  - "Station can be removed while playback continuity is preserved."
+  - "Station can be saved through the current-station particle action and then recalled from Favourites."
+  - "Removing the saved station returns backend queue context to All stations while playback continuity is preserved."

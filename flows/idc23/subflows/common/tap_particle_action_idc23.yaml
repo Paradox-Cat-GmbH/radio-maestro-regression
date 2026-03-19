@@ -1,0 +1,19 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23 - Tap current particle action
+tags:
+  - idc23
+  - subflow
+  - radio
+  - favourites
+---
+- extendedWaitUntil:
+    visible:
+      id: "com.bmwgroup.apinext.mediaapp:id/custom_particle_action"
+    timeout: 10000
+
+- tapOn:
+    id: "com.bmwgroup.apinext.mediaapp:id/custom_particle_action"
+    retryTapIfNoChange: true
+
+- waitForAnimationToEnd

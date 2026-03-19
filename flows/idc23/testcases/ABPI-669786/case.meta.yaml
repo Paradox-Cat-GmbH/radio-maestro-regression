@@ -5,8 +5,9 @@ priority: "P2"
 source: "TMS_PRT_TestScenarios.pdf"
 automationLevel: "semi-automated"
 notes:
-  - "AM equivalent of preset touch + skip behavior."
-  - "Wrap-around verification should be confirmed via station history in artifacts."
+  - "AM-equivalent preset flow now uses station-key snapshots to prove first/last wrap-around in preset context."
+  - "Rack-specific AM station preparation may still be needed to guarantee true AM-only coverage."
 acceptance:
   - "Preset touch selection remains playable."
-  - "Skip left/right actions remain functional from preset context."
+  - "Previous from the first favourite wraps to the last favourite."
+  - "Next from the last favourite wraps back to the first favourite while backend remains strict-OK."

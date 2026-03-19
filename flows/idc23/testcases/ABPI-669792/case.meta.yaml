@@ -5,8 +5,9 @@ priority: "P2"
 source: "TMS_PRT_TestScenarios.pdf"
 automationLevel: "semi-automated"
 notes:
-  - "AM equivalent of DAB status bar update checks."
-  - "Band-specific station preparation may be required per rack profile."
+  - "AM-equivalent status-bar coverage uses backend UI snapshots plus Maestro hierarchy fallback on current IDC23 layouts."
+  - "Band-specific AM station preparation may still require a rack-specific station target."
 acceptance:
-  - "AM station remains audible through navigation and skip actions."
-  - "Backend strict checks remain green throughout."
+  - "Current radio station remains audible through navigation and skip actions while home/widget status text stays populated."
+  - "Skip next/prev updates the extracted station text while backend remains strict-OK."
+  - "Tapping the current top-bar entry returns to the active Radio list."

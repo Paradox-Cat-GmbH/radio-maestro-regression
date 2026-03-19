@@ -1,0 +1,15 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: verify_radio_backend_maestro_ui
+tags:
+  - helper
+  - subflow
+  - backend
+  - radio
+  - idc23
+---
+- runFlow:
+    file: ../../../subflows/verify_radio_backend.yaml
+    env:
+      MAESTRO_UI: "true"
+

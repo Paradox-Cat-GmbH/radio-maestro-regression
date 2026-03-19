@@ -1,0 +1,98 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: open_radio_from_status_bar_idc23
+tags:
+  - helper
+  - subflow
+  - idc23
+  - radio
+---
+- evalScript: ${output.idc23StatusBarOpened = false}
+
+- runFlow:
+    when:
+      visible:
+        id: com.android.systemui:id/navigation_layout
+    commands:
+      - tapOn:
+          id: com.android.systemui:id/navigation_layout
+      - waitForAnimationToEnd
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      true: ${output.idc23StatusBarOpened != true}
+    commands:
+      - extendedWaitUntil:
+          visible:
+            text: "(?i)all stations"
+          timeout: 4000
+          optional: true
+      - runFlow:
+          when:
+            visible:
+              text: "(?i)all stations"
+          commands:
+            - evalScript: ${output.idc23StatusBarOpened = true}
+
+- runFlow:
+    when:
+      visible:
+        id: com.android.systemui:id/text
+    commands:
+      - runFlow:
+          when:
+            true: ${output.idc23StatusBarOpened != true}
+          commands:
+            - tapOn:
+                id: com.android.systemui:id/text
+            - waitForAnimationToEnd
+            - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      true: ${output.idc23StatusBarOpened != true}
+    commands:
+      - extendedWaitUntil:
+          visible:
+            text: "(?i)all stations"
+          timeout: 4000
+          optional: true
+      - runFlow:
+          when:
+            visible:
+              text: "(?i)all stations"
+          commands:
+            - evalScript: ${output.idc23StatusBarOpened = true}
+
+- runFlow:
+    when:
+      visible:
+        id: com.bmwgroup.idnext.launcher:id/text_line4
+    commands:
+      - runFlow:
+          when:
+            true: ${output.idc23StatusBarOpened != true}
+          commands:
+            - tapOn:
+                id: com.bmwgroup.idnext.launcher:id/text_line4
+            - waitForAnimationToEnd
+            - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      true: ${output.idc23StatusBarOpened != true}
+    commands:
+      - extendedWaitUntil:
+          visible:
+            text: "(?i)all stations"
+          timeout: 5000
+          optional: true
+      - runFlow:
+          when:
+            visible:
+              text: "(?i)all stations"
+          commands:
+            - evalScript: ${output.idc23StatusBarOpened = true}
+
+- assertTrue: ${output.idc23StatusBarOpened == true}

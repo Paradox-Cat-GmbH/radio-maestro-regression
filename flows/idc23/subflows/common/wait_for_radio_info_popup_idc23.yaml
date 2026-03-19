@@ -1,0 +1,46 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23 - Wait for radio info popup
+tags:
+  - idc23
+  - subflow
+  - radio
+  - popup
+---
+- evalScript: "${output.idc23RadioInfoPopupObserved = false; output.idc23RadioInfoPopupRequired = (typeof POPUP_REQUIRED !== 'undefined' && String(POPUP_REQUIRED).toLowerCase() == 'true'); output.idc23RadioInfoPopupDismiss = (typeof DISMISS_POPUP !== 'undefined' && String(DISMISS_POPUP).toLowerCase() == 'true'); output.idc23RadioInfoPopupWaitSeconds = (typeof POPUP_WAIT_SECONDS !== 'undefined' ? parseInt(String(POPUP_WAIT_SECONDS), 10) : 60); if (isNaN(output.idc23RadioInfoPopupWaitSeconds) || output.idc23RadioInfoPopupWaitSeconds < 5) output.idc23RadioInfoPopupWaitSeconds = 60; output.idc23RadioInfoPopupChecks = Math.ceil(output.idc23RadioInfoPopupWaitSeconds / 5); output.idc23RadioInfoPopupAttempt = 0;}"
+
+- repeat:
+    times: 36
+    while:
+      true: ${output.idc23RadioInfoPopupObserved != true && output.idc23RadioInfoPopupAttempt < output.idc23RadioInfoPopupChecks}
+    commands:
+      - extendedWaitUntil:
+          visible:
+            text: '(?i)(cancel radio info|stop playing radio infos|radio info)'
+          timeout: 5000
+          optional: true
+
+      - runFlow:
+          when:
+            visible:
+              text: '(?i)(cancel radio info|stop playing radio infos|radio info)'
+          commands:
+            - evalScript: ${output.idc23RadioInfoPopupObserved = true}
+
+      - runFlow:
+          when:
+            true: ${output.idc23RadioInfoPopupObserved != true}
+          commands:
+            - evalScript: ${output.idc23RadioInfoPopupAttempt = output.idc23RadioInfoPopupAttempt + 1}
+
+- runFlow:
+    when:
+      true: ${output.idc23RadioInfoPopupObserved == true && output.idc23RadioInfoPopupDismiss == true}
+    commands:
+      - runFlow: dismiss_radio_info_popup_if_present_idc23.yaml
+
+- runFlow:
+    when:
+      true: ${output.idc23RadioInfoPopupRequired == true}
+    commands:
+      - assertTrue: ${output.idc23RadioInfoPopupObserved == true}

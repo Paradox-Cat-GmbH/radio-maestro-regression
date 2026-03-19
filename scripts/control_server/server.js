@@ -44,6 +44,43 @@ const run=(args,timeout=25000)=>new Promise(ok=>{const isWin=process.platform===
 let out='',err='';const t=setTimeout(()=>{try{ch.kill('SIGKILL');}catch(_){}},timeout);
 ch.stdout.on('data',d=>out+=d.toString());ch.stderr.on('data',d=>err+=d.toString());
 ch.on('close',code=>{clearTimeout(t);ok({code:code??0,stdout:out,stderr:err});});});
+const resolveMaestroCli=(requested)=>{
+  const candidates=[];const push=v=>{const p=String(v||'').trim();if(!p)return;if(candidates.includes(p))return;candidates.push(p);};
+  const addFolder=v=>{const p=String(v||'').trim();if(!p)return;push(path.join(p,'maestro.bat'));push(path.join(p,'maestro.cmd'));push(path.join(p,'maestro.exe'));};
+  push(requested);
+  addFolder(requested);
+  push(process.env.MAESTRO_CMD);
+  addFolder(process.env.MAESTRO_CMD);
+  push('C:/Project Maestro/maestro/bin/maestro.bat');
+  push(path.join(REPO,'tools','maestro','bin','maestro.bat'));
+  if(process.env.USERPROFILE){
+    push(path.join(process.env.USERPROFILE,'maestro','bin','maestro.bat'));
+    push(path.join(process.env.USERPROFILE,'Desktop','maestro','bin','maestro.bat'));
+    push(path.join(process.env.USERPROFILE,'OneDrive','Desktop','maestro','bin','maestro.bat'));
+    push(path.join(process.env.USERPROFILE,'Downloads','maestro-2.1.0','maestro','bin','maestro.bat'));
+  }
+  for(const c of candidates){
+    try{ if(fs.existsSync(c)) return c; }catch(_){ }
+  }
+  return '';
+};
+const runMaestro=(args,timeout=25000,requested='')=>new Promise(ok=>{
+  const cli=resolveMaestroCli(requested);
+  if(!cli)return ok({code:127,stdout:'',stderr:'Maestro CLI not found'});
+  const isWin=process.platform==='win32';
+  const useShell=isWin&&/\.(bat|cmd)$/i.test(cli);
+  const cmd=useShell?'cmd.exe':cli;
+  const cmdArgs=useShell?['/d','/q','/c',cli,...args]:args;
+  const ch=spawn(cmd,cmdArgs,{cwd:REPO,windowsHide:true,env:Object.assign({},process.env,{DEBUG:''})});
+  let out='',err='';const t=setTimeout(()=>{try{ch.kill('SIGKILL');}catch(_){}},timeout);
+  ch.stdout.on('data',d=>out+=d.toString());
+  ch.stderr.on('data',d=>err+=d.toString());
+  ch.on('close',code=>{clearTimeout(t);ok({code:code??0,stdout:out,stderr:err});});
+});
+const runMaestroHierarchyCompact=(deviceId,timeout=30000,requested='')=>{
+  if(!String(deviceId||'').trim()) return Promise.resolve({code:2,stdout:'',stderr:'Device id required'});
+  return runMaestro(['--device',String(deviceId).trim(),'hierarchy','--compact'],timeout,requested);
+};
 
 const startAdbScreenrecord=(deviceId,remoteFile)=>{
   // Start through adb client process; we can always terminate this process reliably from host.
@@ -180,9 +217,50 @@ const metadataTitle=(mdParts[0]&&mdParts[0]!=='null')?mdParts[0]:null;const meta
 const playing=(stateNum===3)||/STATE_PLAYING|\bPLAYING\b/i.test(raw)||/PLAYING/i.test(String(state||''));return{package:pkg,active,state,stateNum,playing,description:desc,queueTitle,queueSize,metadataDescription:md,metadataTitle,metadataArtist,raw};});
 const pickSession=(sessions,pkgs)=>{pkgs=(pkgs||[]).filter(Boolean);for(const p of pkgs){const hit=sessions.find(s=>s.package===p);if(hit)return hit;}return sessions.find(s=>s&&s.active===true)||null;};
 const extractXml=(txt)=>{const s=(txt||'').indexOf('<?xml');return s>=0?(txt||'').slice(s):'';};
-const parseUiRadio=(xml)=>{xml=xml||'';let station=(xml.match(/resource-id="TEST_TAG_HEADER"[\s\S]{0,1500}?text="([^"]+)"/m)||[])[1]||null;const icon=(xml.match(/icon_([a-z0-9_]+)_tuner/i)||[])[1]||null;let band=null;if(icon){if(icon.includes('fm'))band='FM';else if(icon.includes('am'))band='AM';else if(icon.includes('dab'))band='DAB';else band=icon.toUpperCase();}
+const parseMaestroCompactNodes=(txt)=>{
+  return String(txt||'').split(/\r?\n/).map(line=>{
+    const m=line.match(/^\d+,\d+,"(.*)",\d+$/);
+    if(!m)return null;
+    const attrs={};
+    for(const part of m[1].split(/;\s+/)){
+      const idx=part.indexOf('=');
+      if(idx<=0)continue;
+      const key=part.slice(0,idx).trim();
+      const value=part.slice(idx+1).trim();
+      attrs[key]=value;
+    }
+    if(!Object.keys(attrs).length)return null;
+    return attrs;
+  }).filter(Boolean);
+};
+const firstNodeText=(nodes,ids)=>{for(const id of ids){const hit=nodes.find(n=>n['resource-id']===id && String(n.text||'').trim());if(hit)return String(hit.text||'').trim();}return null;};
+const normalizeStationKey=(txt)=>{
+  const s=String(txt||'').toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim();
+  if(!s)return null;
+  return s.split(/\s+/).slice(0,2).join('');
+};
+const parseUiRadio=(xml,maestroCompact)=>{xml=xml||'';let station=(xml.match(/resource-id="TEST_TAG_HEADER"[\s\S]{0,1500}?text="([^"]+)"/m)||[])[1]||null;const icon=(xml.match(/icon_([a-z0-9_]+)_tuner/i)||[])[1]||null;let band=null;if(icon){if(icon.includes('fm'))band='FM';else if(icon.includes('am'))band='AM';else if(icon.includes('dab'))band='DAB';else band=icon.toUpperCase();}
 if(!station){const nodes=Array.from(xml.matchAll(/text="([^"]+)"[^>]*resource-id="TextAtom:dynamic_string\/[^"]+"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/g)).map(m=>({text:m[1],x1:parseInt(m[2],10),y1:parseInt(m[3],10),x2:parseInt(m[4],10),y2:parseInt(m[5],10)}));const cand=nodes.filter(n=>n.text&&n.text!=='Radio'&&n.y1>=280&&n.y1<=540&&((n.y2-n.y1)>=60||(n.x2-n.x1)>=200)).sort((a,b)=>a.y1-b.y1)[0];if(cand)station=cand.text;}
-return{station,band,icon};};
+  const compactNodes=parseMaestroCompactNodes(maestroCompact);
+  const sourceName=firstNodeText(compactNodes,['com.bmwgroup.apinext.mediaapp:id/source_name']);
+  const playlistTitle=firstNodeText(compactNodes,['com.bmwgroup.apinext.mediaapp:id/playlist_title']);
+  const particleStation=firstNodeText(compactNodes,['com.bmwgroup.apinext.mediaapp:id/line3_with_primary_icon']);
+  const particleSubtitle=firstNodeText(compactNodes,['com.bmwgroup.apinext.mediaapp:id/line2_particle']);
+  const homeWidgetSource=firstNodeText(compactNodes,['com.bmwgroup.idnext.launcher:id/text_line1']);
+  const homeWidgetSubtitle=firstNodeText(compactNodes,['com.bmwgroup.idnext.launcher:id/text_line3']);
+  const homeWidgetStation=firstNodeText(compactNodes,['com.bmwgroup.idnext.launcher:id/text_line4']);
+  const topBarStation=firstNodeText(compactNodes,['com.android.systemui:id/text']);
+  const statusBarStation=homeWidgetStation||particleStation||playlistTitle||station||topBarStation||null;
+  return{
+    station,band,icon,
+    sourceName,playlistTitle,
+    particleStation,particleSubtitle,
+    homeWidgetSource,homeWidgetSubtitle,homeWidgetStation,
+    topBarStation,statusBarStation,
+    stationKey:normalizeStationKey(statusBarStation||station),
+    topBarStationKey:normalizeStationKey(topBarStation),
+  };
+};
 const metadataReady=s=>!!(s&&(String(s.metadataTitle||'').trim().length||String(s.metadataArtist||'').trim().length));
 
 // --- core actions ---
@@ -197,7 +275,8 @@ async function radioCheck(p){
   const retryMetadataIntervalMs=Math.max(250,parseInt(p.retryMetadataIntervalMs!=null?p.retryMetadataIntervalMs:1000,10)||1000);
   let detectedDevice=null;
   if(!dev){const d=await run(['devices','-l'],10000);detectedDevice=parseFirstDevice(d.stdout);if(detectedDevice&&detectedDevice.serial)dev=detectedDevice.serial;}
-  let a=null;let u=null;let m=null;let xml='';let uiDumpMethod='exec-out:/dev/tty';let uid=null;let s=null;let metadataRetries=0;
+  let a=null;let u=null;let m=null;let xml='';let maestroCompact='';let uiDumpMethod='exec-out:/dev/tty';let uid=null;let s=null;let metadataRetries=0;
+  const maestroUiRequested=String(p.maestroUi||'').toLowerCase()==='true'||p.maestroUi===true;
   const collect=async()=>{
     a=await run(adbArgs(dev,['shell','dumpsys','audio']));
     u=await run(adbArgs(dev,['shell','am','get-current-user']));
@@ -211,6 +290,17 @@ async function radioCheck(p){
       xml=extractXml((x3.stdout||'')+(x2.stdout?`\n${x2.stdout}`:'')+(x2.stderr?`\n${x2.stderr}`:''));
       uiDumpMethod='shell:/sdcard/window_dump.xml';
     }
+    if(maestroUiRequested||!xml){
+      const mh=await runMaestroHierarchyCompact(dev,30000,p.maestroCmd||'');
+      maestroCompact=(mh.stdout||'').trim();
+      if(maestroCompact){
+        uiDumpMethod=xml?`${uiDumpMethod};maestro:compact`:'maestro:compact';
+      }else if(mh.stderr){
+        maestroCompact=`[stderr]\n${mh.stderr}`;
+      }
+    }else{
+      maestroCompact='';
+    }
     uid=userIdFrom(u.stdout);
     s=pickSession(parseSessions(m.stdout,uid),pkgs);
   };
@@ -223,8 +313,8 @@ async function radioCheck(p){
       await collect();
     }
   }
-  const ui=parseUiRadio(xml);
-  write(dir,'dumpsys_audio.txt',a.stdout+(a.stderr?`\n\n[stderr]\n${a.stderr}`:''));write(dir,'current_user.txt',u.stdout+(u.stderr?`\n\n[stderr]\n${u.stderr}`:''));write(dir,'dumpsys_media_session.txt',m.stdout+(m.stderr?`\n\n[stderr]\n${m.stderr}`:''));write(dir,'ui_dump_debug.txt',`method=${uiDumpMethod}\nxml_found=${xml? 'true':'false'}\nmetadata_retries=${metadataRetries}\n`);if(xml)write(dir,'ui_dump.xml',xml);
+  const ui=parseUiRadio(xml,maestroCompact);
+  write(dir,'dumpsys_audio.txt',a.stdout+(a.stderr?`\n\n[stderr]\n${a.stderr}`:''));write(dir,'current_user.txt',u.stdout+(u.stderr?`\n\n[stderr]\n${u.stderr}`:''));write(dir,'dumpsys_media_session.txt',m.stdout+(m.stderr?`\n\n[stderr]\n${m.stderr}`:''));write(dir,'ui_dump_debug.txt',`method=${uiDumpMethod}\nxml_found=${xml? 'true':'false'}\nmaestro_requested=${maestroUiRequested?'true':'false'}\nmaestro_found=${maestroCompact&&!(String(maestroCompact).startsWith('[stderr]'))? 'true':'false'}\nmetadata_retries=${metadataRetries}\n`);if(xml)write(dir,'ui_dump.xml',xml);if(maestroCompact&&!(String(maestroCompact).startsWith('[stderr]')))write(dir,'maestro_hierarchy_compact.txt',maestroCompact);
   const ap=audioPkgs(a.stdout);const audioFocus=ap.includes(exp);
   const mediaActive=!!(s&&s.active===true);const mediaPlaying=!!(s&&s.playing===true);
   const ok=!!(audioFocus&&mediaActive&&mediaPlaying);

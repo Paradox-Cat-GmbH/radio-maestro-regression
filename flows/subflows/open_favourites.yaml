@@ -5,6 +5,12 @@ tags:
   - subflow
   - radio
 ---
+- extendedWaitUntil:
+    visible:
+      text: '(?i)all stations'
+    timeout: 10000
+    optional: true
+
 # IDC23 exposes this tab as uppercase FAVOURITES. Other builds may use mixed case.
 # Clear any lingering station context menu before switching tabs.
 - runFlow:
@@ -21,5 +27,25 @@ tags:
     commands:
       - pressKey: BACK
       - waitForAnimationToEnd
-- tapOn: '(?i)favourites'
+- runFlow:
+    when:
+      visible:
+        text: '(?i)favourites'
+    commands:
+      - tapOn:
+          text: '(?i)favourites'
+          retryTapIfNoChange: true
+- runFlow:
+    when:
+      notVisible:
+        text: '(?i)favourites'
+    commands:
+      - runFlow:
+          when:
+            visible:
+              text: '(?i)all stations'
+          commands:
+            - tapOn:
+                point: '35%,12%'
+                retryTapIfNoChange: true
 - waitForAnimationToEnd
