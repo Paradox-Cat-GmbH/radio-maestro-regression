@@ -1,0 +1,98 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23 - Dismiss blocking popup if present
+tags:
+  - idc23
+  - subflow
+  - popup
+---
+- repeat:
+    times: 3
+    commands:
+      # Android app-crash dialog, e.g. ALEXA KEEPS STOPPING / ALEXA HAS STOPPED.
+      - runFlow:
+          when:
+            visible:
+              id: "android:id/aerr_close"
+          commands:
+            - tapOn:
+                id: "android:id/aerr_close"
+                retryTapIfNoChange: true
+            - waitForAnimationToEnd
+
+      - runFlow:
+          when:
+            visible:
+              id: "android:id/aerr_app_info"
+          commands:
+            - runFlow:
+                when:
+                  visible:
+                    id: "android:id/aerr_close"
+                commands:
+                  - tapOn:
+                      id: "android:id/aerr_close"
+                      retryTapIfNoChange: true
+            - runFlow:
+                when:
+                  visible:
+                    text: "Close app"
+                commands:
+                  - tapOn:
+                      text: "Close app"
+                      retryTapIfNoChange: true
+            - waitForAnimationToEnd
+
+      - runFlow:
+          when:
+            visible:
+              text: ".*(KEEPS STOPPING|HAS STOPPED).*"
+          commands:
+            - runFlow:
+                when:
+                  visible:
+                    id: "android:id/aerr_close"
+                commands:
+                  - tapOn:
+                      id: "android:id/aerr_close"
+                      retryTapIfNoChange: true
+            - runFlow:
+                when:
+                  visible:
+                    text: "Close app"
+                commands:
+                  - tapOn:
+                      text: "Close app"
+                      retryTapIfNoChange: true
+            - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible:
+        id: "com.bmwgroup.apinext.mediaapp:id/popup"
+    commands:
+      - pressKey: back
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible:
+        text: ".*(KEEPS STOPPING|HAS STOPPED).*"
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "android:id/aerr_close"
+          commands:
+            - tapOn:
+                id: "android:id/aerr_close"
+                retryTapIfNoChange: true
+      - runFlow:
+          when:
+            visible:
+              text: "Close app"
+          commands:
+            - tapOn:
+                text: "Close app"
+                retryTapIfNoChange: true
+      - waitForAnimationToEnd

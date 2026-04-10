@@ -1,0 +1,30 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23 - disable Alexa packages for test users
+tags:
+  - idc23
+  - subflow
+  - alexa
+---
+- evalScript: "${output.idc23UserX = (typeof IDC23_USER_X_ID !== 'undefined' && String(IDC23_USER_X_ID).trim()) ? String(IDC23_USER_X_ID).trim() : '12'; output.idc23UserY = (typeof IDC23_USER_Y_ID !== 'undefined' && String(IDC23_USER_Y_ID).trim()) ? String(IDC23_USER_Y_ID).trim() : '0'; output.idc23GuestUser = (typeof IDC23_GUEST_USER_ID !== 'undefined' && String(IDC23_GUEST_USER_ID).trim()) ? String(IDC23_GUEST_USER_ID).trim() : '13'; output.idc23AlexaStrict = (typeof ALEXA_STRICT !== 'undefined' && String(ALEXA_STRICT).toLowerCase() == 'true');}"
+
+- runFlow:
+    file: ../../../subflows/ediabas_str_prep_backend.yaml
+    env:
+      TEST_ID: "${typeof TEST_ID !== 'undefined' && TEST_ID ? TEST_ID : 'idc23_disable_alexa_packages'}"
+      DEVICE_ID: ${DEVICE_ID}
+      PREP_ENABLED: 'true'
+      PREP_REBOOT: 'false'
+      PREP_TIMEOUT_SECONDS: '30'
+      PREP_BEFORE_SHELL: 'am force-stop com.amazon.alexa.auto.app||am force-stop com.bmwgroup.assistant.alexa||am force-stop com.bmwgroup.apinext.ipavoice.amazon.sso||pm disable-user --user ${output.idc23UserX} com.amazon.alexa.auto.app||pm disable-user --user ${output.idc23UserX} com.bmwgroup.assistant.alexa||pm disable-user --user ${output.idc23UserX} com.bmwgroup.apinext.ipavoice.amazon.sso||pm disable-user --user ${output.idc23UserY} com.amazon.alexa.auto.app||pm disable-user --user ${output.idc23UserY} com.bmwgroup.assistant.alexa||pm disable-user --user ${output.idc23UserY} com.bmwgroup.apinext.ipavoice.amazon.sso||pm disable-user --user ${output.idc23GuestUser} com.amazon.alexa.auto.app||pm disable-user --user ${output.idc23GuestUser} com.bmwgroup.assistant.alexa||pm disable-user --user ${output.idc23GuestUser} com.bmwgroup.apinext.ipavoice.amazon.sso'
+      PREP_AFTER_SHELL: 'cmd package list packages -d --user ${output.idc23UserX} com.amazon.alexa.auto.app||cmd package list packages -d --user ${output.idc23UserX} com.bmwgroup.assistant.alexa||cmd package list packages -d --user ${output.idc23UserX} com.bmwgroup.apinext.ipavoice.amazon.sso||cmd package list packages -d --user ${output.idc23UserY} com.amazon.alexa.auto.app||cmd package list packages -d --user ${output.idc23UserY} com.bmwgroup.assistant.alexa||cmd package list packages -d --user ${output.idc23UserY} com.bmwgroup.apinext.ipavoice.amazon.sso||cmd package list packages -d --user ${output.idc23GuestUser} com.amazon.alexa.auto.app||cmd package list packages -d --user ${output.idc23GuestUser} com.bmwgroup.assistant.alexa||cmd package list packages -d --user ${output.idc23GuestUser} com.bmwgroup.apinext.ipavoice.amazon.sso'
+
+- evalScript: "${var steps = (output.ediabasPrep && output.ediabasPrep.steps) ? output.ediabasPrep.steps : []; function stepStdout(name) { for (var i = 0; i < steps.length; i++) { if (String(steps[i].name || '').indexOf(name) >= 0) return String(steps[i].stdout || ''); } return ''; } function disableAck(userId, pkg) { var s = stepStdout('pm disable-user --user ' + userId + ' ' + pkg).toLowerCase(); return s.indexOf('disabled-user') >= 0 || s.indexOf('already disabled') >= 0; } function disabledQuery(userId, pkg) { return stepStdout('cmd package list packages -d --user ' + userId + ' ' + pkg).indexOf('package:' + pkg) >= 0; } function disabledFor(userId, pkg) { return disabledQuery(userId, pkg) || disableAck(userId, pkg); } output.idc23AlexaDisableCheck = { userX: output.idc23UserX, userY: output.idc23UserY, guestUser: output.idc23GuestUser, alexaX: disabledFor(output.idc23UserX, 'com.amazon.alexa.auto.app'), assistantX: disabledFor(output.idc23UserX, 'com.bmwgroup.assistant.alexa'), ssoX: disabledFor(output.idc23UserX, 'com.bmwgroup.apinext.ipavoice.amazon.sso'), alexaY: disabledFor(output.idc23UserY, 'com.amazon.alexa.auto.app'), assistantY: disabledFor(output.idc23UserY, 'com.bmwgroup.assistant.alexa'), ssoY: disabledFor(output.idc23UserY, 'com.bmwgroup.apinext.ipavoice.amazon.sso'), alexaGuest: disabledFor(output.idc23GuestUser, 'com.amazon.alexa.auto.app'), assistantGuest: disabledFor(output.idc23GuestUser, 'com.bmwgroup.assistant.alexa'), ssoGuest: disabledFor(output.idc23GuestUser, 'com.bmwgroup.apinext.ipavoice.amazon.sso') }; output.idc23AlexaDisableOk = !!(output.idc23AlexaDisableCheck.alexaX && output.idc23AlexaDisableCheck.assistantX && output.idc23AlexaDisableCheck.ssoX && output.idc23AlexaDisableCheck.alexaY && output.idc23AlexaDisableCheck.assistantY && output.idc23AlexaDisableCheck.ssoY); if (!output.idc23AlexaDisableOk) output.idc23AlexaWarning = JSON.stringify(output.idc23AlexaDisableCheck);}"
+
+- runFlow:
+    when:
+      true: ${output.idc23AlexaStrict == true}
+    commands:
+      - assertTrue: ${output.idc23AlexaDisableOk == true}
+
+- runFlow: dismiss_media_popup_if_present_idc23.yaml

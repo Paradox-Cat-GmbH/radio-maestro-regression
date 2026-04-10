@@ -8,6 +8,10 @@
 //   TEST_ID     (string) optional
 //   PACKAGE     (string) expected audio package (default: com.bmwgroup.apinext.tunermediaservice)
 //   EXPECTED_PACKAGES (string) optional comma-separated additional packages to accept (first one is PACKAGE)
+//   RETRY_METADATA_SECONDS (int) optional default: 5
+//   RETRY_METADATA_INTERVAL_MS (int) optional default: 1000
+//   MAESTRO_UI (bool) optional, force Maestro hierarchy UI capture for richer IDC23 UI parsing
+//   MAESTRO_CMD (string) optional override path for Maestro CLI used by control server
 //
 // Writes:
 //   output.radioVerdict  (object)
@@ -31,6 +35,10 @@
   var testId     = str(typeof TEST_ID     !== 'undefined' ? TEST_ID     : undefined, "radio_check");
   var pkg        = str(typeof PACKAGE     !== 'undefined' ? PACKAGE     : undefined, "com.bmwgroup.apinext.tunermediaservice");
   var extra      = str(typeof EXPECTED_PACKAGES !== 'undefined' ? EXPECTED_PACKAGES : undefined, "");
+  var retryMetadataSeconds = str(typeof RETRY_METADATA_SECONDS !== 'undefined' ? RETRY_METADATA_SECONDS : undefined, "5");
+  var retryMetadataIntervalMs = str(typeof RETRY_METADATA_INTERVAL_MS !== 'undefined' ? RETRY_METADATA_INTERVAL_MS : undefined, "1000");
+  var maestroUi = str(typeof MAESTRO_UI !== 'undefined' ? MAESTRO_UI : undefined, "");
+  var maestroCmd = str(typeof MAESTRO_CMD !== 'undefined' ? MAESTRO_CMD : undefined, "");
 
   var expectedPackages = null;
   if (extra && extra.trim().length) {
@@ -46,7 +54,16 @@
   }
 
   var url = backendUrl.replace(/\/+$/, "") + "/radio/check";
-  var payload = { deviceId: deviceId, packageName: pkg, runDir: runDir, testId: testId };
+  var payload = {
+    deviceId: deviceId,
+    packageName: pkg,
+    runDir: runDir,
+    testId: testId,
+    retryMetadataSeconds: retryMetadataSeconds,
+    retryMetadataIntervalMs: retryMetadataIntervalMs
+  };
+  if (maestroUi) payload.maestroUi = maestroUi;
+  if (maestroCmd) payload.maestroCmd = maestroCmd;
   if (expectedPackages && expectedPackages.length) payload.expectedPackages = expectedPackages;
   output.radioCheckSkipped = false;
   output.radioCheckReason = "";

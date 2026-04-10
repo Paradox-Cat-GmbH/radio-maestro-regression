@@ -12,5 +12,5 @@ tags:
     file: ../../../../scripts/maestro/pick_random_station.js
     env:
       RAND_MAX: "${typeof MAESTRO_RAND_MAX_INDEX !== 'undefined' && MAESTRO_RAND_MAX_INDEX ? MAESTRO_RAND_MAX_INDEX : 5}"
-- runFlow: ../../../subflows/tap_random_all_stations_entry.yaml
+- runFlow: tap_random_all_stations_entry_idc23.yaml
 - runFlow: ../../../subflows/verify_radio_backend.yaml

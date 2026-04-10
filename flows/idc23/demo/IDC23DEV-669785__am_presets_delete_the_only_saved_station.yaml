@@ -1,0 +1,10 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23DEV-669785 - AM presets delete the only saved station
+tags:
+  - demo
+  - idc23
+  - prt
+---
+- evalScript: "${output.testId = 'IDC23DEV-669785'}"
+- runFlow: ../testcases/ABPI-669785/idc23.yaml

@@ -1,3 +1,7 @@
 appId: com.android.settings
 ---
+- runFlow:
+    file: disable_ehh_idc23.yaml
+    env:
+      TEST_ID: idc23_start_disable_ehh
 - takeScreenshot: "START"

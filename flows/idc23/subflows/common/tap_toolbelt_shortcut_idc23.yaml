@@ -1,0 +1,115 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23 - Tap Toolbelt shortcut
+tags:
+  - idc23
+  - subflow
+  - radio
+  - toolbelt
+---
+- runFlow: dismiss_media_popup_if_present_idc23.yaml
+- evalScript: "${output.idc23ToolbeltSelector = ''; output.idc23ToolbeltDone = false; output.idc23ToolbeltIndex = (typeof SHORTCUT_INDEX !== 'undefined' ? parseInt(String(SHORTCUT_INDEX), 10) : 0); if (isNaN(output.idc23ToolbeltIndex) || output.idc23ToolbeltIndex < 0) output.idc23ToolbeltIndex = 0; output.idc23ToolbeltOptional = (typeof SHORTCUT_OPTIONAL !== 'undefined' && String(SHORTCUT_OPTIONAL).toLowerCase() == 'true')}"
+
+- extendedWaitUntil:
+    visible:
+      id: "com.bmwgroup.idnext.toolbelt:id/tool_belt_panel_root"
+    timeout: 8000
+    optional: true
+
+- runFlow:
+    when:
+      visible:
+        id: "com.bmwgroup.idnext.toolbelt:id/focus_plate"
+        index: 0
+    commands:
+      - evalScript: ${output.idc23ToolbeltSelector = 'com.bmwgroup.idnext.toolbelt:id/focus_plate'}
+
+- runFlow:
+    when:
+      true: ${output.idc23ToolbeltSelector == ''}
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "com.bmwgroup.idnext.toolbelt:id/background_image"
+            index: 0
+          timeout: 3000
+          optional: true
+      - runFlow:
+          when:
+            visible:
+              id: "com.bmwgroup.idnext.toolbelt:id/background_image"
+              index: 0
+          commands:
+            - evalScript: ${output.idc23ToolbeltSelector = 'com.bmwgroup.idnext.toolbelt:id/background_image'}
+
+- runFlow:
+    when:
+      true: ${output.idc23ToolbeltSelector == '' && output.idc23ToolbeltOptional != true}
+    commands:
+      - assertTrue: ${output.idc23ToolbeltSelector != ''}
+
+- runFlow:
+    when:
+      true: ${output.idc23ToolbeltSelector != '' && output.idc23ToolbeltIndex == 0}
+    commands:
+      - tapOn:
+          id: "${output.idc23ToolbeltSelector}"
+          index: 0
+          retryTapIfNoChange: true
+      - evalScript: ${output.idc23ToolbeltDone = true}
+
+- runFlow:
+    when:
+      true: ${output.idc23ToolbeltSelector != '' && output.idc23ToolbeltIndex == 1}
+    commands:
+      - tapOn:
+          id: "${output.idc23ToolbeltSelector}"
+          index: 1
+          retryTapIfNoChange: true
+      - evalScript: ${output.idc23ToolbeltDone = true}
+
+- runFlow:
+    when:
+      true: ${output.idc23ToolbeltSelector != '' && output.idc23ToolbeltIndex == 2}
+    commands:
+      - tapOn:
+          id: "${output.idc23ToolbeltSelector}"
+          index: 2
+          retryTapIfNoChange: true
+      - evalScript: ${output.idc23ToolbeltDone = true}
+
+- runFlow:
+    when:
+      true: ${output.idc23ToolbeltSelector != '' && output.idc23ToolbeltIndex == 3}
+    commands:
+      - tapOn:
+          id: "${output.idc23ToolbeltSelector}"
+          index: 3
+          retryTapIfNoChange: true
+      - evalScript: ${output.idc23ToolbeltDone = true}
+
+- runFlow:
+    when:
+      true: ${output.idc23ToolbeltSelector != '' && output.idc23ToolbeltIndex == 4}
+    commands:
+      - tapOn:
+          id: "${output.idc23ToolbeltSelector}"
+          index: 4
+          retryTapIfNoChange: true
+      - evalScript: ${output.idc23ToolbeltDone = true}
+
+- runFlow:
+    when:
+      true: ${output.idc23ToolbeltSelector != '' && output.idc23ToolbeltDone != true}
+    commands:
+      - tapOn:
+          id: "${output.idc23ToolbeltSelector}"
+          index: 0
+          retryTapIfNoChange: true
+      - evalScript: ${output.idc23ToolbeltDone = true}
+
+- runFlow:
+    when:
+      true: ${output.idc23ToolbeltDone != true && output.idc23ToolbeltOptional != true}
+    commands:
+      - assertTrue: ${output.idc23ToolbeltDone == true}

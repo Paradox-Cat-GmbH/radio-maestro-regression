@@ -15,6 +15,8 @@ tags:
       PREP_ENABLED: "true"
       PREP_REBOOT: "true"
       PREP_TIMEOUT_SECONDS: "120"
-      PREP_POST_REBOOT_DELAY_SECONDS: "35"
+      PREP_POST_REBOOT_DELAY_SECONDS: "${typeof LIFECYCLE_COLD_POST_REBOOT_DELAY_SECONDS !== 'undefined' && String(LIFECYCLE_COLD_POST_REBOOT_DELAY_SECONDS).trim() ? String(LIFECYCLE_COLD_POST_REBOOT_DELAY_SECONDS).trim() : '35'}"
       PREP_BEFORE_SHELL: ""
-      PREP_AFTER_SHELL: ""
+      PREP_AFTER_SHELL: |
+        sh -c 'am instrument -w dev.mobile.maestro.test/androidx.test.runner.AndroidJUnitRunner >/dev/null 2>&1 &'
+        sleep 8

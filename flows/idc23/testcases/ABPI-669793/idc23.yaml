@@ -20,9 +20,11 @@ onFlowComplete:
         when:
             true: ${output.stationTapped != true}
         commands:
-            - tapOn:
-                    id: "ListImageComponent ImageRightIcon"
-                    index: 0
+            - runFlow:
+                file: ../../subflows/common/tap_station_entry_idc23.yaml
+                env:
+                  STATION_INDEX: "0"
             - evalScript: ${output.stationTapped = true}
 - waitForAnimationToEnd
+- runFlow: ../../subflows/common/dismiss_radio_info_popup_if_present_idc23.yaml
 - runFlow: ../../../subflows/verify_radio_backend.yaml

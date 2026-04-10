@@ -11,11 +11,22 @@
     typeof CASE_ID !== 'undefined' ? CASE_ID : undefined,
     str(typeof MAESTRO_FILENAME !== 'undefined' ? MAESTRO_FILENAME : undefined, 'STUDIO_CASE')
   );
-  var timestamp = str(typeof RUN_TS !== 'undefined' ? RUN_TS : undefined, '');
-  var runRoot = str(typeof RUN_ROOT !== 'undefined' ? RUN_ROOT : undefined, '');
+  var timestamp = str(
+    typeof RUN_TS !== 'undefined' ? RUN_TS : undefined,
+    str(output.generatedRunTs, str(output.dltStart && output.dltStart.timestamp, ''))
+  );
+  var runRoot = str(
+    typeof RUN_ROOT !== 'undefined' ? RUN_ROOT : undefined,
+    str(output.generatedRunRoot, str(output.dltStart && output.dltStart.runRoot, ''))
+  );
 
-  var captureId = str(typeof CAPTURE_ID !== 'undefined' ? CAPTURE_ID : undefined, 'IDCEVO_STUDIO');
-  var payload = { caseId: caseId, timestamp: timestamp, runRoot: runRoot, captureId: captureId };
+  var captureId = str(
+    typeof CAPTURE_ID !== 'undefined' ? CAPTURE_ID : undefined,
+    str(output.generatedCaptureId, str(output.dltStart && output.dltStart.captureId, caseId + '_STUDIO'))
+  );
+  var suite = str(typeof SUITE !== 'undefined' ? SUITE : undefined, str(output.dltStart && output.dltStart.suite, ''));
+  var role = str(typeof ROLE !== 'undefined' ? ROLE : undefined, str(output.dltStart && output.dltStart.role, ''));
+  var payload = { caseId: caseId, timestamp: timestamp, runRoot: runRoot, captureId: captureId, suite: suite, role: role };
   var resp = http.post(base.replace(/\/+$/, '') + '/evidence/bundle-studio', {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)

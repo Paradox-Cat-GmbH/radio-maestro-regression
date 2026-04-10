@@ -1,4 +1,4 @@
-appId: com.bmwgroup.idnext.launcher
+﻿appId: com.bmwgroup.idnext.launcher
 jsEngine: graaljs
 onFlowStart:
   - runFlow: ../../subflows/common/start.yaml
@@ -8,28 +8,49 @@ onFlowComplete:
 - evalScript: "${output.testId = 'ABPI-669800'}"
 - runFlow: ../../../subflows/ensure_radio_source.yaml
 - runFlow: ../../../subflows/open_all_stations.yaml
-- longPressOn:
-    id: "ListImageComponent ImageRightIcon"
-    index: 0
+- runFlow:
+    file: ../../subflows/common/long_press_station_entry_idc23.yaml
+    env:
+      STATION_INDEX: "0"
 - waitForAnimationToEnd
 - tapOn:
     text: Add to favourites
     optional: true
-- longPressOn:
-    id: "ListImageComponent ImageRightIcon"
-    index: 1
+- runFlow:
+    file: ../../subflows/common/long_press_station_entry_idc23.yaml
+    env:
+      STATION_INDEX: "1"
 - waitForAnimationToEnd
 - tapOn:
     text: Add to favourites
     optional: true
 - runFlow: ../../../subflows/open_favourites.yaml
-- tapOn:
-    id: "ListImageComponent ImageRightIcon"
-    index: 0
-    optional: true
+- runFlow:
+    file: ../../subflows/common/tap_station_entry_idc23.yaml
+    env:
+      STATION_INDEX: "0"
+      STATION_OPTIONAL: "true"
 - waitForAnimationToEnd
-- runFlow: ../../../subflows/verify_radio_backend.yaml
-- runFlow: ../../../subflows/inject_swag_next.yaml
-- runFlow: ../../../subflows/verify_radio_backend.yaml
+- runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+- evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23PresetFirstStation = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station) : ''); output.idc23PresetFirstKey = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+- assertTrue: ${output.idc23PresetFirstStation != '' || output.idc23PresetFirstKey != ''}
 - runFlow: ../../../subflows/inject_swag_prev.yaml
-- runFlow: ../../../subflows/verify_radio_backend.yaml
+- waitForAnimationToEnd
+- runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+- evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23PresetLastStation = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station) : ''); output.idc23PresetLastKey = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+- assertTrue: ${output.idc23PresetLastStation != '' || output.idc23PresetLastKey != ''}
+- assertTrue: ${(output.idc23PresetFirstKey != '' && output.idc23PresetLastKey != '' && output.idc23PresetLastKey != output.idc23PresetFirstKey) || (output.idc23PresetFirstStation != '' && output.idc23PresetLastStation != '' && output.idc23PresetLastStation != output.idc23PresetFirstStation)}
+- runFlow: ../../../subflows/inject_swag_next.yaml
+- waitForAnimationToEnd
+- runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+- evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23PresetWrappedToFirstStation = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station) : ''); output.idc23PresetWrappedToFirstKey = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+- assertTrue: ${(output.idc23PresetFirstKey != '' && output.idc23PresetWrappedToFirstKey != '' && output.idc23PresetWrappedToFirstKey == output.idc23PresetFirstKey) || (output.idc23PresetFirstStation != '' && output.idc23PresetWrappedToFirstStation != '' && output.idc23PresetWrappedToFirstStation == output.idc23PresetFirstStation)}
+- runFlow: ../../../subflows/inject_swag_prev.yaml
+- waitForAnimationToEnd
+- runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+- evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23PresetWrappedBackToLastStation = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station) : ''); output.idc23PresetWrappedBackToLastKey = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+- assertTrue: ${(output.idc23PresetLastKey != '' && output.idc23PresetWrappedBackToLastKey != '' && output.idc23PresetWrappedBackToLastKey == output.idc23PresetLastKey) || (output.idc23PresetLastStation != '' && output.idc23PresetWrappedBackToLastStation != '' && output.idc23PresetWrappedBackToLastStation == output.idc23PresetLastStation)}
+
+
+
+

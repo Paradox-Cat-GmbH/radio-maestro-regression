@@ -10,3 +10,4 @@ jsEngine: graaljs
       CASE_ID: ${CASE_ID}
       CAPTURE_ID: ${CAPTURE_ID}
       DEVICE_ID: ${DEVICE_ID}
+      SUITE: g70

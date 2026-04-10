@@ -9,3 +9,5 @@ jsEngine: graaljs
       RUN_TS: ${RUN_TS}
       RUN_ROOT: ${RUN_ROOT}
       CAPTURE_ID: ${CAPTURE_ID}
+      SUITE: idcevo
+      ROLE: idcevo

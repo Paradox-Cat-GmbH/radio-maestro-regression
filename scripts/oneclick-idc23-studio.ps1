@@ -1,10 +1,11 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$CaseId,
-    [string]$DltIp = "169.254.107.117",
+    [string]$DeviceId = "169.254.8.177:5555",
+    [string]$DltIp = "",
     [string]$DltPort = "3490",
     [string]$ControlServerUrl = "http://127.0.0.1:4567",
-    [string]$CaptureId = "IDC23_STUDIO"
+    [string]$CaptureId = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -28,9 +29,13 @@ if (-not (Test-Path $caseStudioFlow)) {
 }
 
 $ts = Get-Date -Format "yyyyMMdd_HHmmss"
-$runRoot = Join-Path $RepoRoot "artifacts\runs\idc23\$CaseId\$ts"
-$dltOutput = Join-Path $runRoot "dlt\idc23_capture.dlt"
-New-Item -ItemType Directory -Force -Path (Join-Path $runRoot "dlt") | Out-Null
+$resolvedDltIp = if (-not [string]::IsNullOrWhiteSpace($DltIp)) {
+    $DltIp
+} elseif ($DeviceId -match '^([^:]+)') {
+    $Matches[1]
+} else {
+    "169.254.8.177"
+}
 
 $uri = [uri]$ControlServerUrl
 $port = $uri.Port
@@ -48,16 +53,15 @@ if (-not $listening) {
 
 $envBlock = @"
 CONTROL_SERVER_URL=$ControlServerUrl
-DLT_IP=$DltIp
+DEVICE_ID=$DeviceId
+DLT_IP=$resolvedDltIp
 DLT_PORT=$DltPort
 CASE_ID=$CaseId
-RUN_TS=$ts
-RUN_ROOT=$runRoot
-DLT_OUTPUT=$dltOutput
-CAPTURE_ID=$CaptureId
 "@
 
-$envFile = Join-Path $runRoot "studio-env.txt"
+$runHint = Join-Path $RepoRoot "artifacts\runs\idc23\$CaseId\$ts"
+New-Item -ItemType Directory -Force -Path $runHint | Out-Null
+$envFile = Join-Path $runHint "studio-env.txt"
 $envBlock | Set-Content -Encoding UTF8 $envFile
 
 try { Set-Clipboard -Value $envBlock } catch {}
@@ -65,8 +69,9 @@ try { Set-Clipboard -Value $envBlock } catch {}
 Write-Host ""
 Write-Host "READY"
 Write-Host "Studio flow: $caseStudioFlow"
-Write-Host "Run root : $runRoot"
+Write-Host "Run hint : $runHint"
 Write-Host "Env file : $envFile"
+Write-Host "Runtime values generated automatically in Studio: RUN_TS, RUN_ROOT, DLT_OUTPUT, CAPTURE_ID"
 Write-Host "(Env block copied to clipboard when supported.)"
 Write-Host ""
 Write-Host "Paste these env vars in Maestro Studio:"

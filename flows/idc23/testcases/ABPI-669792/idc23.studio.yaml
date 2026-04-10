@@ -1,17 +1,13 @@
-appId: com.bmwgroup.idnext.launcher
-jsEngine: graaljs
+appId: com.android.settings
 onFlowStart:
   - runFlow:
       file: ../../subflows/common/studio_start_dlt.yaml
       env:
         CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+        DEVICE_ID: ${DEVICE_ID}
         DLT_IP: ${DLT_IP}
         DLT_PORT: ${DLT_PORT}
         CASE_ID: ${CASE_ID}
-        RUN_TS: ${RUN_TS}
-        RUN_ROOT: ${RUN_ROOT}
-        DLT_OUTPUT: ${DLT_OUTPUT}
-        CAPTURE_ID: ${CAPTURE_ID}
   - runFlow: ../../subflows/common/start.yaml
 onFlowComplete:
   - runFlow: ../../subflows/common/stop.yaml
@@ -22,27 +18,39 @@ onFlowComplete:
       file: ../../subflows/common/studio_stop_dlt.yaml
       env:
         CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
-        CAPTURE_ID: ${CAPTURE_ID}
+        CASE_ID: ${CASE_ID}
   - runFlow:
       file: ../../subflows/common/studio_bundle_evidence.yaml
       env:
         CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
         CASE_ID: ${CASE_ID}
-        RUN_TS: ${RUN_TS}
-        RUN_ROOT: ${RUN_ROOT}
-        CAPTURE_ID: ${CAPTURE_ID}
 ---
 - evalScript: "${output.testId = 'ABPI-669792'}"
 - runFlow: ../../subflows/common/radio_ready_and_verify.yaml
+- runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+- evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23RadioScreenStationBefore = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station) : ''); output.idc23RadioScreenKeyBefore = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+- assertTrue: ${output.idc23RadioScreenStationBefore != '' || output.idc23RadioScreenKeyBefore != ''}
 - takeScreenshot: "ABPI_669792_am_status_before"
 - pressKey: home
 - waitForAnimationToEnd
-- runFlow: ../../../subflows/verify_radio_backend.yaml
+- runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+- evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23HomeStationBefore = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.homeWidgetStation || output.radioVerdict.ui.topBarStation || output.radioVerdict.ui.statusBarStation) : ''); output.idc23HomeKeyBefore = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+- assertTrue: ${output.idc23HomeStationBefore != '' || output.idc23HomeKeyBefore != ''}
 - runFlow: ../../../subflows/inject_swag_next.yaml
-- runFlow: ../../../subflows/verify_radio_backend.yaml
-- runFlow: ../../../subflows/inject_swag_prev.yaml
-- runFlow: ../../../subflows/verify_radio_backend.yaml
-- tapOn:
-    id: TEST_TAG_HEADER
-    optional: true
 - waitForAnimationToEnd
+- runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+- evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23HomeStationAfterNext = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.homeWidgetStation || output.radioVerdict.ui.topBarStation || output.radioVerdict.ui.statusBarStation) : ''); output.idc23HomeKeyAfterNext = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+- assertTrue: ${output.idc23HomeStationAfterNext != '' || output.idc23HomeKeyAfterNext != ''}
+- assertTrue: ${(output.idc23HomeKeyBefore != '' && output.idc23HomeKeyAfterNext != '' && output.idc23HomeKeyAfterNext != output.idc23HomeKeyBefore) || (output.idc23HomeStationBefore != '' && output.idc23HomeStationAfterNext != '' && output.idc23HomeStationAfterNext != output.idc23HomeStationBefore)}
+- runFlow: ../../../subflows/inject_swag_prev.yaml
+- waitForAnimationToEnd
+- runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+- evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23HomeStationAfterPrev = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.homeWidgetStation || output.radioVerdict.ui.topBarStation || output.radioVerdict.ui.statusBarStation) : ''); output.idc23HomeKeyAfterPrev = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+- assertTrue: ${output.idc23HomeStationAfterPrev != '' || output.idc23HomeKeyAfterPrev != ''}
+- assertTrue: ${(output.idc23HomeKeyAfterNext != '' && output.idc23HomeKeyAfterPrev != '' && output.idc23HomeKeyAfterPrev != output.idc23HomeKeyAfterNext) || (output.idc23HomeStationAfterNext != '' && output.idc23HomeStationAfterPrev != '' && output.idc23HomeStationAfterPrev != output.idc23HomeStationAfterNext)}
+- runFlow: ../../subflows/common/open_radio_from_status_bar_idc23.yaml
+- assertVisible:
+    text: "(?i)all stations"
+- waitForAnimationToEnd
+- runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+- assertTrue: ${output.radioVerdict.ui.sourceName == 'RADIO'}

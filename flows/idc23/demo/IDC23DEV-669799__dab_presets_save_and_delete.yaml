@@ -1,0 +1,10 @@
+﻿appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23DEV-669799 - DAB presets save and delete
+tags:
+  - demo
+  - idc23
+  - prt
+---
+- evalScript: "${output.testId = 'IDC23DEV-669799'}"
+- runFlow: ../testcases/ABPI-669799/idc23.yaml

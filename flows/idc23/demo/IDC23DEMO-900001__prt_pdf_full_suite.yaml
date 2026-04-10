@@ -1,0 +1,31 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23DEMO-900001 - PRT PDF full suite orchestrator
+tags:
+  - demo
+  - idc23
+  - prt
+---
+- evalScript: "${output.testId = 'IDC23DEMO-900001'}"
+- runFlow: IDC23DEV-684348__shortcut_icons_after_str_mode.yaml
+- runFlow: IDC23DEV-684288__radio_station_selecting_from_the_toolbelt.yaml
+- runFlow: IDC23DEV-671650__user_switch.yaml
+- runFlow: IDC23DEV-671641__audio_focus_switch.yaml
+- runFlow: IDC23DEV-671618__radio_station_reception_after_lifecycle.yaml
+- runFlow: IDC23DEV-669816__fm_dab_activate_deactivate_traffic_radio_i.yaml
+- runFlow: IDC23DEV-669812__fm_dab_traffic_radio_info_popup_abort_via.yaml
+- runFlow: IDC23DEV-669803__dab_all_stations_list_select_other_station.yaml
+- runFlow: IDC23DEV-669802__dab_all_stations_list_coverage.yaml
+- runFlow: IDC23DEV-669801__dab_status_bar_update.yaml
+- runFlow: IDC23DEV-669800__dab_presets_select_via_touch_and_skip.yaml
+- runFlow: IDC23DEV-669799__dab_presets_save_and_delete.yaml
+- runFlow: IDC23DEV-669798__dab_shortcuts_select.yaml
+- runFlow: IDC23DEV-669795__dab_shortcuts_save_and_delete.yaml
+- runFlow: IDC23DEV-669794__dab_stations_list_skip_to_other_station.yaml
+- runFlow: IDC23DEV-669793__hd_audio_audible.yaml
+- runFlow: IDC23DEV-669792__am_status_bar_update.yaml
+- runFlow: IDC23DEV-669790__am_shortcuts_save_and_delete.yaml
+- runFlow: IDC23DEV-669789__am_stations_list_skip_to_other_station_var.yaml
+- runFlow: IDC23DEV-669787__am_stations_list_skip_to_other_station_var.yaml
+- runFlow: IDC23DEV-669786__am_presets_select_station_via_touch_and_sk.yaml
+- runFlow: IDC23DEV-669785__am_presets_delete_the_only_saved_station.yaml

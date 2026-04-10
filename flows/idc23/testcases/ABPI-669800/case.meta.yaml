@@ -5,8 +5,9 @@ priority: "P2"
 source: "TMS_PRT_TestScenarios.pdf"
 automationLevel: "semi-automated"
 notes:
-  - "Creates favorites and validates skip navigation through preset context."
-  - "Wrap-around behavior should be reviewed in run artifacts."
+  - "Creates two favourites and uses backend station-key snapshots to prove wrap-around in preset context."
+  - "Current IDC23 preset validation relies on radio backend plus Maestro hierarchy fallback for station identity."
 acceptance:
   - "Preset/favorite selection remains playable."
-  - "Next/previous skip actions keep backend check green."
+  - "Previous from the first favourite wraps to the last favourite."
+  - "Next from the last favourite wraps back to the first favourite while backend remains strict-OK."

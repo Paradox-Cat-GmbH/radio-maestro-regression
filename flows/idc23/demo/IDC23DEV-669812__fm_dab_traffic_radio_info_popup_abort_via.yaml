@@ -1,0 +1,10 @@
+﻿appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23DEV-669812 - FM/DAB Traffic/Radio info popup abort via MFL
+tags:
+  - demo
+  - idc23
+  - prt
+---
+- evalScript: "${output.testId = 'IDC23DEV-669812'}"
+- runFlow: ../testcases/ABPI-669812/idc23.yaml

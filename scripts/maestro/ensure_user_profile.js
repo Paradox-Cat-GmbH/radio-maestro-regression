@@ -37,6 +37,7 @@
   var strict = boolVal(typeof STRICT !== 'undefined' ? STRICT : undefined, false);
   var targetUserIdRaw = intVal(typeof TARGET_USER_ID !== 'undefined' ? TARGET_USER_ID : undefined, -1);
   var targetUserName = str(typeof TARGET_USER_NAME !== 'undefined' ? TARGET_USER_NAME : undefined, '');
+  var switchSettleMs = intVal(typeof SWITCH_SETTLE_MS !== 'undefined' ? SWITCH_SETTLE_MS : undefined, -1);
 
   var payload = {
     testId: str(typeof TEST_ID !== 'undefined' ? TEST_ID : undefined, 'studio_ensure_user_profile'),
@@ -45,6 +46,9 @@
     targetUserName: targetUserName,
     strict: strict
   };
+  if (switchSettleMs >= 0) {
+    payload.switchSettleMs = switchSettleMs;
+  }
 
   var url = backendUrl.replace(/\/+$/, '') + '/device/user-ensure';
   var resp = http.post(url, { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });

@@ -1,8 +1,10 @@
 appId: com.android.settings
 jsEngine: graaljs
 ---
+- stopRecording:
+    optional: true
 - runScript:
     file: ../../../../scripts/maestro/dlt_stop.js
     env:
       CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
-      CAPTURE_ID: ${CAPTURE_ID}
+      CASE_ID: ${CASE_ID}

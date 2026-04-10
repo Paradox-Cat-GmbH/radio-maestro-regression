@@ -9,19 +9,39 @@ tags:
 # 1) Home
 # 2) Media DET
 # 3) If not on Radio, resolve Source -> Radio; otherwise tap Media DET again.
+- runFlow: ../idc23/subflows/common/dismiss_media_popup_if_present_idc23.yaml
 - evalScript: ${output.onRadio = false; output._attempt = 0; output.didAction = false}
 
 - pressKey: home
-- tapOn:
-    id: IconicBar.Det.Home
-    optional: true
+- runFlow: ../idc23/subflows/common/dismiss_media_popup_if_present_idc23.yaml
+- runFlow:
+    when:
+      visible:
+        id: "com.bmwgroup.idnext.overlay:id/homeIcon"
+    commands:
+      - tapOn:
+          id: "com.bmwgroup.idnext.overlay:id/homeIcon"
+- runFlow:
+    when:
+      notVisible:
+        id: "com.bmwgroup.idnext.overlay:id/homeIcon"
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: IconicBar.Det.Home
+          commands:
+            - tapOn:
+                id: IconicBar.Det.Home
 - runFlow: ../subflows/tap_media_det.yaml
+- runFlow: ../idc23/subflows/common/dismiss_media_popup_if_present_idc23.yaml
 
 - repeat:
     times: 6
     while:
       true: ${output.onRadio != true}
     commands:
+      - runFlow: ../idc23/subflows/common/dismiss_media_popup_if_present_idc23.yaml
       - evalScript: ${output.didAction = false; output._attempt = (output._attempt || 0) + 1}
 
       # 3.1 Already on Radio
@@ -84,12 +104,14 @@ tags:
           commands:
             - runFlow: ../subflows/tap_media_det.yaml
             - waitForAnimationToEnd
+            - runFlow: ../idc23/subflows/common/dismiss_media_popup_if_present_idc23.yaml
             - runFlow:
                 when:
                   true: ${output._attempt >= 3}
                 commands:
                   - runFlow: ../subflows/double_tap_media_det.yaml
                   - waitForAnimationToEnd
+                  - runFlow: ../idc23/subflows/common/dismiss_media_popup_if_present_idc23.yaml
 
 - extendedWaitUntil:
     visible:

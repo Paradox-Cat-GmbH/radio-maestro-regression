@@ -9,6 +9,29 @@ Maestro-first AAOS radio regression flows for BMW iDrive racks.
 - Verifies backend playback truth via local control server (`http://127.0.0.1:4567`).
 - Exposes a live local dashboard + persisted audit for run observability.
 
+## Platform flow model
+
+This repo does not infer platform from YAML `tags:`. The platform comes from the flow path you explicitly run.
+
+- IDC23
+  - testcase flow: `flows/idc23/testcases/<CASE_ID>/idc23.yaml`
+  - Studio flow: `flows/idc23/testcases/<CASE_ID>/idc23.studio.yaml`
+  - optional demo wrapper layer: `flows/idc23/demo/IDC23DEV-*.yaml`
+- IDCEVO
+  - testcase flow: `flows/idcevo/testcases/<CASE_ID>/idcevo.yaml`
+  - Studio flow: `flows/idcevo/testcases/<CASE_ID>/idcevo.studio.yaml`
+- G70
+  - does not use the same single-file `<platform>.studio.yaml` pattern
+  - it is structured as multi-device side flows under `flows/g70/`
+  - examples are `deviceA.yaml` / `deviceB.yaml` or role-based entrypoints such as `cde.yaml`, `rse.yaml`, `hu.yaml`
+
+Practical rule:
+- run an IDC23 file for IDC23
+- run an IDCEVO file for IDCEVO
+- run a G70 file for G70
+
+`tags:` are useful for organization, search, and demo labeling, but the runners route by the target file path, not by tags.
+
 ## Core behavior (Leandro workflow)
 From Radio:
 1. Open Settings.
@@ -259,9 +282,16 @@ It generates per-run JSON/HTML/ZIP artifacts under:
 ## IDC23 PRT pack
 - Case list index: `flows/idc23/testcases/_INDEX.txt`
 - Case details: `flows/idc23/README.md`
+- Per-case demo files (IDCEVODEV-style flat files): `flows/idc23/demo/IDC23DEV-*.yaml`
+- Demo index: `flows/idc23/demo/_INDEX.txt`
+- Master demo flow: `flows/idc23/demo/IDC23DEMO-900001__prt_pdf_full_suite.yaml`
 - Run one case (CLI):
   ```powershell
   .\scripts\run-idc23-e2e-poc.ps1 -CaseId "ABPI-671618" -DeviceId "<IDC23_SERIAL>"
+  ```
+- Run full IDC23 PDF demo orchestration (single entry flow):
+  ```bat
+  run_idc23_demo_suite.bat <IDC23_SERIAL>
   ```
 - Studio prep helper:
   ```powershell

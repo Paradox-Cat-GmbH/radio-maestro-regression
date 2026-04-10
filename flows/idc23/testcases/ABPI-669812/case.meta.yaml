@@ -5,8 +5,8 @@ priority: "P2"
 source: "TMS_PRT_TestScenarios.pdf"
 automationLevel: "semi-automated"
 notes:
-  - "Waits for popup manually, then sends MFL-like cancel interaction via backend inject."
-  - "Popup presence remains signal/time dependent."
+  - "Enables Radio info, waits for a naturally observed popup, then sends an MFL-like center action via backend inject."
+  - "Popup observation remains signal/time dependent and uses a configurable wait window."
 acceptance:
-  - "Abort action can be injected while radio is active."
-  - "Radio playback remains healthy after abort."
+  - "A real radio info popup is observed before the abort action is injected."
+  - "The popup is dismissed by the MFL-like action while radio remains healthy afterward."

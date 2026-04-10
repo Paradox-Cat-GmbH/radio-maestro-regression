@@ -6,10 +6,30 @@ tags:
   - subflow
   - media
 ---
-# On this build: double tap -> Radio.
-- doubleTapOn:
-    id: IconicBar.Det.Media
-    optional: true
-- doubleTapOn:
-    text: Media
-    optional: true
+# IDC23 exposes the footer DET icons through overlay resource IDs.
+- runFlow:
+    when:
+      visible:
+        id: "com.bmwgroup.idnext.overlay:id/mediaIcon"
+    commands:
+      - doubleTapOn:
+          id: "com.bmwgroup.idnext.overlay:id/mediaIcon"
+- runFlow:
+    when:
+      notVisible:
+        id: "com.bmwgroup.idnext.overlay:id/mediaIcon"
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: IconicBar.Det.Media
+          commands:
+            - doubleTapOn:
+                id: IconicBar.Det.Media
+      - runFlow:
+          when:
+            visible:
+              text: Media
+          commands:
+            - doubleTapOn:
+                text: Media

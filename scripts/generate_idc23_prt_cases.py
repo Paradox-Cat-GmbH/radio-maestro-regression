@@ -69,32 +69,52 @@ CASES = [
         "priority": "P1",
         "automation": "semi-automated",
         "notes": [
-            "Create shortcuts, execute STR lifecycle, and validate shortcut recall afterwards.",
-            "Uses backend STR cycle and optional user-profile recovery after resume.",
+            "Creates two shortcuts under user X, switches to user Y for STR, then switches back to user X.",
+            "Uses backend STR cycle plus explicit profile switching through the control-server user helper.",
         ],
         "acceptance": [
-            "Shortcuts remain present after STR return.",
-            "Radio playback/audio focus remains valid after recall.",
+            "Shortcut icons remain present after STR return to user X.",
+            "Both saved shortcuts can be recalled from Toolbelt after STR with radio backend remaining strict-OK.",
         ],
         "flow": scenario(
             """
             - evalScript: "${output.testId = 'ABPI-684348'}"
+            - runFlow:
+                file: ../../../subflows/ensure_user_profile_backend.yaml
+                env:
+                  TEST_ID: ABPI_684348_switch_to_x_before_setup
+                  TARGET_USER_ID: ${IDC23_USER_X_ID}
+                  TARGET_USER_NAME: ${IDC23_USER_X_NAME}
+                  STRICT: "false"
+            - assertTrue: ${output.userProfileEnsureOk == true}
+            - assertTrue: ${output.userProfileEnsure.targetSpecified == true}
+            - assertTrue: ${output.userProfileEnsure.targetResolved == true}
+            - takeScreenshot: "ABPI_684348_user_x_before_setup"
             - runFlow: ../../subflows/common/radio_ready_and_verify.yaml
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 0
-            - waitForAnimationToEnd
-            - tapOn:
-                text: Add to shortcuts
-                optional: true
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 1
-            - waitForAnimationToEnd
-            - tapOn:
-                text: Add to shortcuts
-                optional: true
+            - runFlow:
+                file: ../../subflows/common/add_station_to_shortcuts_idc23.yaml
+                env:
+                  STATION_INDEX: "0"
             - runFlow: ../../../subflows/open_shortcuts.yaml
+            - takeScreenshot: "ABPI_684348_shortcut_0_added"
+            - runFlow: ../../subflows/common/radio_ready_and_verify.yaml
+            - runFlow:
+                file: ../../subflows/common/add_station_to_shortcuts_idc23.yaml
+                env:
+                  STATION_INDEX: "1"
+            - runFlow: ../../../subflows/open_shortcuts.yaml
+            - takeScreenshot: "ABPI_684348_shortcut_1_added"
+            - runFlow:
+                file: ../../../subflows/ensure_user_profile_backend.yaml
+                env:
+                  TEST_ID: ABPI_684348_switch_to_y_before_str
+                  TARGET_USER_ID: ${IDC23_USER_Y_ID}
+                  TARGET_USER_NAME: ${IDC23_USER_Y_NAME}
+                  STRICT: "false"
+            - assertTrue: ${output.userProfileEnsureOk == true}
+            - assertTrue: ${output.userProfileEnsure.targetSpecified == true}
+            - assertTrue: ${output.userProfileEnsure.targetResolved == true}
+            - takeScreenshot: "ABPI_684348_user_y_before_str"
             - takeScreenshot: "ABPI_684348_before_str"
             - runFlow:
                 file: ../../subflows/common/lifecycle_str_once.yaml
@@ -103,16 +123,26 @@ CASES = [
             - runFlow:
                 file: ../../../subflows/ensure_user_profile_backend.yaml
                 env:
-                  TEST_ID: ABPI_684348_user_recover
-                  TARGET_USER_ID: ${IDC23_TARGET_USER_ID}
-                  TARGET_USER_NAME: ${IDC23_TARGET_USER_NAME}
+                  TEST_ID: ABPI_684348_switch_back_to_x_after_str
+                  TARGET_USER_ID: ${IDC23_USER_X_ID}
+                  TARGET_USER_NAME: ${IDC23_USER_X_NAME}
                   STRICT: "false"
+            - assertTrue: ${output.userProfileEnsureOk == true}
+            - assertTrue: ${output.userProfileEnsure.targetSpecified == true}
+            - assertTrue: ${output.userProfileEnsure.targetResolved == true}
             - runFlow: ../../../subflows/open_shortcuts.yaml
             - takeScreenshot: "ABPI_684348_after_str"
-            - tapOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 0
-                optional: true
+            - runFlow:
+                file: ../../subflows/common/tap_toolbelt_shortcut_idc23.yaml
+                env:
+                  SHORTCUT_INDEX: "0"
+            - waitForAnimationToEnd
+            - runFlow: ../../../subflows/verify_radio_backend.yaml
+            - runFlow: ../../../subflows/open_shortcuts.yaml
+            - runFlow:
+                file: ../../subflows/common/tap_toolbelt_shortcut_idc23.yaml
+                env:
+                  SHORTCUT_INDEX: "1"
             - waitForAnimationToEnd
             - runFlow: ../../../subflows/verify_radio_backend.yaml
             """
@@ -135,20 +165,14 @@ CASES = [
             """
             - evalScript: "${output.testId = 'ABPI-684288'}"
             - runFlow: ../../subflows/common/radio_ready_and_verify.yaml
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 0
-            - waitForAnimationToEnd
-            - tapOn:
-                text: Add to shortcuts
-                optional: true
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 2
-            - waitForAnimationToEnd
-            - tapOn:
-                text: Add to shortcuts
-                optional: true
+            - runFlow:
+                file: ../../subflows/common/add_station_to_shortcuts_idc23.yaml
+                env:
+                  STATION_INDEX: "0"
+            - runFlow:
+                file: ../../subflows/common/add_station_to_shortcuts_idc23.yaml
+                env:
+                  STATION_INDEX: "2"
             - runFlow: ../../../subflows/open_shortcuts.yaml
             - tapOn:
                 id: "ListImageComponent ImageRightIcon"
@@ -308,34 +332,57 @@ CASES = [
         "priority": "P2",
         "automation": "semi-automated",
         "notes": [
-            "Opens radio settings and toggles Radio info ON/OFF path.",
-            "Popup arrival timing remains rack-signal dependent and should be observed manually.",
+            "Normalizes Radio info OFF baseline, enables the toggle, then observes popup arrival within a configurable wait window.",
+            "Disables the toggle again and asserts a short post-disable quiet window.",
         ],
         "acceptance": [
-            "Radio info toggle is reachable and operable.",
+            "Radio info toggle is reachable and operable with stateful ON/OFF verification.",
+            "If the popup is observed during the enabled window it is captured and dismissed.",
             "Radio path remains usable after settings changes.",
         ],
         "flow": scenario(
             """
             - evalScript: "${output.testId = 'ABPI-669816'}"
             - runFlow: ../../../subflows/ensure_radio_source.yaml
-            - tapOn:
-                id: idx_icon_settings
-                optional: true
-            - tapOn:
-                text: Radio settings
-                optional: true
-            - waitForAnimationToEnd
-            - tapOn:
-                text: Radio info
-                optional: true
-            - waitForAnimationToEnd
+            - runFlow: ../../../subflows/preconditions_radio_settings.yaml
+            - runFlow: ../../subflows/common/select_radio_info_station_idc23.yaml
+            - runFlow: ../../subflows/common/open_radio_settings_idc23.yaml
+            - runFlow:
+                file: ../../subflows/common/set_radio_info_toggle_idc23.yaml
+                env:
+                  RADIO_INFO_ENABLED: "true"
+                  RADIO_INFO_STATE_ASSERT: "false"
             - takeScreenshot: "ABPI_669816_radio_info_enabled"
-            - tapOn:
-                text: Radio info
-                optional: true
-            - waitForAnimationToEnd
             - pressKey: back
+            - waitForAnimationToEnd
+            - runFlow: ../../../subflows/ensure_radio_source.yaml
+            - runFlow:
+                file: ../../subflows/common/wait_for_radio_info_popup_idc23.yaml
+                env:
+                  POPUP_WAIT_SECONDS: "${RADIO_INFO_POPUP_WAIT_SECONDS}"
+                  POPUP_REQUIRED: "${RADIO_INFO_REQUIRE_POPUP}"
+                  DISMISS_POPUP: "true"
+            - runFlow:
+                when:
+                  true: ${output.idc23RadioInfoPopupObserved == true}
+                commands:
+                  - takeScreenshot: "ABPI_669816_radio_info_popup_observed"
+            - runFlow: ../../subflows/common/open_radio_settings_idc23.yaml
+            - runFlow:
+                file: ../../subflows/common/set_radio_info_toggle_idc23.yaml
+                env:
+                  RADIO_INFO_ENABLED: "false"
+                  RADIO_INFO_STATE_ASSERT: "false"
+            - takeScreenshot: "ABPI_669816_radio_info_disabled"
+            - pressKey: back
+            - waitForAnimationToEnd
+            - runFlow: ../../../subflows/ensure_radio_source.yaml
+            - runFlow:
+                file: ../../subflows/common/wait_for_radio_info_popup_idc23.yaml
+                env:
+                  POPUP_WAIT_SECONDS: "10"
+                  POPUP_REQUIRED: "false"
+            - assertTrue: ${output.idc23RadioInfoPopupObserved != true}
             - runFlow: ../../../subflows/verify_radio_backend.yaml
             """
         ),
@@ -346,23 +393,42 @@ CASES = [
         "priority": "P2",
         "automation": "semi-automated",
         "notes": [
-            "Waits for popup manually, then sends MFL-like cancel interaction via backend inject.",
-            "Popup presence remains signal/time dependent.",
+            "Enables Radio info, waits for a naturally observed popup, then sends an MFL-like center action via backend inject.",
+            "Popup observation remains signal/time dependent and uses a configurable wait window.",
         ],
         "acceptance": [
-            "Abort action can be injected while radio is active.",
-            "Radio playback remains healthy after abort.",
+            "A real radio info popup is observed before the abort action is injected.",
+            "The popup is dismissed by the MFL-like action while radio remains healthy afterward.",
         ],
         "flow": scenario(
             """
             - evalScript: "${output.testId = 'ABPI-669812'}"
             - runFlow: ../../subflows/common/radio_ready_and_verify.yaml
+            - runFlow: ../../../subflows/preconditions_radio_settings.yaml
+            - runFlow: ../../subflows/common/select_radio_info_station_idc23.yaml
+            - runFlow: ../../subflows/common/open_radio_settings_idc23.yaml
+            - runFlow:
+                file: ../../subflows/common/set_radio_info_toggle_idc23.yaml
+                env:
+                  RADIO_INFO_ENABLED: "true"
+                  RADIO_INFO_STATE_ASSERT: "false"
+            - pressKey: back
+            - waitForAnimationToEnd
+            - runFlow: ../../../subflows/ensure_radio_source.yaml
+            - runFlow:
+                file: ../../subflows/common/wait_for_radio_info_popup_idc23.yaml
+                env:
+                  POPUP_WAIT_SECONDS: "${RADIO_INFO_POPUP_WAIT_SECONDS}"
+                  POPUP_REQUIRED: "true"
+            - takeScreenshot: "ABPI_669812_radio_info_popup_observed"
             - runFlow:
                 file: ../../../subflows/backend_inject.yaml
                 env:
                   KIND: swag
                   TARGET: center
             - waitForAnimationToEnd
+            - assertNotVisible:
+                text: '(?i)(cancel radio info|stop playing radio infos)'
             - runFlow: ../../../subflows/verify_radio_backend.yaml
             """
         ),
@@ -440,30 +506,44 @@ CASES = [
         "priority": "P2",
         "automation": "semi-automated",
         "notes": [
-            "Checks that audio persists after navigation and skip actions.",
-            "Status-bar text interaction is build-dependent and attempted as optional selector.",
+            "Uses backend UI snapshots plus Maestro hierarchy fallback to inspect current IDC23 status-bar and launcher widget text.",
+            "Status-bar return path uses current top-bar selector first and launcher widget as the last fallback.",
         ],
         "acceptance": [
-            "Radio remains playing outside Radio screen.",
-            "Skip actions update active station while backend remains strict-OK.",
+            "Radio remains playing outside Radio screen while home/widget status text stays populated.",
+            "Skip next/prev updates the extracted station text while backend remains strict-OK.",
+            "Tapping the current top-bar entry returns to the active Radio list.",
         ],
         "flow": scenario(
             """
             - evalScript: "${output.testId = 'ABPI-669801'}"
             - runFlow: ../../subflows/common/radio_ready_and_verify.yaml
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23RadioScreenStationBefore = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station) : ''); output.idc23RadioScreenKeyBefore = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+            - assertTrue: ${output.idc23RadioScreenStationBefore != '' || output.idc23RadioScreenKeyBefore != ''}
             - pressKey: home
             - waitForAnimationToEnd
-            - runFlow: ../../../subflows/verify_radio_backend.yaml
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23HomeStationBefore = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.homeWidgetStation || output.radioVerdict.ui.topBarStation || output.radioVerdict.ui.statusBarStation) : ''); output.idc23HomeKeyBefore = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+            - assertTrue: ${output.idc23HomeStationBefore != '' || output.idc23HomeKeyBefore != ''}
             - runFlow: ../../../subflows/inject_swag_next.yaml
             - waitForAnimationToEnd
-            - runFlow: ../../../subflows/verify_radio_backend.yaml
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23HomeStationAfterNext = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.homeWidgetStation || output.radioVerdict.ui.topBarStation || output.radioVerdict.ui.statusBarStation) : ''); output.idc23HomeKeyAfterNext = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+            - assertTrue: ${output.idc23HomeStationAfterNext != '' || output.idc23HomeKeyAfterNext != ''}
+            - assertTrue: ${(output.idc23HomeKeyBefore != '' && output.idc23HomeKeyAfterNext != '' && output.idc23HomeKeyAfterNext != output.idc23HomeKeyBefore) || (output.idc23HomeStationBefore != '' && output.idc23HomeStationAfterNext != '' && output.idc23HomeStationAfterNext != output.idc23HomeStationBefore)}
             - runFlow: ../../../subflows/inject_swag_prev.yaml
             - waitForAnimationToEnd
-            - runFlow: ../../../subflows/verify_radio_backend.yaml
-            - tapOn:
-                id: TEST_TAG_HEADER
-                optional: true
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23HomeStationAfterPrev = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.homeWidgetStation || output.radioVerdict.ui.topBarStation || output.radioVerdict.ui.statusBarStation) : ''); output.idc23HomeKeyAfterPrev = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+            - assertTrue: ${output.idc23HomeStationAfterPrev != '' || output.idc23HomeKeyAfterPrev != ''}
+            - assertTrue: ${(output.idc23HomeKeyAfterNext != '' && output.idc23HomeKeyAfterPrev != '' && output.idc23HomeKeyAfterPrev != output.idc23HomeKeyAfterNext) || (output.idc23HomeStationAfterNext != '' && output.idc23HomeStationAfterPrev != '' && output.idc23HomeStationAfterPrev != output.idc23HomeStationAfterNext)}
+            - runFlow: ../../subflows/common/open_radio_from_status_bar_idc23.yaml
+            - assertVisible:
+                text: "(?i)all stations"
             - waitForAnimationToEnd
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - assertTrue: ${output.radioVerdict.ui.sourceName == 'RADIO'}
             """
         ),
     },
@@ -473,12 +553,13 @@ CASES = [
         "priority": "P2",
         "automation": "semi-automated",
         "notes": [
-            "Creates favorites and validates skip navigation through preset context.",
-            "Wrap-around behavior should be reviewed in run artifacts.",
+            "Creates two favourites and uses backend station-key snapshots to prove wrap-around in preset context.",
+            "Current IDC23 preset validation relies on radio backend plus Maestro hierarchy fallback for station identity.",
         ],
         "acceptance": [
             "Preset/favorite selection remains playable.",
-            "Next/previous skip actions keep backend check green.",
+            "Previous from the first favourite wraps to the last favourite.",
+            "Next from the last favourite wraps back to the first favourite while backend remains strict-OK.",
         ],
         "flow": scenario(
             """
@@ -505,11 +586,25 @@ CASES = [
                 index: 0
                 optional: true
             - waitForAnimationToEnd
-            - runFlow: ../../../subflows/verify_radio_backend.yaml
-            - runFlow: ../../../subflows/inject_swag_next.yaml
-            - runFlow: ../../../subflows/verify_radio_backend.yaml
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23PresetFirstStation = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station) : ''); output.idc23PresetFirstKey = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+            - assertTrue: ${output.idc23PresetFirstStation != '' || output.idc23PresetFirstKey != ''}
             - runFlow: ../../../subflows/inject_swag_prev.yaml
-            - runFlow: ../../../subflows/verify_radio_backend.yaml
+            - waitForAnimationToEnd
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23PresetLastStation = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station) : ''); output.idc23PresetLastKey = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+            - assertTrue: ${output.idc23PresetLastStation != '' || output.idc23PresetLastKey != ''}
+            - assertTrue: ${(output.idc23PresetFirstKey != '' && output.idc23PresetLastKey != '' && output.idc23PresetLastKey != output.idc23PresetFirstKey) || (output.idc23PresetFirstStation != '' && output.idc23PresetLastStation != '' && output.idc23PresetLastStation != output.idc23PresetFirstStation)}
+            - runFlow: ../../../subflows/inject_swag_next.yaml
+            - waitForAnimationToEnd
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23PresetWrappedToFirstStation = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station) : ''); output.idc23PresetWrappedToFirstKey = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+            - assertTrue: ${(output.idc23PresetFirstKey != '' && output.idc23PresetWrappedToFirstKey != '' && output.idc23PresetWrappedToFirstKey == output.idc23PresetFirstKey) || (output.idc23PresetFirstStation != '' && output.idc23PresetWrappedToFirstStation != '' && output.idc23PresetWrappedToFirstStation == output.idc23PresetFirstStation)}
+            - runFlow: ../../../subflows/inject_swag_prev.yaml
+            - waitForAnimationToEnd
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23PresetWrappedBackToLastStation = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station) : ''); output.idc23PresetWrappedBackToLastKey = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+            - assertTrue: ${(output.idc23PresetLastKey != '' && output.idc23PresetWrappedBackToLastKey != '' && output.idc23PresetWrappedBackToLastKey == output.idc23PresetLastKey) || (output.idc23PresetLastStation != '' && output.idc23PresetWrappedBackToLastStation != '' && output.idc23PresetWrappedBackToLastStation == output.idc23PresetLastStation)}
             """
         ),
     },
@@ -519,36 +614,45 @@ CASES = [
         "priority": "P2",
         "automation": "semi-automated",
         "notes": [
-            "Adds and removes a station from favorites/presets path.",
-            "Deletion selector is optional to tolerate skin differences.",
+            "Uses the live IDC23 particle action path instead of long-press context menus.",
+            "Starts from a cleared favourites state so add/remove is deterministic.",
         ],
         "acceptance": [
-            "Station can be saved to presets.",
-            "Station can be removed while playback continuity is preserved.",
+            "Station can be saved through the current-station particle action and then recalled from Favourites.",
+            "Removing the saved station returns backend queue context to All stations while playback continuity is preserved.",
         ],
         "flow": scenario(
             """
             - evalScript: "${output.testId = 'ABPI-669799'}"
             - runFlow: ../../../subflows/ensure_radio_source.yaml
             - runFlow: ../../../subflows/open_all_stations.yaml
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 0
+            - runFlow: ../../subflows/common/clear_favourites_idc23.yaml
+            - runFlow: ../../../subflows/open_all_stations.yaml
+            - runFlow:
+                file: ../../subflows/common/tap_station_entry_idc23.yaml
+                env:
+                  STATION_INDEX: "2"
             - waitForAnimationToEnd
-            - tapOn:
-                text: Add to favourites
-                optional: true
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23PresetSavedStation = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station) : ''); output.idc23PresetSavedKey = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+            - assertTrue: ${output.idc23PresetSavedStation != '' || output.idc23PresetSavedKey != ''}
+            - runFlow: ../../subflows/common/tap_particle_action_idc23.yaml
             - runFlow: ../../../subflows/open_favourites.yaml
             - takeScreenshot: "ABPI_669799_saved_station"
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 0
-                optional: true
-            - tapOn:
-                text: Remove from favourites
-                optional: true
+            - runFlow:
+                file: ../../subflows/common/tap_station_entry_idc23.yaml
+                env:
+                  STATION_INDEX: "0"
+                  STATION_OPTIONAL: "true"
             - waitForAnimationToEnd
-            - runFlow: ../../../subflows/verify_radio_backend.yaml
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23PresetSavedStationFromFavourites = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station) : ''); output.idc23PresetSavedKeyFromFavourites = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+            - assertTrue: ${(output.idc23PresetSavedKey != '' && output.idc23PresetSavedKeyFromFavourites == output.idc23PresetSavedKey) || (output.idc23PresetSavedStation != '' && output.idc23PresetSavedStationFromFavourites == output.idc23PresetSavedStation)}
+            - runFlow: ../../subflows/common/tap_particle_action_idc23.yaml
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function norm(v){return (v===undefined||v===null)?'':String(v).toLowerCase().replace(/\\s+/g,'');} output.idc23PresetQueueTitleNormalized = norm(output.radioVerdict && output.radioVerdict.media ? output.radioVerdict.media.queueTitle : ''); output.idc23PresetRemovedStation = (output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station || '') : ''); output.idc23PresetRemovedKey = (output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey || '') : '');}"
+            - assertTrue: ${output.idc23PresetQueueTitleNormalized == 'allstations'}
+            - assertTrue: ${(output.idc23PresetSavedKey != '' && output.idc23PresetRemovedKey == output.idc23PresetSavedKey) || (output.idc23PresetSavedStation != '' && output.idc23PresetRemovedStation == output.idc23PresetSavedStation)}
             """
         ),
     },
@@ -569,13 +673,10 @@ CASES = [
             """
             - evalScript: "${output.testId = 'ABPI-669798'}"
             - runFlow: ../../subflows/common/radio_ready_and_verify.yaml
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 0
-            - waitForAnimationToEnd
-            - tapOn:
-                text: Add to shortcuts
-                optional: true
+            - runFlow:
+                file: ../../subflows/common/add_station_to_shortcuts_idc23.yaml
+                env:
+                  STATION_INDEX: "0"
             - runFlow: ../../../subflows/open_shortcuts.yaml
             - tapOn:
                 id: "ListImageComponent ImageRightIcon"
@@ -618,16 +719,14 @@ CASES = [
             - evalScript: "${output.testId = 'ABPI-669795'}"
             - runFlow: ../../../subflows/ensure_radio_source.yaml
             - runFlow: ../../../subflows/open_all_stations.yaml
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 0
-            - waitForAnimationToEnd
-            - tapOn:
-                text: Add to shortcuts
-                optional: true
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 0
+            - runFlow:
+                file: ../../subflows/common/add_station_to_shortcuts_idc23.yaml
+                env:
+                  STATION_INDEX: "0"
+            - runFlow:
+                file: ../../subflows/common/long_press_station_entry_idc23.yaml
+                env:
+                  STATION_INDEX: "${output.idc23ShortcutChosenIndex}"
             - waitForAnimationToEnd
             - takeScreenshot: "ABPI_669795_duplicate_shortcut_prompt"
             - runFlow: ../../../subflows/open_shortcuts.yaml
@@ -643,13 +742,11 @@ CASES = [
                 optional: true
             - waitForAnimationToEnd
             - runFlow: ../../../subflows/open_all_stations.yaml
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 1
-                optional: true
-            - tapOn:
-                text: Add to shortcuts
-                optional: true
+            - runFlow:
+                file: ../../subflows/common/add_station_to_shortcuts_idc23.yaml
+                env:
+                  STATION_INDEX: "1"
+                  STATION_OPTIONAL: "true"
             - runFlow: ../../../subflows/open_shortcuts.yaml
             """
         ),
@@ -731,29 +828,45 @@ CASES = [
         "priority": "P2",
         "automation": "semi-automated",
         "notes": [
-            "AM equivalent of DAB status bar update checks.",
-            "Band-specific station preparation may be required per rack profile.",
+            "AM-equivalent status-bar coverage uses backend UI snapshots plus Maestro hierarchy fallback on current IDC23 layouts.",
+            "Band-specific AM station preparation may still require a rack-specific station target.",
         ],
         "acceptance": [
-            "AM station remains audible through navigation and skip actions.",
-            "Backend strict checks remain green throughout.",
+            "Current radio station remains audible through navigation and skip actions while home/widget status text stays populated.",
+            "Skip next/prev updates the extracted station text while backend remains strict-OK.",
+            "Tapping the current top-bar entry returns to the active Radio list.",
         ],
         "flow": scenario(
             """
             - evalScript: "${output.testId = 'ABPI-669792'}"
             - runFlow: ../../subflows/common/radio_ready_and_verify.yaml
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23RadioScreenStationBefore = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station) : ''); output.idc23RadioScreenKeyBefore = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+            - assertTrue: ${output.idc23RadioScreenStationBefore != '' || output.idc23RadioScreenKeyBefore != ''}
             - takeScreenshot: "ABPI_669792_am_status_before"
             - pressKey: home
             - waitForAnimationToEnd
-            - runFlow: ../../../subflows/verify_radio_backend.yaml
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23HomeStationBefore = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.homeWidgetStation || output.radioVerdict.ui.topBarStation || output.radioVerdict.ui.statusBarStation) : ''); output.idc23HomeKeyBefore = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+            - assertTrue: ${output.idc23HomeStationBefore != '' || output.idc23HomeKeyBefore != ''}
             - runFlow: ../../../subflows/inject_swag_next.yaml
-            - runFlow: ../../../subflows/verify_radio_backend.yaml
-            - runFlow: ../../../subflows/inject_swag_prev.yaml
-            - runFlow: ../../../subflows/verify_radio_backend.yaml
-            - tapOn:
-                id: TEST_TAG_HEADER
-                optional: true
             - waitForAnimationToEnd
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23HomeStationAfterNext = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.homeWidgetStation || output.radioVerdict.ui.topBarStation || output.radioVerdict.ui.statusBarStation) : ''); output.idc23HomeKeyAfterNext = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+            - assertTrue: ${output.idc23HomeStationAfterNext != '' || output.idc23HomeKeyAfterNext != ''}
+            - assertTrue: ${(output.idc23HomeKeyBefore != '' && output.idc23HomeKeyAfterNext != '' && output.idc23HomeKeyAfterNext != output.idc23HomeKeyBefore) || (output.idc23HomeStationBefore != '' && output.idc23HomeStationAfterNext != '' && output.idc23HomeStationAfterNext != output.idc23HomeStationBefore)}
+            - runFlow: ../../../subflows/inject_swag_prev.yaml
+            - waitForAnimationToEnd
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23HomeStationAfterPrev = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.homeWidgetStation || output.radioVerdict.ui.topBarStation || output.radioVerdict.ui.statusBarStation) : ''); output.idc23HomeKeyAfterPrev = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+            - assertTrue: ${output.idc23HomeStationAfterPrev != '' || output.idc23HomeKeyAfterPrev != ''}
+            - assertTrue: ${(output.idc23HomeKeyAfterNext != '' && output.idc23HomeKeyAfterPrev != '' && output.idc23HomeKeyAfterPrev != output.idc23HomeKeyAfterNext) || (output.idc23HomeStationAfterNext != '' && output.idc23HomeStationAfterPrev != '' && output.idc23HomeStationAfterPrev != output.idc23HomeStationAfterNext)}
+            - runFlow: ../../subflows/common/open_radio_from_status_bar_idc23.yaml
+            - assertVisible:
+                text: "(?i)all stations"
+            - waitForAnimationToEnd
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - assertTrue: ${output.radioVerdict.ui.sourceName == 'RADIO'}
             """
         ),
     },
@@ -775,16 +888,14 @@ CASES = [
             - evalScript: "${output.testId = 'ABPI-669790'}"
             - runFlow: ../../../subflows/ensure_radio_source.yaml
             - runFlow: ../../../subflows/open_all_stations.yaml
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 0
-            - waitForAnimationToEnd
-            - tapOn:
-                text: Add to shortcuts
-                optional: true
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 0
+            - runFlow:
+                file: ../../subflows/common/add_station_to_shortcuts_idc23.yaml
+                env:
+                  STATION_INDEX: "0"
+            - runFlow:
+                file: ../../subflows/common/long_press_station_entry_idc23.yaml
+                env:
+                  STATION_INDEX: "${output.idc23ShortcutChosenIndex}"
             - waitForAnimationToEnd
             - takeScreenshot: "ABPI_669790_duplicate_prompt"
             - runFlow: ../../../subflows/open_shortcuts.yaml
@@ -870,12 +981,13 @@ CASES = [
         "priority": "P2",
         "automation": "semi-automated",
         "notes": [
-            "AM equivalent of preset touch + skip behavior.",
-            "Wrap-around verification should be confirmed via station history in artifacts.",
+            "AM-equivalent preset flow now uses station-key snapshots to prove first/last wrap-around in preset context.",
+            "Rack-specific AM station preparation may still be needed to guarantee true AM-only coverage.",
         ],
         "acceptance": [
             "Preset touch selection remains playable.",
-            "Skip left/right actions remain functional from preset context.",
+            "Previous from the first favourite wraps to the last favourite.",
+            "Next from the last favourite wraps back to the first favourite while backend remains strict-OK.",
         ],
         "flow": scenario(
             """
@@ -901,10 +1013,26 @@ CASES = [
                 id: "ListImageComponent ImageRightIcon"
                 index: 0
                 optional: true
-            - runFlow: ../../../subflows/verify_radio_backend.yaml
-            - runFlow: ../../../subflows/inject_swag_next.yaml
+            - waitForAnimationToEnd
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23PresetFirstStation = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station) : ''); output.idc23PresetFirstKey = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+            - assertTrue: ${output.idc23PresetFirstStation != '' || output.idc23PresetFirstKey != ''}
             - runFlow: ../../../subflows/inject_swag_prev.yaml
-            - runFlow: ../../../subflows/verify_radio_backend.yaml
+            - waitForAnimationToEnd
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23PresetLastStation = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station) : ''); output.idc23PresetLastKey = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+            - assertTrue: ${output.idc23PresetLastStation != '' || output.idc23PresetLastKey != ''}
+            - assertTrue: ${(output.idc23PresetFirstKey != '' && output.idc23PresetLastKey != '' && output.idc23PresetLastKey != output.idc23PresetFirstKey) || (output.idc23PresetFirstStation != '' && output.idc23PresetLastStation != '' && output.idc23PresetLastStation != output.idc23PresetFirstStation)}
+            - runFlow: ../../../subflows/inject_swag_next.yaml
+            - waitForAnimationToEnd
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23PresetWrappedToFirstStation = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station) : ''); output.idc23PresetWrappedToFirstKey = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+            - assertTrue: ${(output.idc23PresetFirstKey != '' && output.idc23PresetWrappedToFirstKey != '' && output.idc23PresetWrappedToFirstKey == output.idc23PresetFirstKey) || (output.idc23PresetFirstStation != '' && output.idc23PresetWrappedToFirstStation != '' && output.idc23PresetWrappedToFirstStation == output.idc23PresetFirstStation)}
+            - runFlow: ../../../subflows/inject_swag_prev.yaml
+            - waitForAnimationToEnd
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23PresetWrappedBackToLastStation = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station) : ''); output.idc23PresetWrappedBackToLastKey = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+            - assertTrue: ${(output.idc23PresetLastKey != '' && output.idc23PresetWrappedBackToLastKey != '' && output.idc23PresetWrappedBackToLastKey == output.idc23PresetLastKey) || (output.idc23PresetLastStation != '' && output.idc23PresetWrappedBackToLastStation != '' && output.idc23PresetWrappedBackToLastStation == output.idc23PresetLastStation)}
             """
         ),
     },
@@ -914,44 +1042,44 @@ CASES = [
         "priority": "P2",
         "automation": "semi-automated",
         "notes": [
-            "Covers single-preset removal path while playback continuity is expected.",
-            "Favorite remove selector is optional due skin differences.",
+            "Starts from a cleared favourites state so the removal is truly a single-preset delete path.",
+            "Uses the live IDC23 particle action instead of long-press context menus.",
         ],
         "acceptance": [
             "Single preset can be removed without interrupting playback.",
-            "System falls back to all-stations path correctly.",
+            "Backend queue context falls back to All stations after removing the only saved preset.",
         ],
         "flow": scenario(
             """
             - evalScript: "${output.testId = 'ABPI-669785'}"
             - runFlow: ../../../subflows/ensure_radio_source.yaml
             - runFlow: ../../../subflows/open_all_stations.yaml
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 0
-            - waitForAnimationToEnd
-            - tapOn:
-                text: Add to favourites
-                optional: true
-            - runFlow: ../../../subflows/open_favourites.yaml
-            - tapOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 0
-                optional: true
-            - runFlow: ../../../subflows/verify_radio_backend.yaml
-            - longPressOn:
-                id: "ListImageComponent ImageRightIcon"
-                index: 0
-                optional: true
-            - tapOn:
-                text: Remove from favourites
-                optional: true
-            - tapOn:
-                text: Remove
-                optional: true
-            - waitForAnimationToEnd
+            - runFlow: ../../subflows/common/clear_favourites_idc23.yaml
             - runFlow: ../../../subflows/open_all_stations.yaml
-            - runFlow: ../../../subflows/verify_radio_backend.yaml
+            - runFlow:
+                file: ../../subflows/common/tap_station_entry_idc23.yaml
+                env:
+                  STATION_INDEX: "2"
+            - waitForAnimationToEnd
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23SinglePresetStation = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station) : ''); output.idc23SinglePresetKey = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+            - assertTrue: ${output.idc23SinglePresetStation != '' || output.idc23SinglePresetKey != ''}
+            - runFlow: ../../subflows/common/tap_particle_action_idc23.yaml
+            - runFlow: ../../../subflows/open_favourites.yaml
+            - runFlow:
+                file: ../../subflows/common/tap_station_entry_idc23.yaml
+                env:
+                  STATION_INDEX: "0"
+                  STATION_OPTIONAL: "true"
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function pick(v){return (v===undefined||v===null)?'':String(v).trim();} output.idc23SinglePresetStationFromFavourites = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station) : ''); output.idc23SinglePresetKeyFromFavourites = pick(output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey) : '');}"
+            - assertTrue: ${(output.idc23SinglePresetKey != '' && output.idc23SinglePresetKeyFromFavourites == output.idc23SinglePresetKey) || (output.idc23SinglePresetStation != '' && output.idc23SinglePresetStationFromFavourites == output.idc23SinglePresetStation)}
+            - runFlow: ../../subflows/common/tap_particle_action_idc23.yaml
+            - waitForAnimationToEnd
+            - runFlow: ../../subflows/common/verify_radio_backend_maestro_ui.yaml
+            - evalScript: "${function norm(v){return (v===undefined||v===null)?'':String(v).toLowerCase().replace(/\\s+/g,'');} output.idc23SinglePresetQueueTitleNormalized = norm(output.radioVerdict && output.radioVerdict.media ? output.radioVerdict.media.queueTitle : ''); output.idc23SinglePresetRemovedStation = (output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.particleStation || output.radioVerdict.ui.statusBarStation || output.radioVerdict.ui.station || '') : ''); output.idc23SinglePresetRemovedKey = (output.radioVerdict && output.radioVerdict.ui ? (output.radioVerdict.ui.stationKey || output.radioVerdict.ui.topBarStationKey || '') : '');}"
+            - assertTrue: ${output.idc23SinglePresetQueueTitleNormalized == 'allstations'}
+            - assertTrue: ${(output.idc23SinglePresetKey != '' && output.idc23SinglePresetRemovedKey == output.idc23SinglePresetKey) || (output.idc23SinglePresetStation != '' && output.idc23SinglePresetRemovedStation == output.idc23SinglePresetStation)}
             """
         ),
     },

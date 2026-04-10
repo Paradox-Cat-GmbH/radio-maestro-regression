@@ -1,0 +1,10 @@
+﻿appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23DEV-669816 - FM/DAB activate/deactivate Traffic/Radio info announcement
+tags:
+  - demo
+  - idc23
+  - prt
+---
+- evalScript: "${output.testId = 'IDC23DEV-669816'}"
+- runFlow: ../testcases/ABPI-669816/idc23.yaml

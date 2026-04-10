@@ -5,8 +5,9 @@ priority: "P2"
 source: "TMS_PRT_TestScenarios.pdf"
 automationLevel: "semi-automated"
 notes:
-  - "Opens radio settings and toggles Radio info ON/OFF path."
-  - "Popup arrival timing remains rack-signal dependent and should be observed manually."
+  - "Normalizes Radio info OFF baseline, enables the toggle, then observes popup arrival within a configurable wait window."
+  - "Disables the toggle again and asserts a short post-disable quiet window."
 acceptance:
-  - "Radio info toggle is reachable and operable."
+  - "Radio info toggle is reachable and operable with stateful ON/OFF verification."
+  - "If the popup is observed during the enabled window it is captured and dismissed."
   - "Radio path remains usable after settings changes."

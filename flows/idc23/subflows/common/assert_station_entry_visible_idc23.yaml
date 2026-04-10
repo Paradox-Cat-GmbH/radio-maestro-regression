@@ -1,0 +1,45 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23 - Assert station entry visible
+tags:
+  - idc23
+  - subflow
+  - radio
+  - station_select
+---
+- evalScript: ${output.idc23StationEntryVisible = false}
+
+- extendedWaitUntil:
+    visible:
+      id: "com.bmwgroup.apinext.mediaapp:id/cl_one_line_list"
+      index: 0
+    timeout: 5000
+    optional: true
+
+- runFlow:
+    when:
+      visible:
+        id: "com.bmwgroup.apinext.mediaapp:id/cl_one_line_list"
+        index: 0
+    commands:
+      - evalScript: ${output.idc23StationEntryVisible = true}
+
+- runFlow:
+    when:
+      true: ${output.idc23StationEntryVisible != true}
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "com.bmwgroup.apinext.mediaapp:id/item_arrow"
+            index: 0
+          timeout: 3000
+          optional: true
+      - runFlow:
+          when:
+            visible:
+              id: "com.bmwgroup.apinext.mediaapp:id/item_arrow"
+              index: 0
+          commands:
+            - evalScript: ${output.idc23StationEntryVisible = true}
+
+- assertTrue: ${output.idc23StationEntryVisible == true}

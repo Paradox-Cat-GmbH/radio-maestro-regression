@@ -1,0 +1,116 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23 - Tap station entry
+tags:
+  - idc23
+  - subflow
+  - radio
+  - station_select
+---
+- runFlow: dismiss_media_popup_if_present_idc23.yaml
+- evalScript: "${output.idc23StationEntrySelector = ''; output.idc23StationEntryDone = false; output.idc23StationEntryIndex = (typeof STATION_INDEX !== 'undefined' ? parseInt(String(STATION_INDEX), 10) : 0); if (isNaN(output.idc23StationEntryIndex) || output.idc23StationEntryIndex < 0) output.idc23StationEntryIndex = 0; output.idc23StationEntryOptional = (typeof STATION_OPTIONAL !== 'undefined' && String(STATION_OPTIONAL).toLowerCase() == 'true')}"
+
+- extendedWaitUntil:
+    visible:
+      id: "com.bmwgroup.apinext.mediaapp:id/cl_one_line_list"
+      index: 0
+    timeout: 5000
+    optional: true
+
+- runFlow:
+    when:
+      visible:
+        id: "com.bmwgroup.apinext.mediaapp:id/cl_one_line_list"
+        index: 0
+    commands:
+      - evalScript: ${output.idc23StationEntrySelector = 'com.bmwgroup.apinext.mediaapp:id/cl_one_line_list'}
+
+- runFlow:
+    when:
+      true: ${output.idc23StationEntrySelector == ''}
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "com.bmwgroup.apinext.mediaapp:id/item_arrow"
+            index: 0
+          timeout: 3000
+          optional: true
+      - runFlow:
+          when:
+            visible:
+              id: "com.bmwgroup.apinext.mediaapp:id/item_arrow"
+              index: 0
+          commands:
+            - evalScript: ${output.idc23StationEntrySelector = 'com.bmwgroup.apinext.mediaapp:id/item_arrow'}
+
+- runFlow:
+    when:
+      true: ${output.idc23StationEntrySelector == '' && output.idc23StationEntryOptional != true}
+    commands:
+      - assertTrue: ${output.idc23StationEntrySelector != ''}
+
+- runFlow:
+    when:
+      true: ${output.idc23StationEntrySelector != '' && output.idc23StationEntryIndex == 0}
+    commands:
+      - tapOn:
+          id: "${output.idc23StationEntrySelector}"
+          index: 0
+          retryTapIfNoChange: true
+      - evalScript: ${output.idc23StationEntryDone = true}
+
+- runFlow:
+    when:
+      true: ${output.idc23StationEntrySelector != '' && output.idc23StationEntryIndex == 1}
+    commands:
+      - tapOn:
+          id: "${output.idc23StationEntrySelector}"
+          index: 1
+          retryTapIfNoChange: true
+      - evalScript: ${output.idc23StationEntryDone = true}
+
+- runFlow:
+    when:
+      true: ${output.idc23StationEntrySelector != '' && output.idc23StationEntryIndex == 2}
+    commands:
+      - tapOn:
+          id: "${output.idc23StationEntrySelector}"
+          index: 2
+          retryTapIfNoChange: true
+      - evalScript: ${output.idc23StationEntryDone = true}
+
+- runFlow:
+    when:
+      true: ${output.idc23StationEntrySelector != '' && output.idc23StationEntryIndex == 3}
+    commands:
+      - tapOn:
+          id: "${output.idc23StationEntrySelector}"
+          index: 3
+          retryTapIfNoChange: true
+      - evalScript: ${output.idc23StationEntryDone = true}
+
+- runFlow:
+    when:
+      true: ${output.idc23StationEntrySelector != '' && output.idc23StationEntryIndex == 4}
+    commands:
+      - tapOn:
+          id: "${output.idc23StationEntrySelector}"
+          index: 4
+          retryTapIfNoChange: true
+      - evalScript: ${output.idc23StationEntryDone = true}
+
+- runFlow:
+    when:
+      true: ${output.idc23StationEntrySelector != '' && output.idc23StationEntryDone != true}
+    commands:
+      - tapOn:
+          id: "${output.idc23StationEntrySelector}"
+          index: 0
+          retryTapIfNoChange: true
+      - evalScript: ${output.idc23StationEntryDone = true}
+
+- runFlow:
+    when:
+      true: ${output.idc23StationEntryDone != true && output.idc23StationEntryOptional != true}
+    commands:
+      - assertTrue: ${output.idc23StationEntryDone == true}

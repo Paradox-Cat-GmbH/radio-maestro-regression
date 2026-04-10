@@ -6,6 +6,11 @@ if not defined HOST set "HOST=127.0.0.1"
 set "PORT=%MAESTRO_CONTROL_PORT%"
 if not defined PORT set "PORT=4567"
 
+if not defined ADB_EXE set "ADB_EXE=C:\Android\SDK\platform-tools\adb.exe"
+if not exist "%ADB_EXE%" set "ADB_EXE=%~dp0..\..\tools\platform-tools\adb.exe"
+if not defined DLT_RECEIVE_BIN if exist "C:\Tools\dlt\dlt-receive.exe" set "DLT_RECEIVE_BIN=C:\Tools\dlt\dlt-receive.exe"
+if not defined DLT_RECEIVE_BIN if exist "C:\Tools\dlt\dlt-receive-v2.exe" set "DLT_RECEIVE_BIN=C:\Tools\dlt\dlt-receive-v2.exe"
+
 for %%I in ("%~dp0..\..") do set "REPO_ROOT=%%~fI"
 set "ART_DIR=%REPO_ROOT%\artifacts"
 if not exist "%ART_DIR%" mkdir "%ART_DIR%"

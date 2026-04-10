@@ -1,0 +1,34 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23 - Clear favourites best effort
+tags:
+  - idc23
+  - subflow
+  - radio
+  - favourites
+---
+- runFlow: ../../../subflows/open_favourites.yaml
+
+- repeat:
+    times: 6
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "com.bmwgroup.apinext.mediaapp:id/item_arrow"
+              index: 0
+          commands:
+            - runFlow:
+                file: long_press_station_entry_idc23.yaml
+                env:
+                  STATION_INDEX: "0"
+                  STATION_OPTIONAL: "true"
+            - waitForAnimationToEnd
+            - tapOn:
+                text: Remove from favourites
+                optional: true
+            - tapOn:
+                text: Remove
+                optional: true
+            - waitForAnimationToEnd
+            - runFlow: ../../../subflows/open_favourites.yaml

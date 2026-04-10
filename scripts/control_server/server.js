@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const http=require('http');const{spawn}=require('child_process');const fs=require('fs');const path=require('path');
+const http=require('http');const{spawn,spawnSync}=require('child_process');const fs=require('fs');const path=require('path');
 const REPO=path.resolve(__dirname,'..','..');
 const ADB_DEFAULT=process.env.ADB_BAT||path.join(REPO,'scripts','adb.bat');
 const ADB=(function(){
@@ -44,6 +44,43 @@ const run=(args,timeout=25000)=>new Promise(ok=>{const isWin=process.platform===
 let out='',err='';const t=setTimeout(()=>{try{ch.kill('SIGKILL');}catch(_){}},timeout);
 ch.stdout.on('data',d=>out+=d.toString());ch.stderr.on('data',d=>err+=d.toString());
 ch.on('close',code=>{clearTimeout(t);ok({code:code??0,stdout:out,stderr:err});});});
+const resolveMaestroCli=(requested)=>{
+  const candidates=[];const push=v=>{const p=String(v||'').trim();if(!p)return;if(candidates.includes(p))return;candidates.push(p);};
+  const addFolder=v=>{const p=String(v||'').trim();if(!p)return;push(path.join(p,'maestro.bat'));push(path.join(p,'maestro.cmd'));push(path.join(p,'maestro.exe'));};
+  push(requested);
+  addFolder(requested);
+  push(process.env.MAESTRO_CMD);
+  addFolder(process.env.MAESTRO_CMD);
+  push('C:/Project Maestro/maestro/bin/maestro.bat');
+  push(path.join(REPO,'tools','maestro','bin','maestro.bat'));
+  if(process.env.USERPROFILE){
+    push(path.join(process.env.USERPROFILE,'maestro','bin','maestro.bat'));
+    push(path.join(process.env.USERPROFILE,'Desktop','maestro','bin','maestro.bat'));
+    push(path.join(process.env.USERPROFILE,'OneDrive','Desktop','maestro','bin','maestro.bat'));
+    push(path.join(process.env.USERPROFILE,'Downloads','maestro-2.1.0','maestro','bin','maestro.bat'));
+  }
+  for(const c of candidates){
+    try{ if(fs.existsSync(c)) return c; }catch(_){ }
+  }
+  return '';
+};
+const runMaestro=(args,timeout=25000,requested='')=>new Promise(ok=>{
+  const cli=resolveMaestroCli(requested);
+  if(!cli)return ok({code:127,stdout:'',stderr:'Maestro CLI not found'});
+  const isWin=process.platform==='win32';
+  const useShell=isWin&&/\.(bat|cmd)$/i.test(cli);
+  const cmd=useShell?'cmd.exe':cli;
+  const cmdArgs=useShell?['/d','/q','/c',cli,...args]:args;
+  const ch=spawn(cmd,cmdArgs,{cwd:REPO,windowsHide:true,env:Object.assign({},process.env,{DEBUG:''})});
+  let out='',err='';const t=setTimeout(()=>{try{ch.kill('SIGKILL');}catch(_){}},timeout);
+  ch.stdout.on('data',d=>out+=d.toString());
+  ch.stderr.on('data',d=>err+=d.toString());
+  ch.on('close',code=>{clearTimeout(t);ok({code:code??0,stdout:out,stderr:err});});
+});
+const runMaestroHierarchyCompact=(deviceId,timeout=30000,requested='')=>{
+  if(!String(deviceId||'').trim()) return Promise.resolve({code:2,stdout:'',stderr:'Device id required'});
+  return runMaestro(['--device',String(deviceId).trim(),'hierarchy','--compact'],timeout,requested);
+};
 
 const startAdbScreenrecord=(deviceId,remoteFile)=>{
   // Start through adb client process; we can always terminate this process reliably from host.
@@ -75,20 +112,44 @@ const newestDir=(root)=>listDirsNewestFirst(root)[0]||null;
 const copyTree=(src,dst)=>{try{mkdir(dst);fs.cpSync(src,dst,{recursive:true,force:true});return true;}catch(_){return false;}};
 const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
 const listFilesRecursive=(root)=>{const out=[];const walk=(d)=>{for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);if(e.isDirectory())walk(p);else out.push(p);}};try{walk(root);}catch(_){}return out;};
+const sidecarPythonProbe=(exe)=>{
+  try{
+    if(!exe||!fs.existsSync(exe)) return false;
+    const code=[
+      'import os,struct,sys',
+      "os.environ['PATH']=r'C:\\EC-Apps\\EDIABAS\\BIN;'+os.environ.get('PATH','')",
+      'import pydiabas',
+      "print(struct.calcsize('P')*8)",
+    ].join(';');
+    const r=spawnSync(exe,['-c',code],{cwd:REPO,windowsHide:true,encoding:'utf8',timeout:15000});
+    if((r.status??1)!==0) return false;
+    return String(r.stdout||'').includes('32');
+  }catch(_){return false;}
+};
 const resolveSidecarPython=(requested)=>{
-  const fromReq=String(requested||'').trim();
-  if(fromReq&&fs.existsSync(fromReq)) return fromReq;
+  const candidates=[];
+  const push=(v)=>{const p=String(v||'').trim();if(!p)return;if(candidates.includes(p))return;candidates.push(p);};
 
-  const fromEnv=String(process.env.PYDIABAS_PYTHON32||'').trim();
-  if(fromEnv&&fs.existsSync(fromEnv)) return fromEnv;
+  push(requested);
+  push(process.env.PYDIABAS_PYTHON32);
 
   const localAppData=process.env.LOCALAPPDATA||'';
   if(localAppData){
     const versions=['313','312','311','310','39'];
-    for(const v of versions){
-      const p=path.join(localAppData,'Programs','Python',`Python${v}-32`,'python.exe');
-      if(fs.existsSync(p)) return p;
-    }
+    for(const v of versions) push(path.join(localAppData,'Programs','Python',`Python${v}-32`,'python.exe'));
+  }
+
+  const common=[
+    'C:/Python313-32/python.exe',
+    'C:/Python312-32/python.exe',
+    'C:/Python311-32/python.exe',
+    'C:/Python310-32/python.exe',
+    'C:/Python39-32/python.exe',
+  ];
+  common.forEach(push);
+
+  for(const c of candidates){
+    if(sidecarPythonProbe(c)) return c;
   }
 
   return '';
@@ -96,6 +157,42 @@ const resolveSidecarPython=(requested)=>{
 const copyFilesSince=(srcRoot,dstRoot,startMs,filterFn)=>{let n=0;const files=listFilesRecursive(srcRoot);for(const src of files){try{const st=fs.statSync(src);if(startMs&&st.mtimeMs<startMs)continue;if(filterFn&&!filterFn(src))continue;const rel=path.relative(srcRoot,src);const dst=path.join(dstRoot,rel);mkdir(path.dirname(dst));fs.copyFileSync(src,dst);n++;}catch(_){}}return n;};
 const parseMaestroDirTs=(dirPath)=>{try{const name=path.basename(dirPath);const m=name.match(/^(\d{4})-(\d{2})-(\d{2})_(\d{2})(\d{2})(\d{2})$/);if(!m)return 0;const d=new Date(Number(m[1]),Number(m[2])-1,Number(m[3]),Number(m[4]),Number(m[5]),Number(m[6]));return d.getTime()||0;}catch(_){return 0;}};
 const parseMaestroVideoTs=(filePath)=>{try{const n=path.basename(filePath);const m=n.match(/maestro_flow_flow_(\d+)_\d+\.(mp4|mkv|webm)$/i);return m?Number(m[1]):0;}catch(_){return 0;}};
+const normalizeToken=(v,dflt='')=>{const s=String(v||'').trim().toLowerCase();return s||dflt;};
+const inferSuiteRole=(suiteHint,roleHint,captureId)=>{
+  const capNorm=normalizeToken(captureId,'');
+  let suite=normalizeToken(suiteHint,'');
+  let role=normalizeToken(roleHint,'');
+  if(!suite){
+    if(capNorm.startsWith('g70_')||capNorm==='cde'||capNorm==='rse'||capNorm==='hu') suite='g70';
+    else if(capNorm.startsWith('idc23_')||capNorm.includes('_idc23_')||capNorm.includes('idc23')) suite='idc23';
+    else suite='idcevo';
+  }
+  if(!role){
+    if(capNorm.includes('cde')) role='cde';
+    else if(capNorm.includes('rse')) role='rse';
+    else if(capNorm.includes('hu')) role='hu';
+    else role=suite;
+  }
+  return {suite,role};
+};
+const resolveBundleDltPath=(runRoot,suite,role,preferred)=>{
+  const candidates=[];
+  const push=(v)=>{const p=String(v||'').trim();if(!p)return;if(candidates.includes(p))return;candidates.push(p);};
+  push(preferred);
+  if(runRoot){
+    if(suite==='g70' && ['cde','rse','hu'].includes(role)){
+      push(path.join(runRoot,role,'dlt',`${role}_capture.dlt`));
+    }
+    push(path.join(runRoot,'dlt',`${role}_capture.dlt`));
+    push(path.join(runRoot,'dlt',`${suite}_capture.dlt`));
+    push(path.join(runRoot,'dlt','idc23_capture.dlt'));
+    push(path.join(runRoot,'dlt','idcevo_capture.dlt'));
+  }
+  for(const p of candidates){
+    try{ if(fs.existsSync(p)) return p; }catch(_){ }
+  }
+  return candidates[0]||'';
+};
 const step=(name,r)=>({name,code:r.code??0,stdout:r.stdout||'',stderr:r.stderr||''});
 const outDir=(p,st,id)=>p.runDir?path.join(p.runDir,'backend',id):path.join(REPO,'artifacts','runs',st,'backend',id);
 const parseFirstDevice=(txt)=>{const lines=(txt||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean);for(const ln of lines){if(/^List of devices attached/i.test(ln))continue;const m=ln.match(/^(\S+)\s+device\s*(.*)$/);if(m){return{serial:m[1],details:m[2]||''};}}return null;};
@@ -120,9 +217,51 @@ const metadataTitle=(mdParts[0]&&mdParts[0]!=='null')?mdParts[0]:null;const meta
 const playing=(stateNum===3)||/STATE_PLAYING|\bPLAYING\b/i.test(raw)||/PLAYING/i.test(String(state||''));return{package:pkg,active,state,stateNum,playing,description:desc,queueTitle,queueSize,metadataDescription:md,metadataTitle,metadataArtist,raw};});
 const pickSession=(sessions,pkgs)=>{pkgs=(pkgs||[]).filter(Boolean);for(const p of pkgs){const hit=sessions.find(s=>s.package===p);if(hit)return hit;}return sessions.find(s=>s&&s.active===true)||null;};
 const extractXml=(txt)=>{const s=(txt||'').indexOf('<?xml');return s>=0?(txt||'').slice(s):'';};
-const parseUiRadio=(xml)=>{xml=xml||'';let station=(xml.match(/resource-id="TEST_TAG_HEADER"[\s\S]{0,1500}?text="([^"]+)"/m)||[])[1]||null;const icon=(xml.match(/icon_([a-z0-9_]+)_tuner/i)||[])[1]||null;let band=null;if(icon){if(icon.includes('fm'))band='FM';else if(icon.includes('am'))band='AM';else if(icon.includes('dab'))band='DAB';else band=icon.toUpperCase();}
+const parseMaestroCompactNodes=(txt)=>{
+  return String(txt||'').split(/\r?\n/).map(line=>{
+    const m=line.match(/^\d+,\d+,"(.*)",\d+$/);
+    if(!m)return null;
+    const attrs={};
+    for(const part of m[1].split(/;\s+/)){
+      const idx=part.indexOf('=');
+      if(idx<=0)continue;
+      const key=part.slice(0,idx).trim();
+      const value=part.slice(idx+1).trim();
+      attrs[key]=value;
+    }
+    if(!Object.keys(attrs).length)return null;
+    return attrs;
+  }).filter(Boolean);
+};
+const firstNodeText=(nodes,ids)=>{for(const id of ids){const hit=nodes.find(n=>n['resource-id']===id && String(n.text||'').trim());if(hit)return String(hit.text||'').trim();}return null;};
+const normalizeStationKey=(txt)=>{
+  const s=String(txt||'').toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim();
+  if(!s)return null;
+  return s.split(/\s+/).slice(0,2).join('');
+};
+const parseUiRadio=(xml,maestroCompact)=>{xml=xml||'';let station=(xml.match(/resource-id="TEST_TAG_HEADER"[\s\S]{0,1500}?text="([^"]+)"/m)||[])[1]||null;const icon=(xml.match(/icon_([a-z0-9_]+)_tuner/i)||[])[1]||null;let band=null;if(icon){if(icon.includes('fm'))band='FM';else if(icon.includes('am'))band='AM';else if(icon.includes('dab'))band='DAB';else band=icon.toUpperCase();}
 if(!station){const nodes=Array.from(xml.matchAll(/text="([^"]+)"[^>]*resource-id="TextAtom:dynamic_string\/[^"]+"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/g)).map(m=>({text:m[1],x1:parseInt(m[2],10),y1:parseInt(m[3],10),x2:parseInt(m[4],10),y2:parseInt(m[5],10)}));const cand=nodes.filter(n=>n.text&&n.text!=='Radio'&&n.y1>=280&&n.y1<=540&&((n.y2-n.y1)>=60||(n.x2-n.x1)>=200)).sort((a,b)=>a.y1-b.y1)[0];if(cand)station=cand.text;}
-return{station,band,icon};};
+  const compactNodes=parseMaestroCompactNodes(maestroCompact);
+  const sourceName=firstNodeText(compactNodes,['com.bmwgroup.apinext.mediaapp:id/source_name']);
+  const playlistTitle=firstNodeText(compactNodes,['com.bmwgroup.apinext.mediaapp:id/playlist_title']);
+  const particleStation=firstNodeText(compactNodes,['com.bmwgroup.apinext.mediaapp:id/line3_with_primary_icon']);
+  const particleSubtitle=firstNodeText(compactNodes,['com.bmwgroup.apinext.mediaapp:id/line2_particle']);
+  const homeWidgetSource=firstNodeText(compactNodes,['com.bmwgroup.idnext.launcher:id/text_line1']);
+  const homeWidgetSubtitle=firstNodeText(compactNodes,['com.bmwgroup.idnext.launcher:id/text_line3']);
+  const homeWidgetStation=firstNodeText(compactNodes,['com.bmwgroup.idnext.launcher:id/text_line4']);
+  const topBarStation=firstNodeText(compactNodes,['com.android.systemui:id/text']);
+  const statusBarStation=homeWidgetStation||particleStation||playlistTitle||station||topBarStation||null;
+  return{
+    station,band,icon,
+    sourceName,playlistTitle,
+    particleStation,particleSubtitle,
+    homeWidgetSource,homeWidgetSubtitle,homeWidgetStation,
+    topBarStation,statusBarStation,
+    stationKey:normalizeStationKey(statusBarStation||station),
+    topBarStationKey:normalizeStationKey(topBarStation),
+  };
+};
+const metadataReady=s=>!!(s&&(String(s.metadataTitle||'').trim().length||String(s.metadataArtist||'').trim().length));
 
 // --- core actions ---
 const inject=(dev,code)=>run(adbArgs(dev,['shell','cmd','car_service','inject-custom-input','-r','0',String(code)]));
@@ -132,31 +271,58 @@ async function radioCheck(p){
   const exp=p.packageName||DEFAULT_RADIO_PKG;
   const pkgs=(Array.isArray(p.expectedPackages)&&p.expectedPackages.length)?p.expectedPackages:[exp,...DEFAULT_SESSION_PKGS.filter(x=>x!==exp)];
   const dir=outDir(p,st,id);
+  const retryMetadataSeconds=Math.max(0,parseInt(p.retryMetadataSeconds!=null?p.retryMetadataSeconds:5,10)||0);
+  const retryMetadataIntervalMs=Math.max(250,parseInt(p.retryMetadataIntervalMs!=null?p.retryMetadataIntervalMs:1000,10)||1000);
   let detectedDevice=null;
   if(!dev){const d=await run(['devices','-l'],10000);detectedDevice=parseFirstDevice(d.stdout);if(detectedDevice&&detectedDevice.serial)dev=detectedDevice.serial;}
-  const a=await run(adbArgs(dev,['shell','dumpsys','audio']));
-  const u=await run(adbArgs(dev,['shell','am','get-current-user']));
-  const m=await run(adbArgs(dev,['shell','dumpsys','media_session']));
-  const x1=await run(adbArgs(dev,['exec-out','uiautomator','dump','/dev/tty']),12000);
-  let xml=extractXml((x1.stdout||'')+(x1.stderr?`\n${x1.stderr}`:''));
-  let uiDumpMethod='exec-out:/dev/tty';
-  if(!xml){
-    const x2=await run(adbArgs(dev,['shell','uiautomator','dump','/sdcard/window_dump.xml']),12000);
-    const x3=await run(adbArgs(dev,['shell','cat','/sdcard/window_dump.xml']),12000);
-    xml=extractXml((x3.stdout||'')+(x2.stdout?`\n${x2.stdout}`:'')+(x2.stderr?`\n${x2.stderr}`:''));
-    uiDumpMethod='shell:/sdcard/window_dump.xml';
+  let a=null;let u=null;let m=null;let xml='';let maestroCompact='';let uiDumpMethod='exec-out:/dev/tty';let uid=null;let s=null;let metadataRetries=0;
+  const maestroUiRequested=String(p.maestroUi||'').toLowerCase()==='true'||p.maestroUi===true;
+  const collect=async()=>{
+    a=await run(adbArgs(dev,['shell','dumpsys','audio']));
+    u=await run(adbArgs(dev,['shell','am','get-current-user']));
+    m=await run(adbArgs(dev,['shell','dumpsys','media_session']));
+    const x1=await run(adbArgs(dev,['exec-out','uiautomator','dump','/dev/tty']),12000);
+    xml=extractXml((x1.stdout||'')+(x1.stderr?`\n${x1.stderr}`:''));
+    uiDumpMethod='exec-out:/dev/tty';
+    if(!xml){
+      const x2=await run(adbArgs(dev,['shell','uiautomator','dump','/sdcard/window_dump.xml']),12000);
+      const x3=await run(adbArgs(dev,['shell','cat','/sdcard/window_dump.xml']),12000);
+      xml=extractXml((x3.stdout||'')+(x2.stdout?`\n${x2.stdout}`:'')+(x2.stderr?`\n${x2.stderr}`:''));
+      uiDumpMethod='shell:/sdcard/window_dump.xml';
+    }
+    if(maestroUiRequested||!xml){
+      const mh=await runMaestroHierarchyCompact(dev,30000,p.maestroCmd||'');
+      maestroCompact=(mh.stdout||'').trim();
+      if(maestroCompact){
+        uiDumpMethod=xml?`${uiDumpMethod};maestro:compact`:'maestro:compact';
+      }else if(mh.stderr){
+        maestroCompact=`[stderr]\n${mh.stderr}`;
+      }
+    }else{
+      maestroCompact='';
+    }
+    uid=userIdFrom(u.stdout);
+    s=pickSession(parseSessions(m.stdout,uid),pkgs);
+  };
+  await collect();
+  if(retryMetadataSeconds>0&&s&&s.playing===true&&!metadataReady(s)){
+    const deadline=Date.now()+(retryMetadataSeconds*1000);
+    while(Date.now()<deadline&&s&&s.playing===true&&!metadataReady(s)){
+      metadataRetries+=1;
+      await sleep(retryMetadataIntervalMs);
+      await collect();
+    }
   }
-  const ui=parseUiRadio(xml);
-  write(dir,'dumpsys_audio.txt',a.stdout+(a.stderr?`\n\n[stderr]\n${a.stderr}`:''));write(dir,'current_user.txt',u.stdout+(u.stderr?`\n\n[stderr]\n${u.stderr}`:''));write(dir,'dumpsys_media_session.txt',m.stdout+(m.stderr?`\n\n[stderr]\n${m.stderr}`:''));write(dir,'ui_dump_debug.txt',`method=${uiDumpMethod}\nxml_found=${xml? 'true':'false'}\n`);if(xml)write(dir,'ui_dump.xml',xml);
+  const ui=parseUiRadio(xml,maestroCompact);
+  write(dir,'dumpsys_audio.txt',a.stdout+(a.stderr?`\n\n[stderr]\n${a.stderr}`:''));write(dir,'current_user.txt',u.stdout+(u.stderr?`\n\n[stderr]\n${u.stderr}`:''));write(dir,'dumpsys_media_session.txt',m.stdout+(m.stderr?`\n\n[stderr]\n${m.stderr}`:''));write(dir,'ui_dump_debug.txt',`method=${uiDumpMethod}\nxml_found=${xml? 'true':'false'}\nmaestro_requested=${maestroUiRequested?'true':'false'}\nmaestro_found=${maestroCompact&&!(String(maestroCompact).startsWith('[stderr]'))? 'true':'false'}\nmetadata_retries=${metadataRetries}\n`);if(xml)write(dir,'ui_dump.xml',xml);if(maestroCompact&&!(String(maestroCompact).startsWith('[stderr]')))write(dir,'maestro_hierarchy_compact.txt',maestroCompact);
   const ap=audioPkgs(a.stdout);const audioFocus=ap.includes(exp);
-  const uid=userIdFrom(u.stdout);const sessions=parseSessions(m.stdout,uid);const s=pickSession(sessions,pkgs);
   const mediaActive=!!(s&&s.active===true);const mediaPlaying=!!(s&&s.playing===true);
   const ok=!!(audioFocus&&mediaActive&&mediaPlaying);
   const verdict={ok,deviceId:dev,deviceDetected:detectedDevice,stamp:st,expectedPackage:exp,expectedPackages:pkgs,audio:{audioFocus,audioPackages:ap},ui,uiDumpMethod,userId:uid,
     media:s?{
       package:s.package,active:s.active,state:s.state,stateNum:s.stateNum,playing:mediaPlaying,description:s.description,
       queueTitle:s.queueTitle,queueSize:s.queueSize,metadataDescription:s.metadataDescription,metadataTitle:s.metadataTitle,metadataArtist:s.metadataArtist
-    }:{package:null,active:null,state:null,stateNum:null,playing:false,description:[],queueTitle:null,queueSize:null,metadataDescription:null,metadataTitle:null,metadataArtist:null},outDir:dir};
+    }:{package:null,active:null,state:null,stateNum:null,playing:false,description:[],queueTitle:null,queueSize:null,metadataDescription:null,metadataTitle:null,metadataArtist:null},metadataRetries,outDir:dir};
   write(dir,'backend_verdict.json',JSON.stringify(verdict,null,2));latestRadioVerdict=verdict;auditPush({type:'radio_check',ok:verdict.ok===true,deviceId:dev||'',deviceDetails:detectedDevice?detectedDevice.details||'':'',testId:id||'',expectedPackage:exp||'',media:verdict.media?{package:verdict.media.package,playing:verdict.media.playing,state:verdict.media.state,metadataTitle:verdict.media.metadataTitle,metadataArtist:verdict.media.metadataArtist,queueTitle:verdict.media.queueTitle}:null,ui:verdict.ui?{station:verdict.ui.station,band:verdict.ui.band}:null,audio:verdict.audio?{audioFocus:verdict.audio.audioFocus}:null,outDir:dir});return verdict;
 }
 
@@ -307,6 +473,18 @@ async function ediabasStrPrep(p){
     await push(`adb shell ${cmd}`,['shell',cmd]);
   }
 
+  if(reboot){
+    // Re-establish the Maestro Android driver forward after reboot so local gRPC
+    // reconnect does not die on localhost:7001 once control returns to the flow.
+    const forwardList=await run(adbArgs(dev,['forward','--list']),Math.max(10000,timeoutMs));
+    steps.push(step('adb forward --list',forwardList));
+    const currentForwards=String((forwardList&&forwardList.stdout)||'');
+    const desiredForward=`${dev} tcp:7001 tcp:7001`;
+    if(!currentForwards.includes(desiredForward)){
+      await push('adb forward tcp:7001 tcp:7001',['forward','tcp:7001','tcp:7001'],Math.max(10000,timeoutMs));
+    }
+  }
+
   const ok=steps.every(s=>(s.code??0)===0);
   const artifactFile='ediabas_str_prep.json';
   const result={ok,kind:'ediabas_str_prep',stamp:st,testId:id,outDir:dir,artifactFile,steps,request:p};
@@ -323,6 +501,9 @@ async function ensureDeviceUser(p){
 
   const dev=String(p.deviceId||'').trim();
   const strict=asBool(p.strict,false);
+  const settleRaw=parseInt(String(p.switchSettleMs==null?'':p.switchSettleMs),10);
+  const settleEnv=parseInt(String(process.env.MAESTRO_USER_SWITCH_SETTLE_MS||''),10);
+  const switchSettleMs=Math.max(2000,!Number.isNaN(settleRaw)?settleRaw:(!Number.isNaN(settleEnv)?settleEnv:8000));
   const targetUserName=String(p.targetUserName||'').trim();
   let targetUserId=parseInt(String(p.targetUserId==null?'':p.targetUserId),10);
   if(Number.isNaN(targetUserId)) targetUserId=-1;
@@ -348,7 +529,7 @@ async function ensureDeviceUser(p){
 
   if(targetResolved && currentUserId>=0 && currentUserId!==targetUserId){
     await push(`adb shell am switch-user ${targetUserId}`,['shell','am','switch-user',String(targetUserId)],30000);
-    await sleep(2000);
+    await sleep(switchSettleMs);
   }
 
   const verify=await push('adb shell am get-current-user (verify)',['shell','am','get-current-user']);
@@ -376,6 +557,7 @@ async function ensureDeviceUser(p){
     targetSpecified,
     targetResolved,
     switched,
+    switchSettleMs,
     users,
     steps,
     request:p
@@ -421,16 +603,15 @@ http.createServer(async(req,res)=>{
       const captureId=b.captureId||'studio';
       const caseId=b.caseId||'STUDIO_CASE';
       const ts=b.timestamp||stamp();
-
-      const capNorm=String(captureId||'studio').toLowerCase();
-      const suite=(capNorm.startsWith('g70_')||capNorm==='cde'||capNorm==='rse'||capNorm==='hu')?'g70':'idcevo';
-      const role = capNorm.includes('cde') ? 'cde' : (capNorm.includes('rse') ? 'rse' : (capNorm.includes('hu') ? 'hu' : 'idcevo'));
+      const inferred=inferSuiteRole(b.suite||b.platform||b.system,b.role,captureId);
+      const suite=inferred.suite;
+      const role=inferred.role;
 
       const runRoot=b.runRoot||path.join(ARTIFACTS_DIR,'runs',suite,caseId,ts);
       const output=b.outputFile||(
-        suite==='g70'
+        suite==='g70' && ['cde','rse','hu'].includes(role)
           ? path.join(runRoot, role, 'dlt', `${role}_capture.dlt`)
-          : path.join(runRoot, 'dlt', 'idcevo_capture.dlt')
+          : path.join(runRoot, 'dlt', `${role}_capture.dlt`)
       );
       mkdir(path.dirname(output));
 
@@ -452,12 +633,12 @@ http.createServer(async(req,res)=>{
       // Fallback video recording on device (stopped in /dlt/stop)
       const screenPid=startAdbScreenrecord(deviceId,remoteVideo);
 
-      dltCaptureCtx[captureId]={caseId,timestamp:ts,runRoot,outputFile:output,baselineLatest,startMs:Date.now(),deviceId,screenPid,remoteVideo,screenshotsDir,videoDir};
+      dltCaptureCtx[captureId]={caseId,timestamp:ts,runRoot,outputFile:output,baselineLatest,startMs:Date.now(),deviceId,screenPid,remoteVideo,screenshotsDir,videoDir,suite,role};
 
       const r=await runNodeScript(DLT_SCRIPT,['start',ip,port,output,captureId]);
       const ok=(r.code===0);
-      auditPush({type:'dlt_start',ok,captureId,ip,port,output,runRoot,caseId,timestamp:ts,deviceId,screenPid});
-      return jres(res,ok?200:500,{ok,captureId,ip,port,output,runRoot,caseId,timestamp:ts,deviceId,screenPid,stdout:r.stdout,stderr:r.stderr,code:r.code});
+      auditPush({type:'dlt_start',ok,captureId,ip,port,output,runRoot,caseId,timestamp:ts,deviceId,screenPid,suite,role});
+      return jres(res,ok?200:500,{ok,captureId,ip,port,output,runRoot,caseId,timestamp:ts,deviceId,screenPid,suite,role,stdout:r.stdout,stderr:r.stderr,code:r.code});
     }
 
     if(req.method==='POST'&&p==='/dlt/stop'){
@@ -511,70 +692,79 @@ http.createServer(async(req,res)=>{
       const ctx=dltCaptureCtx[captureId]||{};
       const caseId=b.caseId||ctx.caseId||'STUDIO_CASE';
       const ts=b.timestamp||ctx.timestamp||stamp();
-      const runRoot=b.runRoot||ctx.runRoot||path.join(ARTIFACTS_DIR,'runs','idcevo',caseId,ts);
+      const inferred=inferSuiteRole(b.suite||b.platform||b.system||ctx.suite,b.role||ctx.role,captureId);
+      const suite=inferred.suite;
+      const role=inferred.role;
+      const runRoot=b.runRoot||ctx.runRoot||path.join(ARTIFACTS_DIR,'runs',suite,caseId,ts);
       const studioOut=path.join(runRoot,'studio');
       const videoOut=path.join(runRoot,'video');
       const screenshotsOut=path.join(runRoot,'screenshots');
       const maestroRoot=path.join(process.env.USERPROFILE||'', '.maestro','tests');
-      const dirs=maestroRoot?listDirsNewestFirst(maestroRoot):[];
       const toleranceMs=3000;
       const startMs=ctx.startMs||0;
       const stopMs=ctx.stopMs||Date.now();
-      // Prefer run directory in this run time-window.
-      const inWindow=dirs
-        .map(d=>({d,ts:parseMaestroDirTs(d)}))
-        .filter(x=>x.ts>=(startMs-toleranceMs) && x.ts<=(stopMs+20000) && x.ts>0)
-        .sort((a,b)=>a.ts-b.ts);
-      const latest=(inWindow[0]&&inWindow[0].d) || dirs[0] || null;
-      let copied=false,videoCount=0,screenshotCount=0;
+      const pickLatestStudioDir=()=>{
+        const dirs=maestroRoot?listDirsNewestFirst(maestroRoot):[];
+        const inWindow=dirs
+          .map(d=>({d,ts:parseMaestroDirTs(d)}))
+          .filter(x=>x.ts>=(startMs-toleranceMs) && x.ts<=(stopMs+20000) && x.ts>0)
+          .sort((a,b)=>b.ts-a.ts);
+        return (inWindow[0]&&inWindow[0].d) || dirs[0] || null;
+      };
+      let latest=pickLatestStudioDir();
+      let copied=false,videoCount=0,screenshotCount=0,studioVideoCount=0,fallbackVideoCount=0;
       if(latest){
-        // Copy only files modified after dlt start (prevents historical bleed).
-        const copiedFiles=copyFilesSince(latest,studioOut,startMs-toleranceMs,null);
-        copied=copiedFiles>0;
+        // Canonical Studio video folder (current-run files only from Maestro Studio output).
+        for(let attempt=0;attempt<8;attempt++){
+          try{
+            latest=pickLatestStudioDir();
+            if(latest){
+              const copiedFiles=copyFilesSince(latest,studioOut,startMs-toleranceMs,null);
+              copied=copied || copiedFiles>0;
+            }
 
-        // Canonical video folder (current-run files only from Studio)
-        const srcVideos=path.join(latest,'videos');
-        if(fs.existsSync(srcVideos)){
-          // Wait briefly for Studio to finalize video file(s)
-          for(let attempt=0;attempt<8;attempt++){
-            try{
-              const vids=listFilesRecursive(srcVideos).filter(p=>/\.(mp4|mkv|webm)$/i.test(p));
-              let idx=1;
-              for(const v of vids){
+            const existingStudioVideos=listFilesRecursive(videoOut).filter(v=>/^video_studio_\d+\.(mp4|mkv|webm)$/i.test(path.basename(v)));
+            for(const file of existingStudioVideos){
+              try{fs.rmSync(file,{force:true});}catch(_){ }
+            }
+
+            if(!latest){
+              await sleep(1000);
+              continue;
+            }
+
+            const vids=listFilesRecursive(latest).filter(p=>/\.(mp4|mkv|webm)$/i.test(p));
+            let idx=1;
+            for(const v of vids){
+              const st=fs.statSync(v);
+              const vTs=parseMaestroVideoTs(v)||st.mtimeMs;
+              const isCurrent=vTs>=(startMs-toleranceMs) && vTs<=(stopMs+20000);
+              if(!isCurrent) continue;
+              const ext=path.extname(v).toLowerCase()||'.mp4';
+              const dst=path.join(videoOut,`video_studio_${String(idx).padStart(3,'0')}${ext}`);
+              mkdir(path.dirname(dst));
+              fs.copyFileSync(v,dst);
+              idx++;
+            }
+
+            const studioCopied=countFiles(videoOut,/video_studio_\d+\.(mp4|mkv|webm)$/i);
+            if(studioCopied===0 && vids.length){
+              const ranked=vids.map(v=>{
                 const st=fs.statSync(v);
-                const vTs=parseMaestroVideoTs(v);
-                const isCurrent=(st.mtimeMs>=(startMs-toleranceMs)) || (vTs>=(startMs-toleranceMs));
-                if(!isCurrent) continue;
-                const ext=path.extname(v).toLowerCase()||'.mp4';
-                const dst=path.join(videoOut,`video_studio_${String(idx).padStart(3,'0')}${ext}`);
+                const vTs=parseMaestroVideoTs(v)||st.mtimeMs;
+                return {v,score:Math.abs(vTs-startMs),ts:vTs};
+              }).sort((a,b)=>a.score-b.score);
+              const best=ranked.find(x=>x.ts>=(startMs-toleranceMs) && x.ts<=(stopMs+20000)) || ranked[0];
+              if(best){
+                const ext=path.extname(best.v).toLowerCase()||'.mp4';
+                const dst=path.join(videoOut,'video_studio_001'+ext);
                 mkdir(path.dirname(dst));
-                fs.copyFileSync(v,dst);
-                idx++;
+                fs.copyFileSync(best.v,dst);
               }
-
-              // Hard fallback for Studio video selection when timing metadata is weird:
-              // pick newest studio video close to run start and copy as canonical studio clip.
-              const studioCopied=countFiles(videoOut,/video_studio_\d+\.(mp4|mkv|webm)$/i);
-              if(studioCopied===0 && vids.length){
-                const ranked=vids.map(v=>{
-                  const st=fs.statSync(v);
-                  const vTs=parseMaestroVideoTs(v)||st.mtimeMs;
-                  return {v,score:Math.abs(vTs-startMs),ts:vTs,mtime:st.mtimeMs};
-                }).sort((a,b)=>a.score-b.score);
-                const best=ranked[0];
-                if(best){
-                  const ext=path.extname(best.v).toLowerCase()||'.mp4';
-                  const dst=path.join(videoOut,`video_studio_001${ext}`);
-                  mkdir(path.dirname(dst));
-                  fs.copyFileSync(best.v,dst);
-                }
-              }
-            }catch(_){ }
-            if(countFiles(videoOut,/video_studio_\d+\.(mp4|mkv|webm)$/i)>0) break;
-            await sleep(1000);
-          }
-          // cleanup duplicate video tree from studio/ (keep canonical copy in /video)
-          try{fs.rmSync(path.join(studioOut,'videos'),{recursive:true,force:true});}catch(_){}
+            }
+          }catch(_){ }
+          if(countFiles(videoOut,/video_studio_\d+\.(mp4|mkv|webm)$/i)>0) break;
+          await sleep(1000);
         }
 
         // Canonical screenshots folder (from Studio artifacts)
@@ -582,7 +772,6 @@ http.createServer(async(req,res)=>{
       }
       // Final video normalization:
       // - Drop studio video files clearly older than run start
-      // - Prefer fallback when studio candidate looks stale/tiny
       try{
         const vids=listFilesRecursive(videoOut).filter(v=>/\.(mp4|mkv|webm)$/i.test(v));
         for(const v of vids){
@@ -594,41 +783,34 @@ http.createServer(async(req,res)=>{
             }
           }
         }
-
-        const remaining=listFilesRecursive(videoOut).filter(v=>/\.(mp4|mkv|webm)$/i.test(v));
-        const studio=remaining.find(v=>path.basename(v).toLowerCase().startsWith('video_studio_'));
-        const fallback=remaining.find(v=>path.basename(v).toLowerCase().startsWith('video_fallback_adb'));
-        if(studio && fallback){
-          const s=fs.statSync(studio), f=fs.statSync(fallback);
-          // If studio clip is too small and fallback has meaningful size, prefer fallback only
-          if(s.size < 900000 && f.size > s.size*2){
-            try{fs.rmSync(studio,{force:true});}catch(_){ }
-          }
-        }
       }catch(_){ }
 
-      // Final counts (include fallback ADB evidence already written in /dlt/start and /dlt/stop)
-      videoCount=countFiles(videoOut,/\.(mp4|mkv|webm)$/i);
+      // Final counts. Official Studio video must come from Maestro Studio output under %USERPROFILE%\.maestro\tests.
+      studioVideoCount=countFiles(videoOut,/video_studio_\d+\.(mp4|mkv|webm)$/i);
+      fallbackVideoCount=countFiles(videoOut,/video_fallback_adb\.(mp4|mkv|webm)$/i);
+      videoCount=studioVideoCount;
       screenshotCount=countFiles(screenshotsOut,/\.(png|jpg|jpeg|webp)$/i);
-      const dltPath=ctx.outputFile||'';
+      const dltPath=resolveBundleDltPath(runRoot,suite,role,ctx.outputFile||'');
       const dltBytes=(dltPath&&fs.existsSync(dltPath))?fs.statSync(dltPath).size:0;
       const checks={
         studioArtifactsCopied:copied===true,
         dltCaptured:dltBytes>0,
-        videoCaptured:videoCount>0,
+        videoCaptured:studioVideoCount>0,
+        fallbackVideoCaptured:fallbackVideoCount>0,
         screenshotsCaptured:screenshotCount>0
       };
       const verdict=(checks.dltCaptured&&checks.videoCaptured&&checks.screenshotsCaptured)?'PASS':'PARTIAL';
       const analysis=[
         `DLT ${checks.dltCaptured?'captured':'missing/empty'} (${dltBytes} bytes)`,
         `Studio artifacts ${checks.studioArtifactsCopied?'copied':'not copied'}`,
-        `Video ${checks.videoCaptured?`captured (${videoCount} file(s))`:'not found'}`,
+        `Studio video ${checks.videoCaptured?`captured (${studioVideoCount} file(s))`:'not found'}`,
+        `Fallback video ${checks.fallbackVideoCaptured?`captured (${fallbackVideoCount} file(s))`:'not captured'}`,
         `Screenshots ${checks.screenshotsCaptured?`captured (${screenshotCount} file(s))`:'not found'}`
       ];
-      const resp={ok:!!latest,caseId,timestamp:ts,captureId,runRoot,source:latest||'',studioOut,videoOut,screenshotsOut,videoCount,screenshotCount,copied,dltFile:dltPath,dltBytes,checks,verdict,analysis};
+      const resp={ok:!!latest,caseId,timestamp:ts,captureId,runRoot,source:latest||'',suite,role,studioOut,videoOut,screenshotsOut,videoCount,studioVideoCount,fallbackVideoCount,screenshotCount,copied,dltFile:dltPath,dltBytes,checks,verdict,analysis};
       const summaryPath=path.join(runRoot,'run-summary.json');
       try{mkdir(runRoot);fs.writeFileSync(summaryPath,JSON.stringify(resp,null,2),'utf8');}catch(_){}
-      auditPush({type:'bundle_studio',ok:resp.ok===true,caseId,captureId,runRoot,source:latest||'',videoCount,dltBytes,verdict});
+      auditPush({type:'bundle_studio',ok:resp.ok===true,caseId,captureId,runRoot,source:latest||'',suite,role,videoCount:studioVideoCount,fallbackVideoCount,dltBytes,verdict});
       return jres(res,resp.ok?200:404,Object.assign({},resp,{summaryPath}));
     }
 

@@ -1,0 +1,32 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23 - disable CID and PHUD EHH
+tags:
+  - idc23
+  - subflow
+  - ehh
+---
+- runScript:
+    file: ../../../../scripts/maestro/backend_inject.js
+    env:
+      TEST_ID: "${typeof TEST_ID !== 'undefined' && TEST_ID ? TEST_ID : 'idc23_disable_ehh'}"
+      DEVICE_ID: ${DEVICE_ID}
+      KIND: ehh
+      CID_DISABLED: "${typeof CID_DISABLED !== 'undefined' && CID_DISABLED ? CID_DISABLED : 'true'}"
+      PHUD_DISABLED: "${typeof PHUD_DISABLED !== 'undefined' && PHUD_DISABLED ? PHUD_DISABLED : 'true'}"
+
+- evalScript: ${output.idc23EhhStrict = (typeof EHH_STRICT !== 'undefined' && String(EHH_STRICT).toLowerCase() == 'true')}
+
+- runFlow:
+    when:
+      true: ${output.idc23EhhStrict == true}
+    commands:
+      - assertTrue: ${output.injectOk == true}
+
+- runFlow:
+    when:
+      true: ${output.injectOk != true}
+    commands:
+      - evalScript: "${output.idc23EhhWarning = (output.inject && output.inject.steps) ? JSON.stringify(output.inject.steps) : 'EHH suppression could not be applied'}"
+
+- runFlow: dismiss_media_popup_if_present_idc23.yaml

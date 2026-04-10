@@ -1,0 +1,94 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23 - Set radio info toggle state
+tags:
+  - idc23
+  - subflow
+  - radio
+  - settings
+---
+- assertVisible:
+    text: "Radio info"
+
+- evalScript: "${output.idc23RadioInfoTargetOn = !(typeof RADIO_INFO_ENABLED !== 'undefined' && String(RADIO_INFO_ENABLED).toLowerCase() == 'false'); output.idc23RadioInfoAssertState = !(typeof RADIO_INFO_STATE_ASSERT !== 'undefined' && String(RADIO_INFO_STATE_ASSERT).toLowerCase() == 'false'); output.idc23RadioInfoDone = false; output.idc23RadioInfoAttempt = 0;}"
+
+- repeat:
+    times: 4
+    while:
+      true: ${output.idc23RadioInfoDone != true}
+    commands:
+      - evalScript: ${output.idc23RadioInfoCurrentOn = false}
+
+      - runFlow:
+          when:
+            visible:
+              id: com.bmwgroup.apinext.tunermediaservice:id/traffic_information_toggle
+              checked: true
+          commands:
+            - evalScript: ${output.idc23RadioInfoCurrentOn = true}
+
+      - runFlow:
+          when:
+            visible:
+              id: com.bmwgroup.apinext.tunermediaservice:id/item_checkBox
+              checked: true
+          commands:
+            - evalScript: ${output.idc23RadioInfoCurrentOn = true}
+
+      - runFlow:
+          when:
+            true: ${output.idc23RadioInfoCurrentOn == output.idc23RadioInfoTargetOn}
+          commands:
+            - evalScript: ${output.idc23RadioInfoDone = true}
+
+      - runFlow:
+          when:
+            true: ${output.idc23RadioInfoDone != true}
+          commands:
+            - tapOn:
+                id: com.bmwgroup.apinext.tunermediaservice:id/traffic_information_toggle
+                optional: true
+            - tapOn:
+                id: com.bmwgroup.apinext.tunermediaservice:id/item_checkBox
+                optional: true
+            - tapOn:
+                id: com.bmwgroup.apinext.tunermediaservice:id/button_icon
+                optional: true
+            - tapOn:
+                text: "Radio info"
+                optional: true
+            - waitForAnimationToEnd
+
+      - runFlow:
+          when:
+            true: ${output.idc23RadioInfoDone != true && output.idc23RadioInfoAttempt >= 1}
+          commands:
+            - tapOn:
+                point: "65%,34%"
+                optional: true
+            - waitForAnimationToEnd
+
+      - evalScript: ${output.idc23RadioInfoAttempt = output.idc23RadioInfoAttempt + 1}
+
+- runFlow:
+    when:
+      true: ${output.idc23RadioInfoAssertState == true && output.idc23RadioInfoTargetOn == true}
+    commands:
+      - assertVisible:
+          id: com.bmwgroup.apinext.tunermediaservice:id/traffic_information_toggle
+          checked: true
+
+- runFlow:
+    when:
+      true: ${output.idc23RadioInfoAssertState == true && output.idc23RadioInfoTargetOn != true}
+    commands:
+      - assertNotVisible:
+          id: com.bmwgroup.apinext.tunermediaservice:id/traffic_information_toggle
+          checked: true
+
+- runFlow:
+    when:
+      true: ${output.idc23RadioInfoAssertState != true}
+    commands:
+      - assertVisible:
+          id: com.bmwgroup.apinext.tunermediaservice:id/traffic_information_toggle

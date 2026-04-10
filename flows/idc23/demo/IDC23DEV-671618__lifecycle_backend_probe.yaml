@@ -1,0 +1,37 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23DEV-671618 - lifecycle backend probe (STR)
+tags:
+  - demo
+  - idc23
+  - probe
+  - lifecycle
+---
+- evalScript: "${output.testId = 'IDC23DEV-671618-probe'}"
+- runFlow:
+    file: ../../subflows/ediabas_str_sidecar_backend.yaml
+    env:
+      TEST_ID: ABPI_671618_probe_str
+      STR_SECONDS: "20"
+      SETTLE_SECONDS: "5"
+      TIMEOUT_SECONDS: "120"
+      RETRIES: "1"
+      ECU: IPB_APP1
+      JOB: STEUERN_ROUTINE
+      ARGPAD: ARG;ZUSTAND_FAHRZEUG;STR;0x07
+      ARGWOHNEN: ARG;ZUSTAND_FAHRZEUG;STR;0x05
+      ARGPARKING: ARG;ZUSTAND_FAHRZEUG;STR;0x01
+      WAIT_AFTER_PAD_INITIAL_SECONDS: "0"
+      WAIT_AFTER_WOHNEN_ENTER_SECONDS: "10"
+      WAIT_AFTER_PARKING_COMMAND_SECONDS: "0"
+      WAIT_AFTER_WOHNEN_RETURN_SECONDS: "20"
+      WAIT_AFTER_PAD_RETURN_SECONDS: "20"
+      SKIP_INITIAL_PAD: "true"
+      PRE1_ECU: IDCEVO25
+      PRE1_JOB: STEUERN_ROUTINE
+      PRE1_ARG: ARG;DISABLE_POSTPONE_SHUTDOWN;STR;0x01
+      PRE1_WAIT_SECONDS: "20"
+      PRE2_ECU: IPB_APP2
+      PRE2_JOB: STEUERN_ROUTINE
+      PRE2_ARG: ARG;TEILNETZ_MASTER;STR;00000000;0000
+      PRE2_WAIT_SECONDS: "20"

@@ -8,9 +8,25 @@ tags:
 ---
 # Step 1: Go Home (touch + key fallback)
 - pressKey: home
-- tapOn:
-    id: IconicBar.Det.Home
-    optional: true
+- runFlow:
+    when:
+      visible:
+        id: "com.bmwgroup.idnext.overlay:id/homeIcon"
+    commands:
+      - tapOn:
+          id: "com.bmwgroup.idnext.overlay:id/homeIcon"
+- runFlow:
+    when:
+      notVisible:
+        id: "com.bmwgroup.idnext.overlay:id/homeIcon"
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: IconicBar.Det.Home
+          commands:
+            - tapOn:
+                id: IconicBar.Det.Home
 
 # Step 2: Tap Media DET (touch, then SWAG fallback via host control server)
 - runFlow: ../subflows/tap_media_det.yaml

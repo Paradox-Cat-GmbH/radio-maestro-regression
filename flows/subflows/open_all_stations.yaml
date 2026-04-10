@@ -5,10 +5,129 @@ tags:
   - subflow
   - radio
 ---
+- runFlow: ../idc23/subflows/common/dismiss_media_popup_if_present_idc23.yaml
 - tapOn: "All stations"
+- waitForAnimationToEnd
+- evalScript: ${output.allStationsOpened = false}
 
+# IDC23 exposes Android resource IDs; older packs still use the legacy Studio label.
 - extendedWaitUntil:
     visible:
-      id: "ListImageComponent ImageRightIcon"
+      id: "com.bmwgroup.apinext.mediaapp:id/item_arrow"
       index: 0
     timeout: 20000
+    optional: true
+
+- runFlow:
+    when:
+      visible:
+        id: "com.bmwgroup.apinext.mediaapp:id/item_arrow"
+        index: 0
+    commands:
+      - evalScript: ${output.allStationsOpened = true}
+
+- runFlow:
+    when:
+      true: ${output.allStationsOpened != true}
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "com.bmwgroup.apinext.mediaapp:id/cl_one_line_list"
+            index: 0
+          timeout: 5000
+          optional: true
+      - runFlow:
+          when:
+            visible:
+              id: "com.bmwgroup.apinext.mediaapp:id/cl_one_line_list"
+              index: 0
+          commands:
+            - evalScript: ${output.allStationsOpened = true}
+
+- runFlow:
+    when:
+      true: ${output.allStationsOpened != true}
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "ListImageComponent ImageRightIcon"
+            index: 0
+          timeout: 5000
+          optional: true
+      - runFlow:
+          when:
+            visible:
+              id: "ListImageComponent ImageRightIcon"
+              index: 0
+          commands:
+            - evalScript: ${output.allStationsOpened = true}
+
+# IDC23 can land on the player/fullscreen All stations page. Exit via the left arrow and re-check rows.
+- runFlow:
+    when:
+      true: ${output.allStationsOpened != true}
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "com.bmwgroup.apinext.mediaapp:id/back_arrow"
+          commands:
+            - tapOn:
+                id: "com.bmwgroup.apinext.mediaapp:id/back_arrow"
+            - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      true: ${output.allStationsOpened != true}
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "com.bmwgroup.apinext.mediaapp:id/cl_one_line_list"
+            index: 0
+          timeout: 5000
+          optional: true
+      - runFlow:
+          when:
+            visible:
+              id: "com.bmwgroup.apinext.mediaapp:id/cl_one_line_list"
+              index: 0
+          commands:
+            - evalScript: ${output.allStationsOpened = true}
+
+- runFlow:
+    when:
+      true: ${output.allStationsOpened != true}
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "com.bmwgroup.apinext.mediaapp:id/item_arrow"
+            index: 0
+          timeout: 3000
+          optional: true
+      - runFlow:
+          when:
+            visible:
+              id: "com.bmwgroup.apinext.mediaapp:id/item_arrow"
+              index: 0
+          commands:
+            - evalScript: ${output.allStationsOpened = true}
+
+- runFlow:
+    when:
+      true: ${output.allStationsOpened != true}
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "ListImageComponent ImageRightIcon"
+            index: 0
+          timeout: 3000
+          optional: true
+      - runFlow:
+          when:
+            visible:
+              id: "ListImageComponent ImageRightIcon"
+              index: 0
+          commands:
+            - evalScript: ${output.allStationsOpened = true}
+
+- assertTrue: ${output.allStationsOpened == true}

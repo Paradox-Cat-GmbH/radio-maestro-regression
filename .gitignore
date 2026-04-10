@@ -9,3 +9,8 @@ __pycache__/
 .pytest_cache/
 *.pyc
 pydiabas-1.2.0/
+START.png
+STOP.png
+TMS_PRT_TestScenarios.pdf
+scripts/.dlt/
+samples/

@@ -1,0 +1,10 @@
+appId: com.bmwgroup.idnext.launcher
+jsEngine: graaljs
+name: IDC23DEV-669786 - AM presets select station via touch and skip
+tags:
+  - demo
+  - idc23
+  - prt
+---
+- evalScript: "${output.testId = 'IDC23DEV-669786'}"
+- runFlow: ../testcases/ABPI-669786/idc23.yaml

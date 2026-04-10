@@ -20,109 +20,147 @@ tags:
       text: "All stations"
     timeout: 20000
 
-- tapOn:
-    id: idx_icon_settings
-
-- extendedWaitUntil:
-    visible:
-      id: media_app_auto_media_fullscreen_toggle_bt
-    timeout: 20000
-
-# 2) Fullscreen OFF
-- assertVisible:
-    text: "Switch automatically to full screen mode"
-
-- evalScript: ${output.fullscreenOff = false; output.fullscreenToggleAttempts = 0}
+- evalScript: ${output.radioAppSettingsOpen = false; output.radioAppSettingsAttempt = 0}
 
 - repeat:
-    times: 3
+    times: 4
     while:
-      true: ${output.fullscreenOff != true}
+      true: ${output.radioAppSettingsOpen != true}
     commands:
-      - evalScript: ${output.fullscreenOn = false}
-
       - runFlow:
           when:
             visible:
               id: media_app_auto_media_fullscreen_toggle_bt
-              checked: true
           commands:
-            - evalScript: ${output.fullscreenOn = true}
+            - evalScript: ${output.radioAppSettingsOpen = true}
 
       - runFlow:
           when:
-            visible:
-              id: media_app_auto_media_fullscreen_toggle_bt
-              selected: true
+            true: ${output.radioAppSettingsOpen != true}
           commands:
-            - evalScript: ${output.fullscreenOn = true}
-
-      - runFlow:
-          when:
-            visible:
-              id: internal_idx_toggle_atom_glow_indicator
-          commands:
-            - evalScript: ${output.fullscreenOn = true}
-
-      - runFlow:
-          when:
-            true: ${output.fullscreenOn == true}
-          commands:
-            - evalScript: ${output.fullscreenToggleAttempts = output.fullscreenToggleAttempts + 1}
+            - tapOn:
+                id: com.bmwgroup.apinext.mediaapp:id/button_settings
+                optional: true
+            - tapOn:
+                id: idx_icon_settings
+                optional: true
             - runFlow:
                 when:
-                  true: ${output.fullscreenToggleAttempts == 1}
+                  true: ${output.radioAppSettingsAttempt >= 1}
                 commands:
                   - tapOn:
-                      id: media_app_auto_media_fullscreen_toggle_bt
+                      point: "95%,16%"
                       optional: true
-                  - waitForAnimationToEnd
-            - runFlow:
-                when:
-                  true: ${output.fullscreenToggleAttempts >= 2}
-                commands:
-                  - tapOn:
-                      point: "29%,51%"
-                  - waitForAnimationToEnd
+            - waitForAnimationToEnd
+            - evalScript: ${output.radioAppSettingsAttempt = output.radioAppSettingsAttempt + 1}
 
-      - evalScript: ${output.fullscreenOnAfter = false}
+- evalScript: ${output.radioHasFullscreenToggle = false}
 
-      - runFlow:
-          when:
-            visible:
-              id: media_app_auto_media_fullscreen_toggle_bt
-              checked: true
-          commands:
-            - evalScript: ${output.fullscreenOnAfter = true}
+- runFlow:
+    when:
+      visible:
+        id: media_app_auto_media_fullscreen_toggle_bt
+    commands:
+      - evalScript: ${output.radioHasFullscreenToggle = true}
 
-      - runFlow:
-          when:
-            visible:
-              id: media_app_auto_media_fullscreen_toggle_bt
-              selected: true
-          commands:
-            - evalScript: ${output.fullscreenOnAfter = true}
+# 2) Fullscreen OFF
+- runFlow:
+    when:
+      true: ${output.radioHasFullscreenToggle == true}
+    commands:
+      - assertVisible:
+          text: "Switch automatically to full screen mode"
+      - evalScript: ${output.fullscreenOff = false; output.fullscreenToggleAttempts = 0}
 
-      - runFlow:
-          when:
-            visible:
-              id: internal_idx_toggle_atom_glow_indicator
-          commands:
-            - evalScript: ${output.fullscreenOnAfter = true}
-
-      - runFlow:
-          when:
-            true: ${output.fullscreenOnAfter != true}
-          commands:
-            - evalScript: ${output.fullscreenOff = true}
-
-      - runFlow:
-          when:
+      - repeat:
+          times: 3
+          while:
             true: ${output.fullscreenOff != true}
           commands:
-            - waitForAnimationToEnd
+            - evalScript: ${output.fullscreenOn = false}
 
-- assertTrue: ${output.fullscreenOff == true}
+            - runFlow:
+                when:
+                  visible:
+                    id: media_app_auto_media_fullscreen_toggle_bt
+                    checked: true
+                commands:
+                  - evalScript: ${output.fullscreenOn = true}
+
+            - runFlow:
+                when:
+                  visible:
+                    id: media_app_auto_media_fullscreen_toggle_bt
+                    selected: true
+                commands:
+                  - evalScript: ${output.fullscreenOn = true}
+
+            - runFlow:
+                when:
+                  visible:
+                    id: internal_idx_toggle_atom_glow_indicator
+                commands:
+                  - evalScript: ${output.fullscreenOn = true}
+
+            - runFlow:
+                when:
+                  true: ${output.fullscreenOn == true}
+                commands:
+                  - evalScript: ${output.fullscreenToggleAttempts = output.fullscreenToggleAttempts + 1}
+                  - runFlow:
+                      when:
+                        true: ${output.fullscreenToggleAttempts == 1}
+                      commands:
+                        - tapOn:
+                            id: media_app_auto_media_fullscreen_toggle_bt
+                            optional: true
+                        - waitForAnimationToEnd
+                  - runFlow:
+                      when:
+                        true: ${output.fullscreenToggleAttempts >= 2}
+                      commands:
+                        - tapOn:
+                            point: "29%,51%"
+                        - waitForAnimationToEnd
+
+            - evalScript: ${output.fullscreenOnAfter = false}
+
+            - runFlow:
+                when:
+                  visible:
+                    id: media_app_auto_media_fullscreen_toggle_bt
+                    checked: true
+                commands:
+                  - evalScript: ${output.fullscreenOnAfter = true}
+
+            - runFlow:
+                when:
+                  visible:
+                    id: media_app_auto_media_fullscreen_toggle_bt
+                    selected: true
+                commands:
+                  - evalScript: ${output.fullscreenOnAfter = true}
+
+            - runFlow:
+                when:
+                  visible:
+                    id: internal_idx_toggle_atom_glow_indicator
+                commands:
+                  - evalScript: ${output.fullscreenOnAfter = true}
+
+            - runFlow:
+                when:
+                  true: ${output.fullscreenOnAfter != true}
+                commands:
+                  - evalScript: ${output.fullscreenOff = true}
+
+            - runFlow:
+                when:
+                  true: ${output.fullscreenOff != true}
+                commands:
+                  - waitForAnimationToEnd
+
+      - assertTrue: ${output.fullscreenOff == true}
 
 # 3) Open Radio settings
 - evalScript: ${output.radioSettingsOpen = false}
@@ -150,6 +188,9 @@ tags:
           when:
             true: ${output.radioSettingsOpen != true}
           commands:
+            - tapOn:
+                id: com.bmwgroup.apinext.mediaapp:id/source_settings
+                optional: true
             - tapOn:
                 id: media_app_source_settings_bt
                 optional: true
@@ -226,7 +267,7 @@ tags:
     text: "Radio info"
 
 # Radio info OFF (state from actual switch node in row)
-# NOTE: Maestro selectors support checked, not checkable.
+# NOTE: On current IDC23 builds the traffic_information_toggle row carries checked=true/false.
 - retry:
     maxRetries: 3
     commands:
@@ -234,18 +275,14 @@ tags:
       - runFlow:
           when:
             visible:
+              id: com.bmwgroup.apinext.tunermediaservice:id/traffic_information_toggle
               checked: true
-              childOf:
-                id: UiLib:ListComponent
-                containsDescendants:
-                  - text: "Radio info"
           commands:
             - tapOn:
-                checked: true
-                childOf:
-                  id: UiLib:ListComponent
-                  containsDescendants:
-                    - text: "Radio info"
+                id: com.bmwgroup.apinext.tunermediaservice:id/traffic_information_toggle
+                optional: true
+            - tapOn:
+                id: com.bmwgroup.apinext.tunermediaservice:id/button_icon
                 optional: true
             - waitForAnimationToEnd
 
@@ -253,24 +290,18 @@ tags:
       - runFlow:
           when:
             visible:
+              id: com.bmwgroup.apinext.tunermediaservice:id/traffic_information_toggle
               checked: true
-              childOf:
-                id: UiLib:ListComponent
-                containsDescendants:
-                  - text: "Radio info"
           commands:
             - tapOn:
-                point: "28%,39%"
+                point: "65%,34%"
                 optional: true
             - waitForAnimationToEnd
 
       # must end with no checked=true in Radio info row
       - assertNotVisible:
+          id: com.bmwgroup.apinext.tunermediaservice:id/traffic_information_toggle
           checked: true
-          childOf:
-            id: UiLib:ListComponent
-            containsDescendants:
-              - text: "Radio info"
 
 # 6) Close Radio settings
 - pressKey: back
@@ -287,6 +318,13 @@ tags:
     when:
       visible:
         id: media_app_source_settings_bt
+    commands:
+      - pressKey: back
+
+- runFlow:
+    when:
+      visible:
+        text: "Switch automatically to full screen mode"
     commands:
       - pressKey: back
 

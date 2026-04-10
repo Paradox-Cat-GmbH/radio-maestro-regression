@@ -157,7 +157,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $globalPrepEnabled = Get-BoolEnv -Name 'MAESTRO_GLOBAL_PRECONDITIONS_ENABLED' -Default $false
-$keepEvidenceOnPass = Get-BoolEnv -Name 'MAESTRO_KEEP_EVIDENCE_ON_PASS' -Default $true
+$keepEvidenceOnPass = Get-BoolEnv -Name 'MAESTRO_KEEP_EVIDENCE_ON_PASS' -Default $false
 if ($globalPrepEnabled) {
   $prepBase = $env:MAESTRO_BACKEND_URL
   if ([string]::IsNullOrWhiteSpace($prepBase)) { $prepBase = 'http://127.0.0.1:4567' }
@@ -188,7 +188,13 @@ if ($globalPrepEnabled) {
   Write-Host "[OK] Global preconditions completed."
 }
 
-$help = (& $maestro --help 2>&1 | Out-String)
+$help = ''
+try {
+  $help = (& $maestro --help 2>&1 | Out-String)
+} catch {
+  Write-Host "[WARN] Unable to inspect Maestro help output, continuing without --device auto-detection."
+  $help = ''
+}
 $supportsDeviceFlag = $help -match '--device'
 
 $failedFlows = @()

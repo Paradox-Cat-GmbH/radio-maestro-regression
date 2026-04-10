@@ -5,8 +5,8 @@ priority: "P2"
 source: "TMS_PRT_TestScenarios.pdf"
 automationLevel: "semi-automated"
 notes:
-  - "Covers single-preset removal path while playback continuity is expected."
-  - "Favorite remove selector is optional due skin differences."
+  - "Starts from a cleared favourites state so the removal is truly a single-preset delete path."
+  - "Uses the live IDC23 particle action instead of long-press context menus."
 acceptance:
   - "Single preset can be removed without interrupting playback."
-  - "System falls back to all-stations path correctly."
+  - "Backend queue context falls back to All stations after removing the only saved preset."

@@ -5,9 +5,42 @@ tags:
   - subflow
   - radio
 ---
-# Build-dependent entry point.
-# Try tapping the visible "Shortcuts" entry. If your build shows only an icon (no text),
-# use Maestro Studio "Inspect Screen" on the shortcuts entry point and replace this step
-# with `tapOn: { id: "<YOUR_SHORTCUTS_ENTRY_ID>" }`.
-- tapOn: "Shortcuts"
-- waitForAnimationToEnd
+# Older packs used a visible "Shortcuts" label. IDC23 exposes a Toolbelt header instead.
+- runFlow: ../idc23/subflows/common/dismiss_media_popup_if_present_idc23.yaml
+- runFlow:
+    when:
+      visible: "Shortcuts"
+    commands:
+      - tapOn:
+          text: "Shortcuts"
+          retryTapIfNoChange: true
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      notVisible: "Shortcuts"
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "com.bmwgroup.idnext.toolbelt:id/top_touchable_area_in_bar"
+          commands:
+            - tapOn:
+                id: "com.bmwgroup.idnext.toolbelt:id/top_touchable_area_in_bar"
+                retryTapIfNoChange: true
+            - waitForAnimationToEnd
+      - runFlow:
+          when:
+            visible:
+              id: "com.bmwgroup.idnext.toolbelt:id/tool_belt_root"
+          commands:
+            - tapOn:
+                id: "com.bmwgroup.idnext.toolbelt:id/tool_belt_root"
+                retryTapIfNoChange: true
+            - waitForAnimationToEnd
+      - swipe:
+          start: "50%,2%"
+          end: "50%,22%"
+          duration: 300
+      - waitForAnimationToEnd
+      - runFlow: ../idc23/subflows/common/dismiss_media_popup_if_present_idc23.yaml

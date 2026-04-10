@@ -5,10 +5,13 @@ jsEngine: graaljs
     file: ../../../../scripts/maestro/dlt_start.js
     env:
       CONTROL_SERVER_URL: ${CONTROL_SERVER_URL}
+      DEVICE_ID: ${DEVICE_ID}
       DLT_IP: ${DLT_IP}
       DLT_PORT: ${DLT_PORT}
       CASE_ID: ${CASE_ID}
-      RUN_TS: ${RUN_TS}
-      RUN_ROOT: ${RUN_ROOT}
-      DLT_OUTPUT: ${DLT_OUTPUT}
-      CAPTURE_ID: ${CAPTURE_ID}
+      SUITE: idc23
+      ROLE: idc23
+- evalScript: "${output.studioRecordingPath = (output.generatedCaptureId && String(output.generatedCaptureId).trim()) ? String(output.generatedCaptureId).trim() : (((typeof CASE_ID !== 'undefined' && String(CASE_ID).trim()) ? String(CASE_ID).trim() : 'IDC23_STUDIO') + '_recording')}"
+- startRecording:
+    path: "${output.studioRecordingPath}"
+    optional: true

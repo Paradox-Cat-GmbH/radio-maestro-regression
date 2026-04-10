@@ -9,7 +9,33 @@ const hostIp = args[1] || '127.0.0.1';
 const hostPort = args[2] || '3490';
 const outputFile = args[3] || 'capture.dlt';
 let captureIdArg = args[4] || 'default';
-const dltBin = process.env.DLT_RECEIVE_BIN || 'dlt-receive';
+function hasPathSeparators(value) {
+  return /[\\/]/.test(String(value || ''));
+}
+
+function resolveDltBin() {
+  const configured = String(process.env.DLT_RECEIVE_BIN || '').trim();
+  if (configured) {
+    if (!hasPathSeparators(configured) || fs.existsSync(configured)) {
+      return configured;
+    }
+  }
+
+  const localCandidates = [
+    'C:\\Tools\\dlt\\dlt-receive.exe',
+    'C:\\Tools\\dlt\\dlt-receive-v2.exe',
+  ];
+
+  for (const candidate of localCandidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return configured || 'dlt-receive';
+}
+
+const dltBin = resolveDltBin();
 if ((command === 'stop' || command === 'status') && args[4] === undefined && args[1]) {
   // allow shorthand: node dlt-capture.js stop IDCEVO
   captureIdArg = args[1];
@@ -41,7 +67,20 @@ function readPid() {
   return Number.isFinite(pid) ? pid : null;
 }
 
-function startCapture(ip, port, outFile) {
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isDllMissingExit(code) {
+  return code === -1073741515 || code === 3221225781;
+}
+
+function cleanupStateFiles() {
+  try { fs.unlinkSync(pidFile); } catch {}
+  try { fs.unlinkSync(metaFile); } catch {}
+}
+
+async function startCapture(ip, port, outFile) {
   ensureStateDir();
 
   const existingPid = readPid();
@@ -64,6 +103,7 @@ function startCapture(ip, port, outFile) {
   const spawnCwd = path.isAbsolute(dltBin) ? path.dirname(dltBin) : process.cwd();
   const logFd = fs.openSync(logFile, 'a');
   fs.appendFileSync(logFile, `\n[${new Date().toISOString()}] START ${dltBin} -p ${port} -o ${absOut} ${ip}\n`);
+  let earlyExitCode = null;
 
   const dltProcess = spawn(dltBin, ['-p', String(port), '-o', absOut, ip], {
     detached: true,
@@ -71,9 +111,13 @@ function startCapture(ip, port, outFile) {
     windowsHide: true,
     cwd: spawnCwd,
   });
+  dltProcess.on('exit', (code) => {
+    earlyExitCode = code;
+  });
 
   if (!dltProcess.pid) {
     console.error(`[${captureId}] Failed to start '${dltBin}' (PID undefined). Install dlt-receive or set DLT_RECEIVE_BIN to full executable path.`);
+    try { fs.closeSync(logFd); } catch {}
     return 1;
   }
 
@@ -81,12 +125,26 @@ function startCapture(ip, port, outFile) {
   fs.writeFileSync(metaFile, JSON.stringify({
     id: captureId,
     pid: dltProcess.pid,
+    binary: dltBin,
     ip,
     port,
     output: absOut,
     log: logFile,
     startedAt: new Date().toISOString(),
   }, null, 2));
+
+  await sleep(750);
+  if (earlyExitCode !== null || !isRunning(dltProcess.pid)) {
+    cleanupStateFiles();
+    try { fs.closeSync(logFd); } catch {}
+    const codeText = earlyExitCode === null ? 'unknown' : String(earlyExitCode);
+    const dllHint = isDllMissingExit(earlyExitCode)
+      ? ' Windows exit code indicates STATUS_DLL_NOT_FOUND; repair or replace the local DLT tool installation.'
+      : '';
+    fs.appendFileSync(logFile, `[${new Date().toISOString()}] EARLY_EXIT code=${codeText}\n`);
+    console.error(`[${captureId}] '${dltBin}' exited immediately (code ${codeText}).${dllHint}`);
+    return 1;
+  }
 
   dltProcess.unref();
   try { fs.closeSync(logFd); } catch {}
@@ -139,16 +197,21 @@ function statusCapture() {
   return 0;
 }
 
-let code = 0;
-if (command === 'start') {
-  code = startCapture(hostIp, hostPort, outputFile);
-} else if (command === 'stop') {
-  code = stopCapture();
-} else if (command === 'status') {
-  code = statusCapture();
-} else {
-  console.log('Usage: node scripts/dlt-capture.js {start|stop|status} [IP] [PORT] [OUTPUT_FILE] [CAPTURE_ID]');
-  code = 1;
-}
+(async () => {
+  let code = 0;
+  if (command === 'start') {
+    code = await startCapture(hostIp, hostPort, outputFile);
+  } else if (command === 'stop') {
+    code = stopCapture();
+  } else if (command === 'status') {
+    code = statusCapture();
+  } else {
+    console.log('Usage: node scripts/dlt-capture.js {start|stop|status} [IP] [PORT] [OUTPUT_FILE] [CAPTURE_ID]');
+    code = 1;
+  }
 
-process.exit(code);
+  process.exit(code);
+})().catch((err) => {
+  console.error(String(err && err.message ? err.message : err));
+  process.exit(1);
+});
